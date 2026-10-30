@@ -1,0 +1,1587 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b0e13">
+<link rel="preconnect" href="https://fonts.googleapis.com/"><link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap" rel="stylesheet">
+<title>SJ MOB TOP | Gestão de Frota</title>
+<style>
+:root{
+  --bg:#070d1c; --bg-2:#0b1430; --surface:#0f1b3a; --surface-2:#142349;
+  --border:#1f3263; --border-2:#2a4380;
+  --text:#eef3ff; --muted:#93a4c8;
+  --accent:#f5c542; --accent-2:#e0a106;
+  --ok:#34d399; --warn:#fbbf24; --danger:#f87171;
+  --radius:16px; --radius-sm:11px;
+  --shadow:0 18px 40px -18px rgba(0,0,0,.7), 0 1px 0 rgba(255,255,255,.03) inset;
+  --ring:0 0 0 3px rgba(245,197,66,.22);
+  --topbar-bg:rgba(7,13,28,.82);
+  --glow:radial-gradient(1000px 520px at 100% -10%, rgba(245,197,66,.10), transparent 60%),radial-gradient(900px 600px at -10% 110%, rgba(59,110,246,.16), transparent 60%);
+}
+:root[data-theme="light"]{
+  --bg:#eef2f8; --bg-2:#e6ecf4; --surface:#ffffff; --surface-2:#f5f8fc;
+  --border:#dae2ee; --border-2:#c6d1e1;
+  --text:#0f1726; --muted:#5a6879;
+  --shadow:0 14px 30px rgba(15,23,38,.10);
+  --topbar-bg:rgba(255,255,255,.88);
+  --glow:radial-gradient(1100px 520px at 8% -12%, rgba(255,176,31,.16), transparent 62%);
+}
+*{box-sizing:border-box}
+html,body{min-height:100%}
+body{
+  margin:0; color:var(--text); background:var(--bg);
+  background-image:var(--glow);
+  background-repeat:no-repeat;
+  font-family:'Manrope',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;
+  transition:background-color .25s,color .25s;
+}
+h1,h2,h3{margin:0;letter-spacing:-.2px}
+a{color:var(--accent)}
+::-webkit-scrollbar{height:10px;width:10px}
+::-webkit-scrollbar-thumb{background:var(--border-2);border-radius:20px}
+::-webkit-scrollbar-track{background:transparent}
+
+/* ---------- TOPBAR ---------- */
+.topbar{position:sticky;top:0;z-index:60;backdrop-filter:blur(14px);
+  background:var(--topbar-bg);border-bottom:1px solid var(--border)}
+.topbar-inner{max-width:1220px;margin:0 auto;padding:12px 18px;
+  display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:11px;min-width:0}
+.brand-mark{width:40px;height:40px;border-radius:12px;flex:none;
+  background:linear-gradient(135deg,var(--accent),var(--accent-2));
+  color:#161616;font-weight:900;font-size:14px;display:grid;place-items:center;
+  box-shadow:0 6px 18px rgba(255,176,31,.32)}
+.brand-name{font-weight:900;font-size:19px;line-height:1.05;letter-spacing:-.4px}
+.brand-sub{color:var(--muted);font-size:11.5px;letter-spacing:.3px}
+.identity{display:flex;align-items:center;gap:9px;min-width:0}
+.avatar{width:34px;height:34px;border-radius:50%;flex:none;display:grid;place-items:center;
+  background:var(--surface-2);border:1px solid var(--border-2);font-weight:800;color:var(--accent);font-size:13px}
+.who{display:flex;flex-direction:column;line-height:1.2;min-width:0}
+.who b{font-size:12.5px;font-weight:600;max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.who small{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px}
+.icon-btn{width:38px;height:38px;padding:0;display:grid;place-items:center;border-radius:11px;
+  background:var(--surface-2);color:var(--text);border:1px solid var(--border)}
+
+/* ---------- LAYOUT ---------- */
+.wrap{max-width:1220px;margin:0 auto;padding:20px 18px 60px}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:20px;margin:16px 0;box-shadow:var(--shadow)}
+.panel.tight{padding:16px}
+.narrow{max-width:560px;margin:6vh auto 0}
+.panel h2{font-size:17px;margin-bottom:4px}
+.panel .sub{color:var(--muted);font-size:12.5px;margin:0 0 14px}
+.muted{color:var(--muted)}
+small{color:var(--muted)}
+
+/* ---------- FORMS ---------- */
+label{display:block;font-size:12px;font-weight:600;color:var(--muted);
+  margin:0 0 6px;letter-spacing:.2px;text-transform:uppercase}
+input,select{width:100%;max-width:100%;font:inherit;font-size:14px;padding:11px 13px;
+  color:var(--text);background:var(--bg-2);border:1px solid var(--border-2);
+  border-radius:var(--radius-sm);transition:border-color .15s,box-shadow .15s}
+input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:var(--ring)}
+input::placeholder{color:#67738a}
+.fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}
+.field{min-width:0}
+
+/* ---------- BUTTONS ---------- */
+button{font:inherit;font-weight:700;font-size:13.5px;border:0;cursor:pointer;
+  padding:11px 18px;border-radius:var(--radius-sm);
+  background:linear-gradient(180deg,var(--accent),var(--accent-2));color:#171717;
+  transition:transform .14s,filter .14s,opacity .14s;white-space:nowrap}
+button:hover{filter:brightness(1.06)}
+button:active{transform:translateY(1px)}
+button:disabled{opacity:.5;cursor:not-allowed;transform:none}
+button.alt{background:var(--surface-2);color:var(--text);border:1px solid var(--border-2)}
+button.danger{background:rgba(255,107,107,.14);color:var(--danger);border:1px solid rgba(255,107,107,.35)}
+button.sm{padding:7px 12px;font-size:12px;border-radius:9px}
+button.ghost{background:transparent;border:1px solid var(--border-2);color:var(--text)}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+
+/* ---------- TOOLBAR ---------- */
+.toolbar{display:flex;gap:14px;align-items:flex-end;justify-content:space-between;
+  flex-wrap:wrap;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:16px 18px;margin-top:18px;box-shadow:var(--shadow)}
+.toolbar .field{max-width:210px}
+.toolbar-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.sync{font-size:11.5px;color:var(--muted);white-space:nowrap}
+.sync b{color:var(--ok);font-weight:600}
+
+/* ---------- NAV ---------- */
+.nav{display:flex;gap:8px;overflow-x:auto;padding:16px 0 4px;scrollbar-width:none}
+.nav::-webkit-scrollbar{display:none}
+.navbtn{display:inline-flex;align-items:center;gap:8px;background:var(--surface);
+  border:1px solid var(--border);color:var(--muted);font-weight:600;font-size:13px;
+  padding:10px 15px;border-radius:999px;transition:.18s}
+.navbtn:hover{color:var(--text);border-color:var(--border-2);filter:none}
+.navbtn .ico{display:grid;place-items:center}
+.navbtn .ico svg{width:16px;height:16px;display:block}
+.navbtn.active{background:linear-gradient(180deg,var(--accent),var(--accent-2));
+  color:#161616;border-color:transparent;box-shadow:0 6px 18px rgba(255,176,31,.28)}
+
+/* ---------- KPI CARDS ---------- */
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(178px,1fr));gap:14px}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:16px 17px;position:relative;overflow:hidden;transition:.2s;box-shadow:var(--shadow)}
+.kpi:hover{transform:translateY(-2px);border-color:var(--border-2)}
+.kpi-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+.kpi-label{font-size:11.5px;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);font-weight:700}
+.kpi-ico{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;
+  background:rgba(255,206,50,.12);color:var(--accent);flex:none}
+.kpi-ico svg{width:15px;height:15px}
+.kpi-value{font-size:23px;font-weight:800;letter-spacing:-.6px;line-height:1.15;word-break:break-word}
+.trend{display:inline-block;margin-top:7px;font-size:11px;font-weight:700;
+  padding:3px 8px;border-radius:999px;background:var(--surface-2);color:var(--muted)}
+.trend.up{background:rgba(61,220,132,.13);color:var(--ok)}
+.trend.down{background:rgba(255,107,107,.13);color:var(--danger)}
+
+/* ---------- CHART ---------- */
+.chart{display:flex;align-items:flex-end;gap:14px;height:170px;padding:14px 4px 0}
+.chart-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;min-width:0;height:100%}
+.bars{flex:1;width:100%;display:flex;align-items:flex-end;justify-content:center;gap:4px}
+.bar{width:44%;max-width:22px;border-radius:6px 6px 3px 3px;transition:height .4s ease}
+.bar.rev{background:linear-gradient(180deg,var(--accent),var(--accent-2))}
+.bar.exp{background:linear-gradient(180deg,#ff8a8a,#e05555)}
+.chart-col small{font-size:10.5px;color:var(--muted);font-weight:600}
+.legend{display:flex;gap:18px;justify-content:center;margin-top:12px;font-size:11.5px;color:var(--muted)}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:6px}
+.dot.rev{background:var(--accent)} .dot.exp{background:#e05555}
+
+/* ---------- PROGRESS / GOALS ---------- */
+.goal{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:16px 17px;box-shadow:var(--shadow)}
+.goal-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.goal-head b{font-size:14px}
+.goal-values{font-size:12.5px;color:var(--muted);margin:0 0 10px}
+.goal-values b{color:var(--text)}
+.bar-track{background:var(--surface-2);height:10px;border-radius:999px;overflow:hidden;border:1px solid var(--border)}
+.bar-fill{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,var(--accent),var(--accent-2));
+  transition:width .5s ease}
+.goal-foot{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);margin-top:9px}
+
+/* ---------- ALERTS ---------- */
+.alert{display:flex;gap:11px;align-items:flex-start;padding:12px 14px;border-radius:var(--radius-sm);
+  background:var(--surface-2);border:1px solid var(--border);font-size:13px;margin-bottom:9px}
+.alert:last-child{margin-bottom:0}
+.alert .pill{width:8px;height:8px;border-radius:50%;margin-top:5px;flex:none}
+.alert.warn{border-left:3px solid var(--warn)} .alert.warn .pill{background:var(--warn)}
+.alert.danger{border-left:3px solid var(--danger)} .alert.danger .pill{background:var(--danger)}
+.alert.info{border-left:3px solid var(--accent)} .alert.info .pill{background:var(--accent)}
+
+/* ---------- TABLES ---------- */
+.panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;
+  flex-wrap:wrap;margin-bottom:14px}
+.search{max-width:280px}
+.scroll{overflow-x:auto;border-radius:var(--radius-sm)}
+table{width:100%;border-collapse:separate;border-spacing:0;font-size:13px}
+thead th{position:sticky;top:0;background:var(--surface-2);color:var(--muted);
+  font-size:10.5px;text-transform:uppercase;letter-spacing:.7px;font-weight:800;
+  text-align:left;padding:11px 12px;border-bottom:1px solid var(--border);white-space:nowrap}
+tbody td{padding:11px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+tbody tr{transition:background .14s}
+tbody tr:hover{background:var(--surface-2)}
+tbody tr:last-child td{border-bottom:0}
+td.actions{text-align:right;white-space:nowrap}
+.empty{text-align:center;color:var(--muted);padding:34px 12px!important;font-size:13px}
+.badge{display:inline-block;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:700;
+  text-transform:capitalize;border:1px solid transparent}
+.badge.ok{background:rgba(61,220,132,.13);color:var(--ok);border-color:rgba(61,220,132,.3)}
+.badge.warn{background:rgba(255,176,32,.13);color:var(--warn);border-color:rgba(255,176,32,.3)}
+.badge.danger{background:rgba(255,107,107,.13);color:var(--danger);border-color:rgba(255,107,107,.3)}
+.badge.muted{background:var(--surface-2);color:var(--muted);border-color:var(--border-2)}
+
+/* ---------- TOASTS ---------- */
+#toasts{position:fixed;right:18px;bottom:18px;z-index:200;display:flex;flex-direction:column;
+  gap:10px;max-width:min(380px,calc(100vw - 36px))}
+.toast{display:flex;gap:10px;align-items:flex-start;padding:13px 16px;border-radius:13px;
+  background:var(--surface);border:1px solid var(--border-2);box-shadow:var(--shadow);
+  font-size:13px;line-height:1.4;opacity:0;transform:translateY(12px) scale(.97);
+  transition:opacity .25s,transform .25s;word-break:break-word}
+.toast.in{opacity:1;transform:none}
+.toast-dot{width:9px;height:9px;border-radius:50%;margin-top:5px;flex:none;background:var(--ok)}
+.toast.error .toast-dot{background:var(--danger)}
+.toast.error{border-left:3px solid var(--danger)}
+.toast.success{border-left:3px solid var(--ok)}
+
+/* ---------- MODAL ---------- */
+.modal-backdrop{position:fixed;inset:0;z-index:300;background:rgba(5,8,12,.68);
+  backdrop-filter:blur(4px);display:grid;place-items:center;padding:20px;
+  animation:fade .18s ease}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.modal{background:var(--surface);border:1px solid var(--border-2);border-radius:18px;
+  padding:24px;max-width:420px;width:100%;box-shadow:var(--shadow);
+  animation:pop .2s cubic-bezier(.2,.9,.3,1.2)}
+@keyframes pop{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:none}}
+.modal h3{font-size:16px;margin-bottom:8px}
+.modal p{color:var(--muted);font-size:13.5px;margin:0 0 20px;line-height:1.5}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+
+.hide{display:none!important}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--muted);
+  background:var(--surface-2);border:1px solid var(--border);padding:5px 11px;border-radius:999px}
+.footer{max-width:1220px;margin:0 auto;padding:0 18px 34px;color:var(--muted);
+  font-size:11.5px;text-align:center;letter-spacing:.3px}
+
+@media(max-width:760px){
+  .wrap{padding:14px 13px 50px}
+  .topbar-inner{padding:10px 13px}
+  .brand-name{font-size:16.5px}
+  .brand-mark{width:36px;height:36px}
+  .panel{padding:16px;border-radius:14px}
+  .toolbar{padding:14px;gap:12px}
+  .toolbar .field{max-width:100%;flex:1}
+  .toolbar-actions{width:100%}
+  .toolbar-actions button{flex:1}
+  .sync{width:100%}
+  .kpi-value{font-size:20px}
+  table{min-width:620px}
+  #toasts{right:12px;left:12px;bottom:12px;max-width:none}
+  .who{display:none}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* Cartão premium de desempenho por veículo */
+.veh-selector-wrap{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:16px}
+.veh-selector-wrap label{display:block;font-size:13px;color:var(--text);margin-bottom:8px;text-transform:none}
+.veh-selector-wrap select{font-size:15px;padding:14px 16px;background:var(--bg);border-radius:12px;cursor:pointer;font-weight:600;width:100%}
+.veh-card{background:var(--surface);border:1px solid var(--border-2);border-radius:var(--radius);padding:20px;box-shadow:0 8px 24px rgba(0,0,0,.15)}
+.veh-card-header{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+.veh-title{font-size:21px;font-weight:900;letter-spacing:-.5px;color:var(--text);display:flex;align-items:baseline;flex-wrap:wrap;gap:8px}
+.veh-subtitle{font-size:13px;color:var(--muted);margin-top:4px;font-weight:500}
+.veh-badge-rpk{font-size:18px;font-weight:800;padding:8px 16px;border-radius:12px;background:rgba(61,220,132,.12);color:var(--ok);border:1px solid rgba(61,220,132,.3);white-space:nowrap}
+.veh-badge-rpk.muted{background:var(--surface-2);color:var(--muted);border-color:var(--border-2)}
+.veh-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px}
+.veh-box{background:var(--bg-2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.veh-box-label{font-size:10.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);font-weight:800}
+.veh-box-value{font-size:19px;font-weight:800;color:var(--text);line-height:1.2;overflow-wrap:anywhere}
+.veh-box-value.pos{color:var(--ok)}.veh-box-value.neg{color:var(--danger)}
+.veh-box-sub{font-size:11.5px;color:var(--muted);font-weight:500}
+.veh-meta-area{background:var(--surface-2);padding:14px 16px;border-radius:12px;border:1px solid var(--border)}
+.veh-meta-header{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;font-size:12px;color:var(--muted)}
+.veh-meta-header b{color:var(--text);font-size:13px}
+@media(max-width:520px){.veh-card{padding:14px}.veh-title{font-size:18px}.veh-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.veh-box{padding:12px}.veh-box-value{font-size:16px}}
+
+
+/* Dashboard responsivo compacto: escopo exclusivo para nao afetar cadastros */
+.dash{min-width:0;max-width:100%;overflow-wrap:break-word}
+.dash .panel{padding:15px 16px;margin:12px 0;border-radius:14px;min-width:0}
+.dash .panel h2{font-size:15.5px;line-height:1.35}
+.dash .panel .sub{margin-bottom:10px}
+.dash .grid{gap:11px}
+.dash .kpi-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media(min-width:620px){.dash .kpi-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(min-width:960px){.dash .kpi-grid{grid-template-columns:repeat(6,minmax(0,1fr))}}
+.dash .kpi{padding:12px 13px;border-radius:13px;min-width:0}
+.dash .kpi-top{margin-bottom:7px;gap:6px}
+.dash .kpi-label{font-size:10px;letter-spacing:.5px}
+.dash .kpi-ico{width:26px;height:26px;border-radius:8px;flex-shrink:0}
+.dash .kpi-ico svg{width:13px;height:13px}
+.dash .kpi-value{font-size:17.5px;letter-spacing:-.4px;overflow-wrap:anywhere}
+.dash .trend{font-size:10px;padding:2px 7px;margin-top:6px}
+.dash .dash-title{font-size:16px;margin:16px 0 12px}
+.dash .chart{height:130px;gap:10px;padding:10px 2px 0}
+.dash .chart-col small{font-size:10px}
+.dash .legend{font-size:11px;margin-top:10px}
+.dash .goal{padding:13px 14px;border-radius:13px;min-width:0}
+.dash .goal-head{margin-bottom:8px}
+.dash .goal-head b{font-size:13px}
+.dash .goal-values{font-size:12px;margin-bottom:8px}
+.dash h3{font-size:14px;margin:14px 0 10px}
+.dash .veh-card{padding:15px;border-radius:14px}
+.dash .veh-card-header{margin-bottom:14px;padding-bottom:12px}
+.dash .veh-title{font-size:18px}
+.dash .veh-badge-rpk{font-size:15px;padding:6px 12px}
+.dash .veh-grid{gap:9px;margin-bottom:14px}
+.dash .veh-box{padding:10px 12px;gap:4px;border-radius:10px}
+.dash .veh-box-label{font-size:10px}
+.dash .veh-box-value{font-size:15.5px}
+.dash .veh-meta-area{padding:11px 13px;border-radius:10px}
+.dash .veh-selector-wrap{padding:12px 13px;margin-bottom:12px}
+.dash .veh-selector-wrap label{font-size:12px;margin-bottom:6px}
+.dash .veh-selector-wrap select{padding:11px 13px;font-size:14px;border-radius:10px}
+.dash .alert{padding:10px 12px;font-size:12.5px;margin-bottom:8px;border-radius:10px}
+@media(max-width:420px){
+  .dash .panel{padding:12px}
+  .dash .kpi-grid{gap:8px}
+  .dash .kpi{padding:10px}
+  .dash .kpi-value{font-size:15px}
+  .dash .veh-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .dash .veh-box{padding:9px}
+  .dash .veh-box-value{font-size:14px}
+  .dash .veh-card-header{gap:8px}
+  .dash .veh-title{font-size:16px}
+  .dash .chart{overflow-x:auto}
+}
+
+
+/* ===== Visual Profissional: Azul Marinho + Ouro ===== */
+body{background-attachment:fixed}
+h1,h2,h3,.brand-name,.kpi-value,.veh-title,.dash-title{font-family:'Sora','Manrope',sans-serif}
+.brand-name{background:linear-gradient(135deg,#ffe28a,var(--accent) 45%,var(--accent-2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.brand-mark{color:#0b1430;box-shadow:0 8px 22px -6px rgba(245,197,66,.55)}
+.topbar{border-bottom:1px solid rgba(245,197,66,.14)}
+.panel,.kpi,.goal,.toolbar,.veh-card{background:linear-gradient(160deg,#12204a 0%,#0e1937 100%);border-color:var(--border)}
+.kpi{border-top:2px solid rgba(245,197,66,.0)}
+.kpi:hover,.goal:hover{border-color:rgba(245,197,66,.45);box-shadow:0 18px 40px -16px rgba(245,197,66,.18)}
+.kpi::after{content:"";position:absolute;inset:0 0 auto 0;height:2px;background:linear-gradient(90deg,transparent,rgba(245,197,66,.55),transparent);opacity:.0;transition:.2s}
+.kpi:hover::after{opacity:1}
+.kpi-ico{background:rgba(245,197,66,.13);border:1px solid rgba(245,197,66,.25)}
+button{color:#0b1430;box-shadow:0 6px 16px -8px rgba(245,197,66,.6)}
+button.alt,button.ghost,button.danger,.icon-btn,.navbtn{box-shadow:none}
+button.alt:hover,button.ghost:hover,.icon-btn:hover{border-color:var(--accent);color:var(--accent);filter:none}
+.navbtn{background:rgba(15,27,58,.8)}
+.navbtn:hover{border-color:rgba(245,197,66,.4)}
+.navbtn.active{color:#0b1430}
+input,select{background:#081128}
+input::placeholder{color:#5f719a}
+thead th{background:#132451;color:#b7c4e3}
+tbody tr:hover{background:rgba(245,197,66,.05)}
+.veh-box{background:#0a1430}
+.veh-selector-wrap,.veh-meta-area{background:#0c1736}
+.bar-track{background:#0a1430}
+.footer{color:#6c7ea8}
+.modal{background:#0f1b3a}
+.chip{background:#0c1736}
+:root[data-theme="light"] .panel,:root[data-theme="light"] .kpi,:root[data-theme="light"] .goal,:root[data-theme="light"] .toolbar,:root[data-theme="light"] .veh-card{background:var(--surface)}
+:root[data-theme="light"] input,:root[data-theme="light"] select,:root[data-theme="light"] .veh-box,:root[data-theme="light"] .veh-selector-wrap,:root[data-theme="light"] .veh-meta-area,:root[data-theme="light"] .bar-track,:root[data-theme="light"] .navbtn,:root[data-theme="light"] .chip{background:var(--bg-2)}
+:root[data-theme="light"] thead th{background:var(--surface-2);color:var(--muted)}
+:root[data-theme="light"] .modal{background:var(--surface)}
+@media(max-width:760px){
+  .nav{position:sticky;top:58px;z-index:50;margin:0 -13px;padding:12px 13px 8px;background:linear-gradient(180deg,var(--bg) 70%,transparent)}
+  .navbtn{padding:9px 13px;font-size:12.5px}
+  .toolbar-actions .sync{order:3;text-align:center}
+  button,input,select{min-height:42px}
+  button.sm{min-height:34px}
+}
+
+/* Histórico de pendências: ações compactas e recibos recolhidos */
+.pend-table{width:100%;min-width:860px;table-layout:auto}
+.pend-table th,.pend-table td{padding:12px 9px;vertical-align:middle;text-align:left}
+.pend-table td:last-child{min-width:160px;width:210px}
+.pend-table td{overflow-wrap:anywhere}
+.pend-description{display:block;color:var(--muted);margin-top:4px;line-height:1.4;max-width:230px}
+.pend-actions{display:flex;flex-direction:column;align-items:flex-start;gap:7px}
+.pend-history{max-width:100%;font-size:12px}
+.pend-history summary{cursor:pointer;color:var(--accent);padding:5px 0;white-space:nowrap}
+.pend-payment-list{display:flex;flex-direction:column;gap:8px;padding-top:8px}
+.pend-payment{display:flex;align-items:center;gap:8px;justify-content:space-between;border-top:1px solid var(--border);padding-top:8px;min-width:0}
+.pend-payment span{min-width:0;line-height:1.5}
+.pend-payment button{flex-shrink:0}
+@media(max-width:600px){.pend-table{min-width:780px}.pend-table td:last-child{width:180px;min-width:180px}.pend-table th,.pend-table td{padding:10px 7px}}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <div class="brand-mark">SJ</div>
+      <div>
+        <div class="brand-name">SJ MOB TOP</div>
+        <div class="brand-sub">Gestão de frota · Supabase online</div>
+      </div>
+    </div>
+    <div class="btn-row">
+      <div id="identity" class="identity"></div>
+      <button class="icon-btn" id="themeBtn" title="Alternar tema" aria-label="Alternar tema" onclick="toggleTheme()">☀</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ============ 1. CONEXÃO ============ -->
+  <section id="setup" class="panel narrow">
+    <h2>1. Conectar seu Supabase</h2>
+    <p class="sub">Informe somente a URL do projeto e a chave pública <b>publishable</b> (ou anon). Nunca use <code>service_role</code>, secret key ou senha do banco.</p>
+    <div class="field" style="margin-bottom:14px">
+      <label for="url">Project URL</label>
+      <input id="url" placeholder="https://seu-projeto.supabase.co" autocomplete="off" spellcheck="false">
+    </div>
+    <div class="field" style="margin-bottom:16px">
+      <label for="key">Publishable key / anon key</label>
+      <input id="key" type="password" placeholder="sb_publishable_... ou eyJ..." autocomplete="off" spellcheck="false">
+    </div>
+    <div class="btn-row">
+      <button onclick="connect()">Conectar</button>
+    </div>
+    <p style="margin:16px 0 0"><small>Configuração salva apenas neste navegador. Para abrir em outro dispositivo, informe novamente URL e chave pública.</small></p>
+  </section>
+
+  <!-- ============ 2. LOGIN ============ -->
+  <section id="auth" class="panel narrow hide">
+    <h2>2. Entrar no sistema</h2>
+    <p class="sub">Acesse com o usuário criado no Supabase Authentication.</p>
+    <div class="fields">
+      <div class="field"><label for="email">E-mail</label><input id="email" type="email" autocomplete="username" placeholder="voce@empresa.com"></div>
+      <div class="field"><label for="password">Senha</label><input id="password" type="password" autocomplete="current-password" placeholder="••••••••"></div>
+    </div>
+    <div class="btn-row" style="margin-top:16px">
+      <button onclick="signIn()">Entrar</button>
+      <button class="alt" onclick="resetPassword()">Recuperar senha</button>
+    </div>
+    <p style="margin:16px 0 0"><small>Crie seu usuário em <b>Authentication → Users</b> no Supabase. Este sistema não oferece cadastro público.</small></p>
+  </section>
+
+  <!-- ============ 3. APP ============ -->
+  <section id="app" class="hide">
+
+    <div class="toolbar">
+      <div class="field">
+        <label for="month">Mês de referência</label>
+        <input id="month" type="month">
+      </div>
+      <div class="toolbar-actions">
+        <span class="sync" id="syncInfo"></span>
+        <button class="alt" onclick="refresh()">↻ Atualizar</button>
+        <button class="ghost" onclick="logout()">Sair</button>
+      </div>
+    </div>
+
+    <nav class="nav" id="nav" aria-label="Navegação principal"></nav>
+
+    <section id="content"></section>
+  </section>
+
+</main>
+
+<footer class="footer">SJ MOB TOP · v2 · dados protegidos por RLS no Supabase</footer>
+
+<div id="toasts" aria-live="polite" aria-atomic="false"></div>
+<div id="modal-root"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+'use strict';
+
+/* =========================================================
+   ESTADO
+   ========================================================= */
+let client = null;
+let session = null;
+let active = 'dashboard';
+let data = {};
+let month = new Date().toISOString().slice(0, 7);
+let search = {};
+let lastSync = null;
+
+const $ = id => document.getElementById(id);
+
+/* =========================================================
+   HELPERS
+   ========================================================= */
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const brl = n => Number(n || 0).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+const num = n => Number(n || 0).toLocaleString('pt-BR', {maximumFractionDigits:1});
+const MONEY = ['faturamento','valor','custo','meta_faturamento'];
+
+function fmtDate(v){
+  if(!v) return '—';
+  const p = String(v).slice(0,10).split('-');
+  return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : v;
+}
+function prevMonth(m){
+  const [y, mo] = m.split('-').map(Number);
+  const d = new Date(y, mo - 2, 1);
+  return d.toISOString().slice(0,7);
+}
+function last6(m){
+  const [y, mo] = m.split('-').map(Number);
+  const out = [];
+  for(let i = 5; i >= 0; i--) out.push(new Date(y, mo - 1 - i, 1).toISOString().slice(0,7));
+  return out;
+}
+
+/* =========================================================
+   ÍCONES
+   ========================================================= */
+const S = (p) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
+const ICONS = {
+  dashboard: S('<rect x="3" y="3" width="7" height="9" rx="1.6"/><rect x="14" y="3" width="7" height="5" rx="1.6"/><rect x="14" y="12" width="7" height="9" rx="1.6"/><rect x="3" y="16" width="7" height="5" rx="1.6"/>'),
+  motoristas: S('<circle cx="12" cy="8" r="3.4"/><path d="M5 20c0-3.6 3.1-6.2 7-6.2s7 2.6 7 6.2"/>'),
+  veiculos: S('<path d="M4 16v-3l2-5h12l2 5v3"/><circle cx="7.5" cy="17.5" r="1.6"/><circle cx="16.5" cy="17.5" r="1.6"/><path d="M4 13h16"/>'),
+  viagens: S('<circle cx="6" cy="18" r="2.2"/><circle cx="18" cy="6" r="2.2"/><path d="M8.2 18h5.3a4.5 4.5 0 0 0 4.5-4.5V8.2"/>'),
+  financeiro: S('<path d="M12 3v18"/><path d="M16.5 7.4c0-1.7-2-3-4.5-3s-4.5 1.3-4.5 3 2 2.6 4.5 3 4.5 1.3 4.5 3-2 3-4.5 3-4.5-1.3-4.5-3"/>'),
+  manutencoes: S('<path d="M14.7 6.3a3.6 3.6 0 0 0 4.9 4.9l-8.3 8.3a3.6 3.6 0 0 1-4.9-4.9l8.3-8.3Z"/><path d="M4 20l3.5-3.5"/>'),
+  metas: S('<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1"/>'),
+  seguranca: S('<path d="M12 3l7 3v6c0 4.2-3 7.5-7 9-4-1.5-7-4.8-7-9V6l7-3Z"/><path d="M9 12l2 2 4-4"/>')
+};
+
+/* =========================================================
+   TOASTS / MODAL / TEMA
+   ========================================================= */
+function toast(text, type = 'success'){
+  const el = document.createElement('div');
+  el.className = 'toast ' + type;
+  el.innerHTML = `<span class="toast-dot"></span><span>${esc(text)}</span>`;
+  $('toasts').appendChild(el);
+  requestAnimationFrame(() => el.classList.add('in'));
+  setTimeout(() => {
+    el.classList.remove('in');
+    setTimeout(() => el.remove(), 300);
+  }, 4600);
+}
+function msg(t, bad = false){ toast(t, bad ? 'error' : 'success'); }
+
+function confirmDialog(text, confirmLabel = 'Excluir'){
+  return new Promise(resolve => {
+    const root = $('modal-root');
+    root.innerHTML = `
+      <div class="modal-backdrop">
+        <div class="modal" role="dialog" aria-modal="true">
+          <h3>Confirmar ação</h3>
+          <p>${esc(text)}</p>
+          <div class="modal-actions">
+            <button class="alt" id="modal-no">Cancelar</button>
+            <button class="danger" id="modal-yes">${esc(confirmLabel)}</button>
+          </div>
+        </div>
+      </div>`;
+    const close = v => { root.innerHTML = ''; document.removeEventListener('keydown', onKey); resolve(v); };
+    const onKey = e => { if(e.key === 'Escape') close(false); };
+    document.addEventListener('keydown', onKey);
+    $('modal-no').onclick = () => close(false);
+    $('modal-yes').onclick = () => close(true);
+    root.querySelector('.modal-backdrop').onclick = e => {
+      if(e.target.classList.contains('modal-backdrop')) close(false);
+    };
+    $('modal-yes').focus();
+  });
+}
+
+function applyTheme(t){
+  document.documentElement.dataset.theme = t;
+  localStorage.setItem('sj_theme', t);
+  const b = $('themeBtn');
+  if(b) b.textContent = t === 'light' ? '🌙' : '☀';
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if(meta) meta.setAttribute('content', t === 'light' ? '#eef2f8' : '#0b0e13');
+}
+function toggleTheme(){
+  applyTheme(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light');
+}
+
+/* =========================================================
+   ESPECIFICAÇÕES DAS TABELAS
+   ========================================================= */
+const specs = {
+  motoristas:{title:'Motoristas',cols:[
+    ['nome','Nome','text',true],
+    ['telefone','Telefone','text'],
+    ['cnh','Número da CNH','text'],
+    ['validade_cnh','Validade da CNH','date'],
+    ['status','Status','select',['ativo','inativo']]
+  ]},
+  veiculos:{title:'Veículos',cols:[
+    ['placa','Placa','text',true],
+    ['modelo','Modelo','text',true],
+    ['ano','Ano','number'],
+    ['km_atual','Odômetro','number'],
+    ['status','Status','select',['ativo','manutencao','inativo']]
+  ]},
+  viagens:{title:'Viagens',cols:[
+    ['data_viagem','Data','date',true],
+    ['motorista_id','Motorista','driver',true],
+    ['veiculo_id','Veículo','vehicle',true],
+    ['km_rodados','KM rodados','number',true],
+    ['faturamento','Faturamento (R$)','number',true],
+    ['observacoes','Observações','text']
+  ]},
+  financeiro:{title:'Financeiro',cols:[
+    ['data_lancamento','Data','date',true],
+    ['tipo','Tipo','select',['receita','despesa']],
+    ['categoria','Categoria','text',true],
+    ['descricao','Descrição','text'],
+    ['valor','Valor (R$)','number',true],
+    ['motorista_id','Motorista (opcional)','driver'],
+    ['veiculo_id','Veículo (opcional)','vehicle']
+  ]},
+  manutencoes:{title:'Manutenção',cols:[
+    ['veiculo_id','Veículo','vehicle',true],
+    ['data_manutencao','Data','date',true],
+    ['servico','Serviço','text',true],
+    ['custo','Custo (R$)','number',true],
+    ['km_veiculo','KM do veículo','number']
+  ]},
+  metas:{title:'Metas mensais',cols:[
+    ['mes','Mês (primeiro dia)','date',true],
+    ['motorista_id','Motorista','driver'],
+    ['veiculo_id','Veículo','vehicle'],
+    ['meta_faturamento','Meta faturamento','number',true],
+    ['meta_km','Meta KM','number',true]
+  ]}
+};
+const names = {motoristas: r => r.nome, veiculos: r => r.placa + ' • ' + r.modelo};
+
+function lookup(table, id){
+  const r = (data[table] || []).find(x => x.id === id);
+  if(!r) return '—';
+  return names[table] ? names[table](r) : id;
+}
+function options(type){
+  const t = type === 'driver' ? 'motoristas' : 'veiculos';
+  return '<option value="">— Selecione —</option>' + (data[t] || [])
+    .map(r => `<option value="${esc(r.id)}">${esc(lookup(t, r.id))}</option>`).join('');
+}
+
+/* =========================================================
+   CONEXÃO / AUTH
+   ========================================================= */
+$('month').value = month;
+$('month').onchange = e => { month = e.target.value; render(); };
+
+function show(id){
+  for(const k of ['setup','auth','app']) $(k).classList.toggle('hide', k !== id);
+}
+
+function setIdentity(){
+  if(!session){ $('identity').innerHTML = ''; return; }
+  const email = session.user.email || 'Conectado';
+  $('identity').innerHTML = `
+    <div class="avatar">${esc((email[0] || '?').toUpperCase())}</div>
+    <div class="who"><b>${esc(email)}</b><small>conectado</small></div>`;
+}
+
+async function connect(){
+  try{
+    if(!window.supabase) throw Error('Biblioteca não carregada. Verifique a internet.');
+    const u = $('url').value.trim();
+    const k = $('key').value.trim();
+    if(!/^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/.test(u)) throw Error('Informe uma URL válida do Supabase.');
+    if(!k || k.includes('service_role') || k.startsWith('sb_secret_')) throw Error('Use somente a chave pública publishable/anon.');
+
+    client = window.supabase.createClient(u, k, {
+      auth:{persistSession:true, autoRefreshToken:true, detectSessionInUrl:true}
+    });
+    localStorage.setItem('sj_config', JSON.stringify({u, k}));
+
+    client.auth.onAuthStateChange((_event, s) => {
+      session = s;
+      if(!s){ show('auth'); setIdentity(); }
+      else { show('app'); setIdentity(); setTimeout(refresh, 0); }
+    });
+
+    const {data:d, error} = await client.auth.getSession();
+    if(error) throw error;
+    session = d.session;
+
+    if(session){
+      show('app'); setIdentity(); await refresh();
+      toast('Sessão restaurada com sucesso.');
+    }else{
+      show('auth');
+      toast('Conexão configurada. Faça login.');
+    }
+  }catch(e){
+    msg(e.message, true);
+  }
+}
+
+async function signIn(){
+  const {error} = await client.auth.signInWithPassword({
+    email: $('email').value.trim(),
+    password: $('password').value
+  });
+  if(error) msg('Login: ' + error.message, true);
+  else { $('password').value = ''; toast('Login realizado.'); }
+}
+
+async function resetPassword(){
+  const email = $('email').value.trim();
+  if(!email) return msg('Digite seu e-mail.', true);
+  const {error} = await client.auth.resetPasswordForEmail(email);
+  msg(error ? error.message : 'Se o e-mail estiver cadastrado, você receberá instruções.', !!error);
+}
+
+async function logout(){
+  await client.auth.signOut();
+  data = {}; search = {}; lastSync = null;
+  setIdentity();
+  toast('Você saiu do sistema.');
+}
+
+/* =========================================================
+   SYNC
+   ========================================================= */
+async function refresh(){
+  if(!session) return;
+  try{
+    for(const t of Object.keys(specs)){
+      const {data:d, error} = await client.from(t).select('*').limit(5000);
+      if(error) throw Error(t + ': ' + error.message);
+      data[t] = d || [];
+    }
+    await carregarPendencias();
+    lastSync = new Date();
+    render();
+    toast('Dados sincronizados com o Supabase.');
+  }catch(e){
+    msg('Erro de leitura: ' + e.message, true);
+  }
+}
+
+/* =========================================================
+   NAVEGAÇÃO / RENDER
+   ========================================================= */
+function nav(t){ active = t; render(); }
+
+function render(){
+  if(!session) return;
+
+  const tabs = ['dashboard','motoristas','veiculos','viagens','financeiro','pendencias','manutencoes','metas','seguranca'];
+  $('nav').innerHTML = tabs.map(t => {
+    const label = t === 'dashboard' ? 'Dashboard' : t === 'seguranca' ? 'Segurança' : t === 'pendencias' ? 'Pendências' : specs[t].title;
+    return `<button class="navbtn${active === t ? ' active' : ''}" onclick="nav('${t}')">
+      <span class="ico">${(ICONS[t] || (t === 'pendencias' ? '◉' : ''))}</span><span>${label}</span></button>`;
+  }).join('');
+
+  $('syncInfo').innerHTML = lastSync
+    ? `Sincronizado às <b>${lastSync.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})}</b>`
+    : '';
+
+  $('content').innerHTML =
+    active === 'dashboard' ? dashboard() :
+    active === 'seguranca' ? security() :
+    active === 'pendencias' ? pendenciasPage() :
+    tablePage(active);
+}
+
+/* =========================================================
+   CÉLULAS / BADGES
+   ========================================================= */
+function badge(v){
+  const s = String(v);
+  const cls = (s === 'ativo' || s === 'receita') ? 'ok'
+            : (s === 'manutencao') ? 'warn'
+            : (s === 'despesa' || s === 'inativo') ? 'danger'
+            : 'muted';
+  return `<span class="badge ${cls}">${esc(s)}</span>`;
+}
+
+function cell(k, type, v){
+  if(v === null || v === undefined || v === '') return '<span class="muted">—</span>';
+  if(type === 'driver') return esc(lookup('motoristas', v));
+  if(type === 'vehicle') return esc(lookup('veiculos', v));
+  if(type === 'date') return esc(fmtDate(v));
+  if(type === 'select') return badge(v);
+  if(type === 'number') return MONEY.includes(k) ? brl(v) : num(v);
+  return esc(v);
+}
+
+/* =========================================================
+   TABELAS CRUD
+   ========================================================= */
+function blobOf(t, r){
+  return specs[t].cols.map(([k,,type]) => {
+    if(type === 'driver') return lookup('motoristas', r[k]);
+    if(type === 'vehicle') return lookup('veiculos', r[k]);
+    return r[k] ?? '';
+  }).join(' ').toLowerCase();
+}
+
+function visibleRows(t, q){
+  q = (q || '').toLowerCase();
+  return (data[t] || []).slice().reverse().filter(r => !q || blobOf(t, r).includes(q));
+}
+
+let editingRow = null;
+let revenueSource = localStorage.getItem("sj_revenue_source") === "financeiro" ? "financeiro" : "viagens";
+let selectedVehicleId = localStorage.getItem('sj_selected_vehicle') || null;
+let selectedDriverId = localStorage.getItem('sj_selected_driver') || null;
+function setSelectedDriver(id){
+  selectedDriverId = id || null;
+  if(selectedDriverId) localStorage.setItem('sj_selected_driver', selectedDriverId);
+  else localStorage.removeItem('sj_selected_driver');
+  render();
+}
+function setSelectedVehicle(id){
+  selectedVehicleId = id || null;
+  if(selectedVehicleId) localStorage.setItem('sj_selected_vehicle', selectedVehicleId);
+  else localStorage.removeItem('sj_selected_vehicle');
+  render();
+}
+function setRevenueSource(v){
+  revenueSource = v === "financeiro" ? "financeiro" : "viagens";
+  localStorage.setItem("sj_revenue_source", revenueSource);
+  render();
+}
+
+function editRow(t, id){
+  const record = (data[t] || []).find(x => x.id === id);
+  if(!record) return msg("Registro não encontrado.", true);
+
+  editingRow = {table:t, id};
+  const panel = document.getElementById('form-panel-' + t);
+  if(!panel) return;
+
+  panel.classList.remove('hide');
+
+  const form = document.getElementById('entry');
+  if(form){
+    for(const [k,,type] of specs[t].cols){
+      const input = form.elements.namedItem(k);
+      if(input) input.value = record[k] == null ? "" : String(record[k]).slice(0, type === 'date' ? 10 : undefined);
+    }
+  }
+
+  const titleEl   = document.getElementById('entry-title');
+  const subEl     = document.getElementById('entry-sub');
+  const submitBtn = document.getElementById('entry-submit');
+  const cancelBtn = document.getElementById('entry-cancel');
+  if(titleEl)   titleEl.textContent   = 'Editando registro';
+  if(subEl)     subEl.textContent     = 'Altere os campos e clique em salvar.';
+  if(submitBtn) submitBtn.textContent = 'Salvar alterações';
+  if(cancelBtn) cancelBtn.classList.remove('hide');
+
+  panel.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function cancelEdit(){
+  const t = editingRow?.table;
+  if(t) closeForm(t);
+  else render();
+}
+
+function openNewForm(t){
+  editingRow = null;
+  const panel = document.getElementById('form-panel-' + t);
+  if(!panel) return;
+
+  panel.classList.remove('hide');
+
+  const form = document.getElementById('entry');
+  if(form) form.reset();
+
+  // Restaura a data-padrão do campo "mes" em Metas
+  if(t === 'metas' && form){
+    const mesInput = form.elements.namedItem('mes');
+    if(mesInput) mesInput.value = month + '-01';
+  }
+
+  const titleEl   = document.getElementById('entry-title');
+  const subEl     = document.getElementById('entry-sub');
+  const submitBtn = document.getElementById('entry-submit');
+  const cancelBtn = document.getElementById('entry-cancel');
+  if(titleEl)   titleEl.textContent   = 'Novo registro';
+  if(subEl)     subEl.textContent     = 'Preencha os campos e salve no Supabase.';
+  if(submitBtn) submitBtn.textContent = 'Salvar no Supabase';
+  if(cancelBtn) cancelBtn.classList.add('hide');
+
+  panel.scrollIntoView({behavior:'smooth', block:'start'});
+  setTimeout(() => {
+    const first = form?.querySelector('input,select');
+    if(first) first.focus();
+  }, 300);
+}
+
+function closeForm(t){
+  editingRow = null;
+  const panel = document.getElementById('form-panel-' + t);
+  if(panel) panel.classList.add('hide');
+
+  const form = document.getElementById('entry');
+  if(form) form.reset();
+
+  if(t === 'metas' && form){
+    const mesInput = form.elements.namedItem('mes');
+    if(mesInput) mesInput.value = month + '-01';
+  }
+
+  const titleEl   = document.getElementById('entry-title');
+  const submitBtn = document.getElementById('entry-submit');
+  const cancelBtn = document.getElementById('entry-cancel');
+  if(titleEl)   titleEl.textContent   = 'Novo registro';
+  if(submitBtn) submitBtn.textContent = 'Salvar no Supabase';
+  if(cancelBtn) cancelBtn.classList.add('hide');
+}
+
+function rowHtml(t, r){
+  const s = specs[t];
+  const divida = t === 'motoristas' && pendenciasReady ? resumoDividasMotoristas().motoristas.find(d=>d.id===r.id) : null;
+  return `<tr>
+    ${s.cols.map(([k,,type]) => `<td>${cell(k, type, r[k])}</td>`).join('')}
+    <td class="actions">
+      ${t === 'motoristas' && divida ? `<span class="badge danger" title="Saldo devedor">Dívida: ${reaisPend(divida.saldo)}</span> ` : ''}
+      <button class="sm" onclick="editRow('${t}','${r.id}')">Editar</button> <button class="sm danger" onclick="removeRow('${t}','${r.id}')">Excluir</button>
+    </td></tr>`;
+}
+
+function rowsHtml(t, q){
+  const s = specs[t];
+  const list = visibleRows(t, q);
+  if(!list.length) return `<tr><td class="empty" colspan="${s.cols.length + 1}">Nenhum registro encontrado.</td></tr>`;
+  return list.map(r => rowHtml(t, r)).join('');
+}
+
+function countLabel(t, q){
+  const total = (data[t] || []).length;
+  const shown = visibleRows(t, q).length;
+  return q ? `${shown} de ${total} registro(s)` : `${total} registro(s)`;
+}
+
+function onSearch(t, val){
+  search[t] = val;
+  const tb = $('tbody-' + t);
+  if(tb) tb.innerHTML = rowsHtml(t, val);
+  const c = $('count-' + t);
+  if(c) c.textContent = countLabel(t, val);
+}
+
+function resumoCaixaMensal(m){
+ const fin=(data.financeiro||[]).filter(x=>String(x.data_lancamento||'').slice(0,7)===m);
+ const entradas=fin.filter(x=>x.tipo==='receita').reduce((n,x)=>n+Number(x.valor||0),0);
+ const saidas=fin.filter(x=>x.tipo==='despesa').reduce((n,x)=>n+Number(x.valor||0),0);
+ const recuperacoes=pendenciasReady?(data.pagamentos_pendencias||[]).filter(x=>String(x.data_pagamento||'').slice(0,7)===m).reduce((n,x)=>n+Number(x.valor||0),0):0;
+ return {entradas,saidas,recuperacoes,totalEntradas:entradas+recuperacoes,saldo:entradas+recuperacoes-saidas};
+}
+function resumoCaixaPage(){
+ const c=resumoCaixaMensal(month);
+ return `<div class="panel" style="margin-top:16px"><div class="panel-head"><div><h2>Resumo do caixa — ${esc(month)}</h2><p class="sub">Movimentação financeira registrada, incluindo recebimentos de pendências.</p></div></div>
+ <div class="grid kpi-grid">
+ <div class="kpi"><span class="kpi-label">Entradas financeiras</span><div class="kpi-value">${reaisPend(c.entradas)}</div></div>
+ <div class="kpi"><span class="kpi-label">Pendências recebidas</span><div class="kpi-value" style="color:#49d7a5">${reaisPend(c.recuperacoes)}</div></div>
+ <div class="kpi"><span class="kpi-label">Saídas financeiras</span><div class="kpi-value" style="color:#ff7676">${reaisPend(c.saidas)}</div></div>
+ <div class="kpi"><span class="kpi-label">Saldo do caixa no mês</span><div class="kpi-value" style="color:${c.saldo>=0?'#49d7a5':'#ff7676'}">${reaisPend(c.saldo)}</div></div>
+ </div><p class="sub" style="margin-top:12px">Saldo mensal dos lançamentos financeiros e das baixas de pendências, não saldo bancário acumulado. Viagens e manutenções não são somadas automaticamente aqui, para evitar duplicidade com lançamentos financeiros. Se algum pagamento de pendência já foi lançado manualmente como receita, revise esse lançamento para não contar duas vezes.</p></div>`;
+}
+function caixaPendenciasPage(){
+ const pag=(data.pagamentos_pendencias||[]).filter(x=>String(x.data_pagamento||'').slice(0,7)===month);
+ const total=pag.reduce((n,x)=>n+Number(x.valor||0),0);
+ const pendById=new Map((data.pendencias||[]).map(p=>[p.id,p]));
+ return `<div class="panel" style="margin-top:16px">
+ <div class="panel-head"><div><h2>Caixa — recebimentos de pendências</h2><p class="sub">Pagamentos confirmados, exibidos automaticamente. Não duplicar como novo lançamento financeiro.</p></div><strong style="color:#49d7a5">${reaisPend(total)}</strong></div>
+ <details><summary style="cursor:pointer;padding:10px 0">Ver pagamentos recebidos no mês (${pag.length})</summary>
+ <div class="scroll"><table><thead><tr><th>Data</th><th>Motorista</th><th>Origem</th><th>Forma</th><th>Entrada no caixa</th><th>Recibo</th></tr></thead><tbody>
+ ${pag.map(x=>{const p=pendById.get(x.pendencia_id);return `<tr><td>${esc(x.data_pagamento||'—')}</td><td>${esc(p?lookup('motoristas',p.motorista_id):'—')}</td><td>${esc(p?.categoria||'Pendência')}</td><td>${esc(x.forma||'—')}</td><td style="color:#49d7a5">${reaisPend(x.valor)}</td><td><button class="alt sm" onclick="emitirRecibo(\'${x.id}\')">Recibo</button></td></tr>`}).join('')||'<tr><td colspan="6">Nenhum pagamento de pendência neste mês.</td></tr>'}
+ </tbody></table></div></details>
+ <p class="sub" style="margin-top:10px">Entrada de caixa não significa faturamento: devoluções de empréstimos e adiantamentos são recuperações de valores. Este quadro é separado das receitas e despesas operacionais.</p>
+ </div>`;
+}
+function tablePage(t){
+  const s = specs[t];
+  const q = search[t] || '';
+
+  const fields = s.cols.map(([k, label, type, req]) => {
+    let inp;
+    if(type === 'select'){
+      inp = `<select name="${k}">${req.map(v => `<option value="${v}">${v}</option>`).join('')}</select>`;
+    }else if(type === 'driver' || type === 'vehicle'){
+      inp = `<select name="${k}">${options(type)}</select>`;
+    }else{
+      const val = type === 'date'
+        ? (k === 'mes' ? `value="${month}-01"` : `value="${new Date().toISOString().slice(0,10)}"`)
+        : '';
+      inp = `<input name="${k}" type="${type}" ${type === 'number' ? 'min="0" step="0.01"' : ''} ${val} ${req === true ? 'required' : ''}>`;
+    }
+    return `<div class="field"><label>${label}</label>${inp}</div>`;
+  }).join('');
+
+  return `
+  ${t === 'financeiro' ? resumoCaixaPage() : ''}
+  <!-- ===== REGISTROS (primeiro) ===== -->
+  <div class="panel">
+    <div class="panel-head">
+      <div>
+        <h2>${s.title}</h2>
+        <p class="sub" style="margin:4px 0 0">Registros cadastrados · <b>${esc(month)}</b></p>
+      </div>
+      <div class="btn-row">
+        <input class="search" id="search-${t}" placeholder="Buscar…" value="${esc(q)}"
+               oninput="onSearch('${t}', this.value)" aria-label="Buscar registros">
+        <button class="alt" onclick="exportCsv('${t}')">↓ CSV</button>
+        <button onclick="openNewForm('${t}')">＋ Novo registro</button>
+      </div>
+    </div>
+    <div class="scroll">
+      <table>
+        <thead><tr>
+          ${s.cols.map(c => `<th>${c[1]}</th>`).join('')}
+          <th style="text-align:right">Ação</th>
+        </tr></thead>
+        <tbody id="tbody-${t}">${rowsHtml(t, q)}</tbody>
+      </table>
+    </div>
+    <p style="margin:12px 0 0"><small id="count-${t}">${esc(countLabel(t, q))}</small></p>
+  </div>
+
+  ${t === 'financeiro' && pendenciasReady ? caixaPendenciasPage() : ''}
+  <!-- ===== FORMULÁRIO (oculto abaixo) ===== -->
+  <div class="panel hide" id="form-panel-${t}">
+    <div class="panel-head">
+      <div>
+        <h2 id="entry-title">Novo registro</h2>
+        <p class="sub" id="entry-sub" style="margin:4px 0 0">Preencha os campos e salve no Supabase.</p>
+      </div>
+      <button type="button" class="alt sm" onclick="closeForm('${t}')">✕ Fechar</button>
+    </div>
+    <form id="entry" onsubmit="saveRow(event,'${t}')">
+      <div class="fields">${fields}</div>
+      <div class="btn-row" style="margin-top:16px">
+        <button type="submit" id="entry-submit">Salvar no Supabase</button>
+        <button type="button" class="alt hide" id="entry-cancel" onclick="cancelEdit()">Cancelar edição</button>
+      </div>
+    </form>
+  </div>`;
+}
+
+async function saveRow(e, t){
+  e.preventDefault();
+  const f = new FormData(e.target);
+  const o = {};
+  for(const [k, v] of f.entries()){
+    if(v === '') continue;
+    const col = specs[t].cols.find(c => c[0] === k);
+    o[k] = col[2] === 'number' ? Number(v) : v;
+  }
+  if(t === 'metas' && Boolean(o.motorista_id) === Boolean(o.veiculo_id))
+    return msg('Meta: selecione somente um motorista OU um veículo.', true);
+  if(t === 'metas' && o.mes?.slice(8) !== '01')
+    return msg('Meta: use o primeiro dia do mês.', true);
+
+  const btn = e.target.querySelector('button[type="submit"]');
+  if(btn){ btn.disabled = true; btn.textContent = 'Salvando…'; }
+
+  const editing = editingRow?.table === t ? editingRow : null;
+  const {error} = editing
+    ? await client.from(t).update(o).eq("id", editing.id)
+    : await client.from(t).insert(o);
+  if(error){
+    if(btn){ btn.disabled = false; btn.textContent = editing ? 'Salvar alterações' : 'Salvar no Supabase'; }
+    return msg('Erro ao salvar: ' + error.message, true);
+  }
+  editingRow = null;
+  await refresh();
+  toast(editing ? 'Registro atualizado com sucesso.' : 'Registro salvo com sucesso.');
+}
+
+async function removeRow(t, id){
+  const ok = await confirmDialog('Excluir este registro definitivamente? Esta ação não pode ser desfeita.');
+  if(!ok) return;
+  const {error} = await client.from(t).delete().eq('id', id);
+  if(error) return msg('Erro ao excluir: ' + error.message, true);
+  await refresh();
+  toast('Registro excluído.');
+}
+
+/* =========================================================
+   EXPORTAR CSV
+   ========================================================= */
+function exportCsv(t){
+  const s = specs[t];
+  const q = search[t] || '';
+  const list = visibleRows(t, q);
+  if(!list.length) return msg('Não há registros para exportar.', true);
+
+  const head = s.cols.map(c => c[1]);
+  const body = list.map(r => s.cols.map(([k,,type]) => {
+    if(type === 'driver') return lookup('motoristas', r[k]);
+    if(type === 'vehicle') return lookup('veiculos', r[k]);
+    return r[k] ?? '';
+  }));
+
+  const csv = [head, ...body]
+    .map(line => line.map(v => `"${String(v).replace(/"/g, '""')}"`).join(';'))
+    .join('\r\n');
+
+  const blob = new Blob(['\ufeff' + csv], {type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `sj-mob-top-${t}-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  toast(`${list.length} registro(s) exportado(s).`);
+}
+
+/* =========================================================
+   DASHBOARD
+   ========================================================= */
+function monthTotals(m){
+  const trips = (data.viagens || []).filter(x => x.data_viagem?.startsWith(m));
+  const fin   = (data.financeiro || []).filter(x => x.data_lancamento?.startsWith(m));
+  const maint = (data.manutencoes || []).filter(x => x.data_manutencao?.startsWith(m));
+
+  // Uma única fonte de receitas por vez evita contar duas vezes o mesmo serviço.
+  const rev = revenueSource === "financeiro"
+    ? fin.filter(x => x.tipo === "receita").reduce((s,x) => s + Number(x.valor || 0), 0)
+    : trips.reduce((s,x) => s + Number(x.faturamento || 0), 0);
+  const expense = fin.filter(x => x.tipo === 'despesa').reduce((s, x) => s + Number(x.valor || 0), 0)
+            + maint.reduce((s, x) => s + Number(x.custo || 0), 0);
+  const km = trips.reduce((s, x) => s + Number(x.km_rodados || 0), 0);
+
+  return {trips, fin, maint, rev, expense, km};
+}
+
+function trend(cur, prev, invert = false){
+  if(!prev || prev === 0) return '';
+  const d = Math.round(((cur - prev) / Math.abs(prev)) * 100);
+  if(!isFinite(d)) return '';
+  const good = invert ? d <= 0 : d >= 0;
+  return `<span class="trend ${good ? 'up' : 'down'}">${d >= 0 ? '▲' : '▼'} ${Math.abs(d)}% vs mês anterior</span>`;
+}
+
+function chart6(){
+  const series = last6(month).map(m => {
+    const t = monthTotals(m);
+    return {m, rev:t.rev, exp:t.expense};
+  });
+  const max = Math.max(1, ...series.map(s => Math.max(s.rev, s.exp)));
+  return `
+    <div class="chart">
+      ${series.map(s => `
+        <div class="chart-col">
+          <div class="bars">
+            <div class="bar rev" style="height:${Math.max(3, (s.rev / max) * 100)}%" title="Receita: ${brl(s.rev)}"></div>
+            <div class="bar exp" style="height:${Math.max(3, (s.exp / max) * 100)}%" title="Despesa: ${brl(s.exp)}"></div>
+          </div>
+          <small>${s.m.slice(5)}/${s.m.slice(2,4)}</small>
+        </div>`).join('')}
+    </div>
+    <div class="legend">
+      <span><i class="dot rev"></i>Receita</span>
+      <span><i class="dot exp"></i>Despesa</span>
+    </div>`;
+}
+
+function buildAlerts(){
+  const out = [];
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  (data.motoristas || []).forEach(m => {
+    if(!m.validade_cnh) return;
+    const d = new Date(m.validade_cnh + 'T00:00:00');
+    const days = Math.round((d - today) / 86400000);
+    if(days < 0) out.push({t:'danger', text:`CNH de ${m.nome} vencida em ${fmtDate(m.validade_cnh)}.`});
+    else if(days <= 30) out.push({t:'warn', text:`CNH de ${m.nome} vence em ${days} dia(s) — ${fmtDate(m.validade_cnh)}.`});
+  });
+
+  (data.veiculos || []).forEach(v => {
+    if(v.status === 'manutencao') out.push({t:'warn', text:`Veículo ${v.placa} (${v.modelo}) está em manutenção.`});
+  });
+
+  const semMeta = (data.motoristas || []).filter(m =>
+    m.status !== 'inativo' &&
+    !(data.metas || []).some(g => g.motorista_id === m.id && g.mes?.startsWith(month))
+  );
+  if(semMeta.length) out.push({t:'info', text:`${semMeta.length} motorista(s) ativo(s) sem meta cadastrada em ${month}.`});
+
+  return out;
+}
+
+/* Indicadores do veículo: meta e R$/km baseados SOMENTE nas viagens.
+   Financeiro só aparece no detalhe se o lançamento estiver vinculado ao carro.
+   Receitas financeiras são exibidas à parte, sem soma automática às viagens. */
+function vehiclePerfRows(m){
+  const t = monthTotals(m);
+  const goals = (data.metas || []).filter(g => g.mes?.startsWith(m) && g.veiculo_id);
+  return (data.veiculos || []).map(v => {
+    const trips = t.trips.filter(x => x.veiculo_id === v.id);
+    const fin = t.fin.filter(x => x.veiculo_id === v.id);
+    const maint = t.maint.filter(x => x.veiculo_id === v.id);
+    const km = trips.reduce((s,x) => s + Number(x.km_rodados || 0), 0);
+    const rev = trips.reduce((s,x) => s + Number(x.faturamento || 0), 0);
+    const finRevenue = fin.filter(x => x.tipo === 'receita').reduce((s,x) => s + Number(x.valor || 0), 0);
+    const finExpense = fin.filter(x => x.tipo === 'despesa').reduce((s,x) => s + Number(x.valor || 0), 0);
+    const maintCost = maint.reduce((s,x) => s + Number(x.custo || 0), 0);
+    const cost = maintCost + finExpense;
+    const g = goals.find(x => x.veiculo_id === v.id);
+    return {v, km, rev, finRevenue, finExpense, maintCost, cost,
+      revPerKm: km > 0 ? rev/km : 0,
+      maintPerKm: km > 0 ? maintCost/km : 0,
+      netPerKm: km > 0 ? (rev-cost)/km : 0,
+      metaRev: Number(g?.meta_faturamento || 0)};
+  }).filter(r => r.km || r.rev || r.finRevenue || r.cost || r.metaRev);
+}
+function vehiclePerformance(){
+  const rows = vehiclePerfRows(month);
+  if(!rows.length) return `<div class="panel" style="margin-top:16px"><h2>Desempenho por veículo · ${esc(month)}</h2><p class="sub">Nenhuma viagem, meta ou lançamento vinculado a veículo neste mês.</p></div>`;
+  const sorted = rows.slice().sort((a,b) => (b.km > 0 ? 1 : 0) - (a.km > 0 ? 1 : 0) || b.revPerKm - a.revPerKm);
+  const current = sorted.find(r => r.v.id === selectedVehicleId) || sorted[0];
+  const totals = rows.reduce((a,r) => ({rev:a.rev+r.rev,km:a.km+r.km,maint:a.maint+r.maintCost,cost:a.cost+r.cost}),{rev:0,km:0,maint:0,cost:0});
+  const r = current;
+  const prev = vehiclePerfRows(prevMonth(month)).find(x => x.v.id === r.v.id);
+  const delta = prev && prev.km > 0 && r.km > 0 && prev.revPerKm > 0 ? Math.round((r.revPerKm-prev.revPerKm)/prev.revPerKm*100) : null;
+  const ranked = sorted.filter(x => x.km > 0);
+  const rank = r.km > 0 ? ranked.findIndex(x => x.v.id === r.v.id) + 1 : 0;
+  const rankText = rank > 0 ? (ranked.length === 1 ? 'Único veículo com KM registrado' : `${rank}º de ${ranked.length} veículos com KM registrado`) : 'Sem classificação: KM não registrado';
+  const pct = r.metaRev > 0 ? Math.round(r.rev/r.metaRev*100) : null;
+  const safePct = pct === null ? 0 : Math.max(0, Math.min(100, pct));
+  const optionsHtml = sorted.map(x => `<option value="${esc(x.v.id)}" ${x.v.id === r.v.id ? 'selected' : ''}>${esc(x.v.placa)} · ${esc(x.v.modelo)} — ${x.km > 0 ? brl(x.revPerKm)+'/km' : 'sem KM'}</option>`).join('');
+  const kpi = (label,value,icon) => `<div class="kpi"><div class="kpi-top"><span class="kpi-label">${label}</span><span class="kpi-ico">${icon}</span></div><div class="kpi-value">${value}</div></div>`;
+  const box = (label,value,sub='',tone='') => `<div class="veh-box"><span class="veh-box-label">${label}</span><span class="veh-box-value ${tone}">${value}</span>${sub ? `<span class="veh-box-sub">${sub}</span>` : ''}</div>`;
+  const net = r.rev-r.cost;
+  return `<div class="panel" style="margin-top:16px">
+    <h2>Resumo geral da frota e desempenho por veículo · ${esc(month)}</h2>
+    <p class="sub">Metas, faturamento e R$/km calculados <b>somente pelas viagens do veículo</b>. Lançamentos do Financeiro só aparecem aqui quando vinculados ao carro.</p>
+    <div class="grid" style="margin-bottom:16px">
+      ${kpi('R$/km da frota',totals.km > 0 ? brl(totals.rev/totals.km) : '—',ICONS.financeiro)}
+      ${kpi('Manutenção/km',totals.km > 0 ? brl(totals.maint/totals.km) : '—',ICONS.manutencoes)}
+      ${kpi('Resultado/km',totals.km > 0 ? brl((totals.rev-totals.cost)/totals.km) : '—',ICONS.metas)}
+      ${kpi('KM da frota',num(totals.km),ICONS.viagens)}
+    </div>
+    <h3 style="margin:22px 0 12px">Desempenho do veículo selecionado</h3>
+    <div class="veh-selector-wrap"><label for="veh-select">Escolher veículo para o relatório</label><select id="veh-select" onchange="setSelectedVehicle(this.value)">${optionsHtml}</select></div>
+    <div class="veh-card">
+      <div class="veh-card-header">
+        <div><div class="veh-title">${esc(r.v.placa)} <span style="font-size:15px;color:var(--muted);font-weight:600">${esc(r.v.modelo)}</span></div><div class="veh-subtitle">${rankText}</div></div>
+        <div class="veh-badge-rpk ${r.km > 0 ? '' : 'muted'}">${r.km > 0 ? brl(r.revPerKm)+'/km' : 'Sem KM'}</div>
+      </div>
+      <div class="veh-grid">
+        ${box('Faturamento das corridas',brl(r.rev),'Usado para meta e R$/km')}
+        ${box('Distância rodada',num(r.km)+' km')}
+        ${box('Faturamento por KM',r.km > 0 ? brl(r.revPerKm)+'/km' : '—','Somente corridas registradas')}
+        ${box('Custo total por KM',r.km > 0 ? brl(r.cost/r.km)+'/km' : '—','Manutenção + despesas vinculadas')}
+        ${box('Custo manutenção',brl(r.maintCost),r.km > 0 ? brl(r.maintPerKm)+'/km' : 'Sem KM')}
+        ${box('Despesas financeiras',brl(r.finExpense),'Somente as vinculadas ao carro')}
+        ${box('Resultado das corridas',brl(net),'Corridas menos custos vinculados',net < 0 ? 'neg' : 'pos')}
+        ${box('Resultado por KM',r.km > 0 ? brl(r.netPerKm)+'/km' : '—','Após custos vinculados',net < 0 ? 'neg' : 'pos')}
+        ${r.finRevenue ? box('Receitas financeiras vinculadas',brl(r.finRevenue),'Informativo: não somadas às corridas') : ''}
+      </div>
+      <div class="veh-meta-area">
+        <div class="veh-meta-header"><span>${r.metaRev > 0 ? 'Meta de corridas: '+brl(r.metaRev) : 'Nenhuma meta de corridas cadastrada para este carro'}</span><b>${pct === null ? 'Sem meta' : pct+'% da meta'}</b></div>
+        <div class="bar-track"><span class="bar-fill" style="width:${safePct}%"></span></div>
+        ${delta !== null ? `<div class="goal-foot" style="margin-top:12px"><span>R$/km em relação a ${esc(prevMonth(month))}</span><span class="trend ${delta >= 0 ? 'up' : 'down'}">${delta >= 0 ? '▲' : '▼'} ${Math.abs(delta)}%</span></div>` : ''}
+      </div>
+    </div>
+    <div class="alert info" style="margin-top:16px;margin-bottom:0"><span class="pill"></span><span><b>Como ler:</b> a meta considera apenas viagens. Receitas financeiras vinculadas aparecem separadas para evitar duplicidade. Despesas financeiras sem carro não entram neste relatório individual, mas continuam no Dashboard geral. O resultado é uma estimativa operacional: não inclui custos não cadastrados ou sem vínculo com o carro. Não registre a mesma manutenção duas vezes.</span></div>
+  </div>`;
+}
+
+/* Desempenho por motorista: não confundir faturamento das corridas com
+   dinheiro recebido pela empresa. A versão atual não possui tabela de
+   contratos/diárias/comissões; somente valores lançados no Financeiro
+   e vinculados ao motorista são reconhecidos como receitas da empresa. */
+function driverPerformance(){
+  const trips = (data.viagens || []).filter(x => x.data_viagem?.startsWith(month));
+  const fin = (data.financeiro || []).filter(x => x.data_lancamento?.startsWith(month));
+  const drivers = (data.motoristas || []);
+  if(!drivers.length) return `<div class="panel" style="margin-top:16px"><h2>Desempenho por motorista</h2><p class="sub">Nenhum motorista cadastrado.</p></div>`;
+  const optionsHtml = drivers.map(d => `<option value="${esc(d.id)}" ${d.id === selectedDriverId ? 'selected' : ''}>${esc(d.nome)}</option>`).join('');
+  const d = drivers.find(x => x.id === selectedDriverId) || drivers[0];
+  const dt = trips.filter(x => x.motorista_id === d.id);
+  const df = fin.filter(x => x.motorista_id === d.id);
+  const sum = (items,key) => items.reduce((a,x) => a + Number(x[key] || 0),0);
+  const gross = sum(dt,'faturamento');
+  const km = sum(dt,'km_rodados');
+  const income = sum(df.filter(x => x.tipo === 'receita'),'valor');
+  const expense = sum(df.filter(x => x.tipo === 'despesa'),'valor');
+  const result = income-expense;
+  const g = (data.metas || []).find(x => x.mes?.startsWith(month) && x.motorista_id === d.id);
+  const target = Number(g?.meta_faturamento || 0);
+  const pct = target > 0 ? Math.round(gross/target*100) : null;
+  const box = (label,value,sub='',tone='') => `<div class="veh-box"><span class="veh-box-label">${label}</span><span class="veh-box-value ${tone}">${value}</span>${sub ? `<span class="veh-box-sub">${sub}</span>` : ''}</div>`;
+  return `<div class="panel" style="margin-top:16px">
+    <h2>Desempenho por motorista · ${esc(month)}</h2>
+    <p class="sub">Corridas e KM do motorista, separados das receitas e despesas efetivamente lançadas no Financeiro.</p>
+    <div class="veh-selector-wrap"><label for="driver-select">Escolher motorista</label><select id="driver-select" onchange="setSelectedDriver(this.value)">${optionsHtml}</select></div>
+    <div class="veh-card">
+      <div class="veh-card-header"><div><div class="veh-title">${esc(d.nome)}</div><div class="veh-subtitle">Relatório individual do período</div></div></div>
+      <div class="veh-grid">
+        ${box('Faturamento das corridas',brl(gross),'Não é receita integral da empresa')}
+        ${box('KM rodados',num(km)+' km')}
+        ${box('Faturamento das corridas por KM',km > 0 ? brl(gross/km)+'/km' : '—')}
+        ${box('Receitas da empresa vinculadas',brl(income),'Diárias/comissões apenas se lançadas no Financeiro')}
+        ${box('Despesas financeiras vinculadas',brl(expense),'Somente registros com este motorista')}
+        ${box('Saldo financeiro atribuído',brl(result),'Receitas menos despesas vinculadas',result < 0 ? 'neg' : 'pos')}
+        ${box('Saldo financeiro por KM',km > 0 ? brl(result/km)+'/km' : '—','Somente lançamentos atribuídos',result < 0 ? 'neg' : 'pos')}
+      </div>
+      <div class="veh-meta-area"><div class="veh-meta-header"><span>${target > 0 ? 'Meta de corridas: '+brl(target) : 'Sem meta de corridas cadastrada'}</span><b>${pct === null ? 'Sem meta' : pct+'%'}</b></div><div class="bar-track"><span class="bar-fill" style="width:${pct === null ? 0 : Math.max(0,Math.min(100,pct))}%"></span></div></div>
+    </div>
+    <div class="alert info" style="margin-top:16px;margin-bottom:0"><span class="pill"></span><span><b>Importante:</b> este saldo não é o lucro líquido definitivo do motorista. A versão atual ainda não calcula automaticamente diárias e comissões contratuais, e custos de manutenção ou do veículo não são rateados por motorista. Para aparecer aqui, cada receita ou despesa da empresa deve ser vinculada ao motorista no Financeiro. Não duplique lançamentos.</span></div>
+  </div>`;
+}
+
+function resumoDividasMotoristas(){
+ const lista=data.pendencias||[];
+ const abertas=lista.map(p=>({...p,saldo:Math.max(0,Number(p.valor||0)-pagoPend(p.id))})).filter(p=>p.saldo>0);
+ const receber=abertas.reduce((n,p)=>n+p.saldo,0);
+ const vencido=abertas.filter(p=>statusPend(p)==='Vencida').reduce((n,p)=>n+p.saldo,0);
+ const recebido=(data.pagamentos_pendencias||[]).filter(p=>String(p.data_pagamento||'').slice(0,7)===month).reduce((n,p)=>n+Number(p.valor||0),0);
+ const grupos=new Map();
+ for(const p of abertas){const g=grupos.get(p.motorista_id)||{id:p.motorista_id,nome:lookup('motoristas',p.motorista_id),saldo:0,vencido:0,qtd:0};g.saldo+=p.saldo;g.qtd++;if(statusPend(p)==='Vencida')g.vencido+=p.saldo;grupos.set(p.motorista_id,g);}
+ return {receber,vencido,recebido,motoristas:[...grupos.values()].sort((a,b)=>b.saldo-a.saldo)};
+}
+function filtrarDevedores(){
+ const id=$('busca-devedores')?.value||'';
+ const out=$('consulta-devedor-resultado');
+ if(!out)return;
+ if(!id){out.classList.add('hide');out.innerHTML='';return;}
+ const m=(data.motoristas||[]).find(x=>x.id===id);
+ if(!m){out.classList.add('hide');return;}
+ const d=resumoDividasMotoristas().motoristas.find(x=>x.id===id);
+ const nome=lookup('motoristas',id);
+ out.classList.remove('hide');
+ out.innerHTML=`<div class="panel-head" style="margin-top:12px;gap:12px;flex-wrap:wrap">
+ <div><strong>${esc(nome)}</strong><div style="margin-top:6px"><span class="badge ${d?'danger':'ok'}">${d?'Com dívida':'Em dia'}</span> &nbsp; Saldo: <b>${reaisPend(d?.saldo||0)}</b> &nbsp; Vencido: ${reaisPend(d?.vencido||0)} &nbsp; Pendências: ${d?.qtd||0}</div></div>
+ ${d?'<button class="sm" onclick="verDividasMotorista()">Ver dívidas deste motorista</button>':''}
+ </div>`;
+}
+function verDividasMotorista(){
+ const id=$('busca-devedores')?.value||'';
+ if(!id)return;
+ nav('pendencias');
+ const filtro=$('pend-filtro');
+ if(filtro){filtro.value=id;filtrarPendencias();filtro.scrollIntoView({behavior:'smooth',block:'center'});}
+}
+function dashboard(){
+  const cur = monthTotals(month);
+  const prev = monthTotals(prevMonth(month));
+  const dividas = pendenciasReady ? resumoDividasMotoristas() : null;
+
+  const cards = [
+    {label:'Motoristas', value:(data.motoristas || []).length, icon:ICONS.motoristas},
+    {label:'Veículos', value:(data.veiculos || []).length, icon:ICONS.veiculos},
+    {label:'Faturamento', value:brl(cur.rev), icon:ICONS.financeiro, trend:trend(cur.rev, prev.rev)},
+    {label:'Despesas', value:brl(cur.expense), icon:ICONS.manutencoes, trend:trend(cur.expense, prev.expense, true)},
+    {label:'Resultado', value:brl(cur.rev - cur.expense), icon:ICONS.metas, trend:trend(cur.rev - cur.expense, prev.rev - prev.expense)},
+    {label:'KM rodados', value:num(cur.km), icon:ICONS.viagens, trend:trend(cur.km, prev.km)}
+  ];
+
+  const goals = (data.metas || []).filter(x => x.mes?.startsWith(month)).map(g => {
+    const isDriver = !!g.motorista_id;
+    const arr = cur.trips.filter(x => x[isDriver ? 'motorista_id' : 'veiculo_id'] === (isDriver ? g.motorista_id : g.veiculo_id));
+    const got = arr.reduce((s, x) => s + Number(x.faturamento || 0), 0);
+    const kmGot = arr.reduce((s, x) => s + Number(x.km_rodados || 0), 0);
+    const target = Number(g.meta_faturamento || 0);
+    const pct = target ? Math.round((100 * got) / target) : 0;
+    const kmPct = Number(g.meta_km) ? Math.round((100 * kmGot) / Number(g.meta_km)) : 0;
+
+    return `<div class="goal">
+      <div class="goal-head">
+        <b>${esc(isDriver ? lookup('motoristas', g.motorista_id) : lookup('veiculos', g.veiculo_id))}</b>
+        <span class="badge ${pct >= 100 ? 'ok' : pct >= 60 ? 'warn' : 'muted'}">${pct}%</span>
+      </div>
+      <p class="goal-values"><small>${isDriver ? 'Motorista' : 'Veículo'}</small> · <b>${brl(got)}</b> de ${brl(target)}</p>
+      <div class="bar-track"><span class="bar-fill" style="width:${Math.max(0, Math.min(100, pct))}%"></span></div>
+      <div class="goal-foot"><span>KM: ${num(kmGot)} / ${num(g.meta_km)}</span><span>${kmPct}% da meta</span></div>
+    </div>`;
+  }).join('');
+
+  const alerts = buildAlerts();
+  const alertsHtml = alerts.length
+    ? `<div class="panel"><h2>Avisos operacionais</h2>
+        <p class="sub">Verificações automáticas com base nos dados cadastrados.</p>
+        ${alerts.map(a => `<div class="alert ${a.t}"><span class="pill"></span><span>${esc(a.text)}</span></div>`).join('')}
+      </div>`
+    : '';
+
+  return `
+    <div class="dash">
+    <h2 class="dash-title">Dashboard · ${esc(month)}</h2>
+    <div class="grid kpi-grid">
+      ${cards.map(c => `
+        <div class="kpi">
+          <div class="kpi-top">
+            <span class="kpi-label">${c.label}</span>
+            <span class="kpi-ico">${c.icon}</span>
+          </div>
+          <div class="kpi-value">${c.value}</div>
+          ${c.trend || ''}
+        </div>`).join('')}
+    </div>
+
+    ${dividas ? `<div class="panel" style="margin-top:16px">
+      <div class="panel-head"><div><h2>Contas a receber</h2><p class="sub">Resumo separado do faturamento operacional.</p></div><button class="alt sm" onclick="nav('pendencias')">Abrir Pendências</button></div>
+      <div class="grid kpi-grid">
+        <div class="kpi"><span class="kpi-label">A receber</span><div class="kpi-value">${reaisPend(dividas.receber)}</div></div>
+        <div class="kpi"><span class="kpi-label">Vencido</span><div class="kpi-value" style="color:#ff7676">${reaisPend(dividas.vencido)}</div></div>
+        <div class="kpi"><span class="kpi-label">Recebido no mês</span><div class="kpi-value" style="color:#49d7a5">${reaisPend(dividas.recebido)}</div></div>
+      </div>
+      <div class="panel-head" style="margin-top:12px"><div><h3>Consultar motorista</h3><p class="sub">Selecione para ver a situação sem ocupar espaço no painel.</p></div><select id="busca-devedores" class="search" aria-label="Selecionar motorista" onchange="filtrarDevedores()"><option value="">Selecione um motorista</option>${(data.motoristas||[]).slice().sort((a,b)=>lookup('motoristas',a.id).localeCompare(lookup('motoristas',b.id),'pt-BR')).map(m=>`<option value="${esc(m.id)}">${esc(lookup('motoristas',m.id))}</option>`).join('')}</select></div>
+      <div id="consulta-devedor-resultado" class="hide" aria-live="polite"></div>
+    </div>` : '<div class="panel" style="margin-top:16px"><h2>Contas a receber</h2><p class="sub">Módulo de Pendências indisponível. Confira a conexão com o Supabase.</p></div>'}
+
+    <div class="panel" style="margin-top:16px">
+      <h2>Evolução dos últimos 6 meses</h2>
+      <p class="sub">Receitas calculadas a partir de uma única fonte; despesas financeiras e manutenção.</p>
+      ${chart6()}
+    </div>
+
+    <div class="panel" style="margin-top:16px">
+      <label for="revenue-source" style="display:block;margin-bottom:8px"><b>Fonte do faturamento no Dashboard</b></label>
+      <select id="revenue-source" onchange="setRevenueSource(this.value)" style="max-width:340px">
+        <option value="viagens" ${revenueSource === 'viagens' ? 'selected' : ''}>Viagens (padrão)</option>
+        <option value="financeiro" ${revenueSource === 'financeiro' ? 'selected' : ''}>Receitas do Financeiro</option>
+      </select>
+      <p class="sub" style="margin-top:8px">Escolha onde você registra o faturamento real. As duas fontes não são somadas. Esta preferência fica salva neste navegador.</p>
+    </div>
+
+    ${alertsHtml}
+
+    ${vehiclePerformance()}
+
+    ${driverPerformance()}
+
+    <h2 class="dash-title">Metas por motorista e veículo</h2>
+    <div class="grid">
+      ${goals || '<div class="panel muted" style="grid-column:1/-1">Cadastre metas mensais na aba <b>Metas</b>. O faturamento realizado é calculado a partir das viagens do mês.</div>'}
+    </div>
+
+    <div class="panel" style="margin-top:16px">
+      <div class="alert info" style="margin:0">
+        <span class="pill"></span>
+        <span><b>Conferência:</b> o faturamento usa apenas a fonte selecionada acima, evitando somar Viagens e Financeiro em duplicidade. Despesas financeiras e custos de Manutenção ainda são somados: não lance a mesma manutenção como despesa financeira.</span>
+      </div>
+    </div>
+    </div>`;
+}
+
+/* =========================================================
+   SEGURANÇA
+   ========================================================= */
+async function securityTest(){
+  try{
+    const {data:s, error:e} = await client.auth.getUser();
+    if(e || !s.user) throw Error('Usuário não autenticado');
+
+    const {data:rows, error} = await client.from('motoristas').select('id,user_id').limit(100);
+    if(error) throw error;
+
+    const wrong = rows.filter(r => r.user_id !== s.user.id);
+    msg(
+      wrong.length
+        ? 'ALERTA: foram retornados registros de outro usuário. Revise as políticas RLS.'
+        : 'Teste básico OK: consulta autenticada e registros retornados pertencem ao seu usuário. Para validar isolamento completo, teste também com uma segunda conta.',
+      !!wrong
+    );
+  }catch(e){
+    msg('Falha no teste: ' + e.message, true);
+  }
+}
+
+function security(){
+  return `
+  <div class="panel">
+    <h2>Segurança e testes</h2>
+    <p class="sub">Usuário atual: <b>${esc(session.user.email)}</b></p>
+    <p style="font-size:13.5px;line-height:1.6;color:var(--muted)">
+      O navegador usa somente a chave pública. As políticas <b>RLS</b> do Supabase devem proteger as seis tabelas.
+    </p>
+    <div class="btn-row" style="margin-top:16px">
+      <button onclick="securityTest()">Testar leitura com minha conta</button>
+    </div>
+    <div class="alert info" style="margin-top:18px">
+      <span class="pill"></span>
+      <span>Este teste não comprova isolamento entre contas. Faça também o teste com dois usuários distintos conforme as instruções do guia.</span>
+    </div>
+  </div>`;
+}
+
+
+/* ============== PENDÊNCIAS (MÓDULO ISOLADO) ============== */
+const categoriasPend=['Diária atrasada','Pedágio','Multa de trânsito','Abastecimento','Adiantamento de dinheiro','Empréstimo','Mau uso do veículo','Outras dívidas'];
+let pendenciasReady=false;
+async function carregarPendencias(){
+ if(!client || !session) return;
+ const [p,g]=await Promise.all([client.from('pendencias').select('*').order('created_at',{ascending:false}),client.from('pagamentos_pendencias').select('*')]);
+ if(p.error||g.error){pendenciasReady=false;data.pendencias=[];data.pagamentos_pendencias=[];return;}
+ data.pendencias=p.data||[];data.pagamentos_pendencias=g.data||[];pendenciasReady=true;
+}
+function reaisPend(n){return Number(n||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});}
+function pagoPend(id){return (data.pagamentos_pendencias||[]).filter(x=>x.pendencia_id===id).reduce((a,x)=>a+Number(x.valor||0),0);}
+function statusPend(p){const saldo=Math.max(0,Number(p.valor)-pagoPend(p.id));return saldo<0.005?'Quitada':pagoPend(p.id)>0?'Parcial':p.vencimento&&p.vencimento<new Date().toISOString().slice(0,10)?'Vencida':'Pendente';}
+function pendenciasPage(){
+ if(!pendenciasReady)return '<div class="panel"><h2>Pendências por motorista</h2><p>Este módulo ainda precisa ser ativado no Supabase. O sistema original continua funcionando normalmente.</p><p>Arquivo de configuração disponível no GitHub: <b>supabase_pendencias.sql</b>. Não execute sem revisar.</p></div>';
+ const list=data.pendencias||[],receber=list.reduce((a,p)=>a+Math.max(0,Number(p.valor)-pagoPend(p.id)),0);
+ const recebido=(data.pagamentos_pendencias||[]).filter(x=>String(x.data_pagamento||'').slice(0,7)===month).reduce((a,x)=>a+Number(x.valor),0);
+ const vencido=list.filter(p=>statusPend(p)==='Vencida').reduce((a,p)=>a+Math.max(0,Number(p.valor)-pagoPend(p.id)),0);
+ return `<div class="panel">
+ <h2>Pendências / Contas a Receber</h2>
+ <p class="sub">Valores a receber não entram automaticamente no faturamento. Empréstimos e adiantamentos não são receitas operacionais.</p>
+ <div class="fields"><div class="field"><label>Saldo a receber</label><strong>${reaisPend(receber)}</strong></div><div class="field"><label>Vencido</label><strong style="color:#ff7676">${reaisPend(vencido)}</strong></div><div class="field"><label>Recebido no mês</label><strong style="color:#49d7a5">${reaisPend(recebido)}</strong></div></div>
+ <div class="panel-head"><div><h2>Pendências cadastradas</h2><p class="sub">Consulte as cobranças e registre pagamentos.</p></div><div class="btn-row"><button onclick="abrirFormularioPendencia()">＋ Novo registro</button></div></div>
+ <div class="panel hide" id="form-panel-pendencias">
+ <div class="panel-head"><div><h2>Nova pendência</h2><p class="sub">Preencha os dados da cobrança.</p></div><button type="button" class="alt sm" onclick="fecharFormularioPendencia()">✕ Fechar</button></div>
+ <form id="form-nova-pendencia" onsubmit="salvarPendencia(event)"><div class="fields">
+ <div class="field"><label>Motorista</label><select name="motorista_id" required>${options('driver')}</select></div>
+ <div class="field"><label>Veículo (opcional)</label><select name="veiculo_id">${options('vehicle')}</select></div>
+ <div class="field"><label>Categoria</label><select name="categoria" required>${categoriasPend.map(c=>`<option>${esc(c)}</option>`).join('')}</select></div>
+ <div class="field"><label>Descrição / motivo</label><input name="descricao" placeholder="Descreva a cobrança"></div>
+ <div class="field"><label>Valor (R$)</label><input name="valor" type="number" min="0.01" step="0.01" required></div>
+ <div class="field"><label>Data</label><input name="data_lancamento" type="date" required value="${new Date().toISOString().slice(0,10)}"></div>
+ <div class="field"><label>Vencimento</label><input name="vencimento" type="date"></div></div>
+ <div class="btn-row"><button type="submit">Registrar pendência</button></div></form>
+ </div>
+ <h3 style="margin-top:24px">Histórico e baixas</h3>
+ <div class="fields"><div class="field"><label>Filtrar motorista</label><select id="pend-filtro" onchange="filtrarPendencias()"><option value="">Todos</option>${options('driver')}</select></div><div class="field"><label>Situação</label><select id="pend-situacao" onchange="filtrarPendencias()"><option value="todas">Todas</option><option value="abertas">Em aberto</option><option value="quitadas">Quitadas</option></select></div></div>
+ <div class="scroll"><table class="pend-table"><thead><tr><th>Motorista</th><th>Categoria</th><th>Vencimento</th><th>Original</th><th>Pago</th><th>Saldo</th><th>Situação</th><th>Ação</th></tr></thead><tbody id="pend-linhas">${linhasPendencias(list)}</tbody></table></div></div>`;
+}
+function abrirFormularioPendencia(){
+ const p=$('form-panel-pendencias');if(!p)return;p.classList.remove('hide');p.scrollIntoView({behavior:'smooth',block:'start'});
+}
+function fecharFormularioPendencia(){
+ const p=$('form-panel-pendencias');if(p)p.classList.add('hide');
+}
+function linhasPendencias(list){
+ return list.map(p=>{
+ const saldo=Math.max(0,Number(p.valor)-pagoPend(p.id)),st=statusPend(p);
+ const color=st==='Quitada'?'#49d7a5':st==='Parcial'?'#f8c63c':'#ff7676';
+ const pagamentos=(data.pagamentos_pendencias||[]).filter(x=>x.pendencia_id===p.id);
+ const hist=pagamentos.map(x=>`<div class="pend-payment"><span>${esc(String(x.data_pagamento||'').split('-').reverse().join('/'))} · ${reaisPend(x.valor)} · ${esc(x.forma||'—')}</span><button type="button" class="alt sm" onclick="emitirRecibo('${x.id}')">PDF</button></div>`).join('');
+ return `<tr><td><strong>${esc(lookup('motoristas',p.motorista_id))}</strong></td><td>${esc(p.categoria)}<small class="pend-description">${esc(p.descricao||'')}</small></td><td>${esc(p.vencimento||'—')}</td><td>${reaisPend(p.valor)}</td><td>${reaisPend(pagoPend(p.id))}</td><td><strong>${reaisPend(saldo)}</strong></td><td><span class="badge ${st==='Quitada'?'ok':st==='Vencida'?'danger':st==='Parcial'?'warn':'muted'}">${st}</span></td><td><div class="pend-actions">${saldo>0?`<button class="sm" onclick="abrirBaixa('${p.id}')">Dar baixa</button>`:''}${pagamentos.length?`<details class="pend-history"><summary>Pagamentos (${pagamentos.length})</summary><div class="pend-payment-list">${hist}</div></details>`:'<small class="pend-description">Sem pagamentos</small>'}</div></td></tr>`;
+ }).join('')||'<tr><td colspan="8">Nenhuma pendência encontrada.</td></tr>';
+}
+function filtrarPendencias(){const id=$('pend-filtro').value,situacao=$('pend-situacao')?.value||'todas';$('pend-linhas').innerHTML=linhasPendencias((data.pendencias||[]).filter(p=>(!id||p.motorista_id===id)&&(situacao==='todas'||(situacao==='quitadas'?statusPend(p)==='Quitada':statusPend(p)!=='Quitada'))));}
+async function salvarPendencia(e){
+ e.preventDefault();const b=e.target.querySelector('button[type=submit]');b.disabled=true;
+ try{const o=Object.fromEntries(new FormData(e.target).entries());if(!o.motorista_id)throw Error('Selecione o motorista');
+ if(o.categoria==='Outras dívidas'&&!o.descricao.trim())throw Error('Informe o motivo');
+ o.valor=Number(o.valor);if(!(o.valor>0))throw Error('Valor inválido');
+ if(!o.veiculo_id)delete o.veiculo_id;if(!o.vencimento)delete o.vencimento;
+ const {error}=await client.from('pendencias').insert(o);if(error)throw error;
+ await carregarPendencias();render();toast('Pendência registrada.');
+ }catch(err){msg('Pendência: '+err.message,true);}finally{b.disabled=false;}
+}
+function emitirRecibo(pagamentoId){
+ const pg=(data.pagamentos_pendencias||[]).find(x=>x.id===pagamentoId);
+ if(!pg){toast('Pagamento não encontrado.');return;}
+ const p=(data.pendencias||[]).find(x=>x.id===pg.pendencia_id);
+ if(!p){toast('Pendência não encontrada.');return;}
+ const nome=lookup('motoristas',p.motorista_id);
+ const fmtData=v=>{if(!v)return '—';const [y,m,d]=String(v).slice(0,10).split('-');return d&&m&&y?d+'/'+m+'/'+y:String(v);};
+ const saldo=Math.max(0,Number(p.valor||0)-pagoPend(p.id));
+ const pago=Number(pg.valor||0);
+ const w=window.open('','_blank');
+ if(!w){toast('Permita pop-ups para visualizar o recibo.');return;}
+ const html='<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Recibo SJ MOB TOP</title><style>*{box-sizing:border-box}body{font:16px Arial,sans-serif;color:#172033;background:#f3f5f8;margin:0;padding:16px}.sheet{background:#fff;max-width:720px;margin:0 auto;padding:clamp(18px,5vw,38px);border-radius:12px;box-shadow:0 5px 24px #0001}h1{font-size:clamp(21px,5vw,28px);border-bottom:3px solid #e9af16;padding-bottom:15px;margin-top:0}p{line-height:1.6;overflow-wrap:anywhere}.valor{font-size:clamp(22px,6vw,30px);font-weight:bold}.info{border:1px solid #ddd;border-radius:10px;padding:clamp(12px,4vw,20px);margin:20px 0}.muted{color:#666;font-size:13px}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}.btn{padding:13px 16px;background:#e9af16;border:0;border-radius:7px;cursor:pointer;font-weight:bold;min-height:44px;flex:1}.secondary{background:#e7eaf0}@media(max-width:480px){body{padding:8px}.sheet{border-radius:8px}.actions{flex-direction:column}.btn{width:100%}}@media print{@page{size:A4;margin:12mm}body{background:white;padding:0}.sheet{box-shadow:none;max-width:none;padding:0}.actions{display:none}}</style></head><body><main class="sheet"><h1>SJ MOB TOP — Recibo de pagamento</h1><p>Confirmamos o recebimento do pagamento abaixo:</p><div class="info"><p><strong>Recebido de:</strong> '+esc(nome)+'</p><p><strong>Referente a:</strong> '+esc(p.categoria)+'</p><p><strong>Descrição:</strong> '+esc(p.descricao||'—')+'</p><p><strong>Data do pagamento:</strong> '+esc(fmtData(pg.data_pagamento))+'</p><p><strong>Forma de pagamento:</strong> '+esc(pg.forma||'—')+'</p><p class="valor">Valor recebido: '+esc(reaisPend(pago))+'</p><p><strong>Saldo restante:</strong> '+esc(reaisPend(saldo))+'</p><p><strong>Situação atual:</strong> '+(saldo<0.005?'Quitada':'Pagamento parcial')+'</p></div><p class="muted">Comprovante de pagamento registrado no SJ MOB TOP. Em pagamentos parciais, comprova apenas o valor acima. Referência: '+esc(String(pg.id).slice(0,8).toUpperCase())+'</p><div class="actions"><button class="btn" onclick="window.print()">Baixar recibo PDF</button><button class="btn secondary" onclick="window.close()">Fechar</button></div></main></body></html>';
+ w.document.open();w.document.write(html);w.document.close();w.focus();
+}
+function abrirBaixa(id){
+ const p=(data.pendencias||[]).find(x=>x.id===id);if(!p)return;
+ const saldo=Math.max(0,Number(p.valor)-pagoPend(id));
+ $('modal-root').innerHTML=`<div class="modal-overlay" style="position:fixed;inset:0;background:#000b;z-index:1000;display:grid;place-items:center;padding:20px"><div class="panel" style="width:min(520px,100%);max-height:90vh;overflow:auto">
+ <h2>Dar baixa — ${esc(lookup('motoristas',p.motorista_id))}</h2><p>Saldo: ${reaisPend(saldo)}</p>
+ <form onsubmit="salvarBaixa(event,'${id}')"><div class="fields">
+ <div class="field"><label>Valor pago</label><input name="valor" type="number" min="0.01" max="${saldo.toFixed(2)}" step="0.01" value="${saldo.toFixed(2)}" required></div>
+ <div class="field"><label>Data</label><input name="data_pagamento" type="date" value="${new Date().toISOString().slice(0,10)}" required></div>
+ <div class="field"><label>Forma</label><select name="forma">${['PIX','Dinheiro','Cartão de crédito','Cartão de débito','Transferência'].map(x=>`<option>${x}</option>`).join('')}</select></div>
+ <div class="field"><label>Observações</label><input name="observacoes"></div></div>
+ <div class="btn-row"><button type="submit">Confirmar pagamento</button><button type="button" class="alt" onclick="fecharBaixa()">Cancelar</button></div></form></div></div>`;
+}
+function fecharBaixa(){$('modal-root').innerHTML='';}
+async function salvarBaixa(e,id){
+ e.preventDefault();const b=e.target.querySelector('button[type=submit]');b.disabled=true;
+ try{const o=Object.fromEntries(new FormData(e.target).entries());
+ const {error}=await client.rpc('registrar_pagamento_pendencia',{p_pendencia_id:id,p_valor:Number(o.valor),p_data:o.data_pagamento,p_forma:o.forma,p_observacoes:o.observacoes||''});
+ if(error)throw error;fecharBaixa();await carregarPendencias();render();toast('Pagamento registrado.');
+ }catch(err){msg('Pagamento: '+err.message,true);b.disabled=false;}
+}
+
+/* =========================================================
+   BOOTSTRAP
+   ========================================================= */
+(function boot(){
+  applyTheme(localStorage.getItem('sj_theme') || 'dark');
+  try{
+    const c = JSON.parse(localStorage.getItem('sj_config') || 'null');
+    if(c){
+      $('url').value = c.u;
+      $('key').value = c.k;
+      connect();
+    }
+  }catch(e){ /* configuração inválida — ignora */ }
+})();
+</script>
+
+
+</body><!-- Atualização: registros primeiro; formulário recolhido; edição com painel expansível. --></html>
