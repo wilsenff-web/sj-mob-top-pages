@@ -402,6 +402,20 @@ tbody tr:hover{background:rgba(245,197,66,.05)}
 :root[data-theme="light"] .sidebar{background:var(--surface)}
 :root[data-theme="light"] .sidebar .navbtn:hover{background:rgba(245,197,66,.10)}
 
+
+/* Refinamentos da sidebar: rolagem discreta e controles acessíveis */
+@media(min-width:901px){
+ .sidebar{top:68px;max-height:calc(100dvh - 84px);gap:9px;padding:12px 12px;scrollbar-width:thin;scrollbar-color:#34466e transparent}
+ .sidebar::-webkit-scrollbar{width:6px}
+ .sidebar::-webkit-scrollbar-track{background:transparent}
+ .sidebar::-webkit-scrollbar-thumb{background:#34466e;border-radius:10px}
+ .sidebar::-webkit-scrollbar-thumb:hover{background:#526899}
+ .sidebar .nav{gap:2px;padding:8px 0}
+ .sidebar .navbtn{padding:8px 10px;font-size:12.5px;min-height:36px}
+ .sidebar-footer{gap:6px;padding-top:2px}
+ .sidebar-footer button{padding:8px 10px}
+}
+
 </style>
 </head>
 <body>
