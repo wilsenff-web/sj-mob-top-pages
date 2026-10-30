@@ -64,7 +64,7 @@ a{color:var(--accent)}
   background:var(--surface-2);color:var(--text);border:1px solid var(--border)}
 
 /* ---------- LAYOUT ---------- */
-.wrap{max-width:1220px;margin:0 auto;padding:20px 18px 60px}
+.wrap{max-width:1500px;margin:0 auto;padding:20px 18px 60px}
 .panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
   padding:20px;margin:16px 0;box-shadow:var(--shadow)}
 .panel.tight{padding:16px}
@@ -369,6 +369,39 @@ tbody tr:hover{background:rgba(245,197,66,.05)}
 .pend-payment span{min-width:0;line-height:1.5}
 .pend-payment button{flex-shrink:0}
 @media(max-width:600px){.pend-table{min-width:780px}.pend-table td:last-child{width:180px;min-width:180px}.pend-table th,.pend-table td{padding:10px 7px}}
+
+/* Layout com sidebar lateral — v3 */
+.app-shell{display:flex;gap:20px;align-items:flex-start}
+.sidebar{position:sticky;top:80px;width:236px;flex-shrink:0;display:flex;flex-direction:column;gap:14px;background:linear-gradient(160deg,#12204a 0%,#0e1937 100%);border:1px solid var(--border);border-radius:var(--radius);padding:16px 14px;box-shadow:var(--shadow);max-height:calc(100vh - 100px);overflow-y:auto;scrollbar-width:thin}
+.sidebar-section{display:flex;flex-direction:column;gap:7px}
+.sidebar-section>label{font-size:10.5px;text-transform:uppercase;letter-spacing:.7px;font-weight:800;color:var(--muted);margin:0}
+.sidebar .field{max-width:none}
+.sidebar input[type="month"]{padding:9px 11px;font-size:13px;width:100%;min-width:0}
+.sidebar .nav{position:static;top:auto;z-index:auto;display:flex;flex-direction:column;gap:4px;padding:12px 0;margin:0;overflow:visible;background:none;border-top:1px solid var(--border);border-bottom:1px solid var(--border);scrollbar-width:none}
+.sidebar .nav::-webkit-scrollbar{display:none}
+.sidebar .navbtn{width:100%;justify-content:flex-start;text-align:left;padding:10px 12px;border-radius:10px;border:1px solid transparent;background:transparent;color:var(--muted);font-size:13px;font-weight:600;box-shadow:none}
+.sidebar .navbtn:hover{background:rgba(245,197,66,.07);color:var(--text);border-color:rgba(245,197,66,.2);filter:none}
+.sidebar .navbtn.active{background:linear-gradient(180deg,var(--accent),var(--accent-2));color:#0b1430;border-color:transparent;box-shadow:0 6px 18px -8px rgba(245,197,66,.6)}
+.sidebar .navbtn .ico{flex-shrink:0;width:18px;height:18px;display:grid;place-items:center}
+.sidebar .navbtn .ico svg{width:16px;height:16px}
+.sidebar-footer{display:flex;flex-direction:column;gap:8px;padding-top:4px}
+.sidebar-footer .sync{font-size:11px;color:var(--muted);text-align:center;padding:4px 0;white-space:normal;line-height:1.4}
+.sidebar-footer button{width:100%;padding:10px 12px;font-size:12.5px;box-shadow:none}
+.app-main{flex:1;min-width:0}
+@media(max-width:900px){
+ .app-shell{flex-direction:column;gap:12px}
+ .sidebar{position:static;width:100%;max-height:none;padding:12px;overflow:visible}
+ .sidebar .nav{flex-direction:row;overflow-x:auto;overflow-y:hidden;max-width:100%;border-top:0;border-bottom:0;padding:0;margin:0;background:none;-webkit-overflow-scrolling:touch}
+ .sidebar .nav::-webkit-scrollbar{display:none}
+ .sidebar .navbtn{width:auto;flex-shrink:0;padding:9px 13px;font-size:12.5px}
+ .sidebar-footer{flex-direction:row;align-items:center;flex-wrap:wrap;gap:8px}
+ .sidebar-footer .sync{flex:1 1 100%;text-align:left;order:3;padding:0}
+ .sidebar-footer button{width:auto;flex:1;min-width:0}
+}
+@media(max-width:520px){.sidebar-section>label{font-size:10px}.sidebar .navbtn{font-size:12px;padding:8px 11px}}
+:root[data-theme="light"] .sidebar{background:var(--surface)}
+:root[data-theme="light"] .sidebar .navbtn:hover{background:rgba(245,197,66,.10)}
+
 </style>
 </head>
 <body>
@@ -425,23 +458,25 @@ tbody tr:hover{background:rgba(245,197,66,.05)}
   </section>
 
   <!-- ============ 3. APP ============ -->
-  <section id="app" class="hide">
-
-    <div class="toolbar">
-      <div class="field">
+<section id="app" class="hide">
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Menu lateral">
+      <div class="sidebar-section">
         <label for="month">Mês de referência</label>
         <input id="month" type="month">
       </div>
-      <div class="toolbar-actions">
+      <nav class="nav" id="nav" aria-label="Navegação principal"></nav>
+      <div class="sidebar-footer">
         <span class="sync" id="syncInfo"></span>
         <button class="alt" onclick="refresh()">↻ Atualizar</button>
         <button class="ghost" onclick="logout()">Sair</button>
       </div>
+    </aside>
+    <div class="app-main">
+      <section id="content"></section>
     </div>
-
-    <nav class="nav" id="nav" aria-label="Navegação principal"></nav>
-
-    <section id="content"></section>
+  </div>
+</section>
   </section>
 
 </main>
