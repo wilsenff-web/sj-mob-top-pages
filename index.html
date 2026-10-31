@@ -1344,9 +1344,7 @@ async function saveRow(e, t){
     if(!Number.isFinite(a) || !Number.isFinite(b) || b < a || o.km_inicial === undefined || o.km_final === undefined)
       return msg('Informe KM inicial e final válidos; o final não pode ser menor.', true);
     o.km_rodados = Number((b-a).toFixed(2));
-    // Prévia: mantém gravação legada até migração do banco.
-    delete o.km_inicial;
-    delete o.km_final;
+    // Grava os três campos no Supabase após a migração das colunas.
   }
   const btn = e.target.querySelector('button[type="submit"]');
   if(btn){ btn.disabled = true; btn.textContent = 'Salvando…'; }
