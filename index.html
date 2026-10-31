@@ -866,6 +866,8 @@ const specs = {
     ['data_viagem','Data','date',true],
     ['motorista_id','Motorista','driver',true],
     ['veiculo_id','Veículo','vehicle',true],
+    ['km_inicial','KM inicial','number',true],
+    ['km_final','KM final','number',true],
     ['km_rodados','KM rodados','number',true],
     ['faturamento','Faturamento (R$)','number',true],
     ['observacoes','Observações','text']
@@ -1109,6 +1111,7 @@ function editRow(t, id){
     }
   }
 
+  if(t === 'viagens' && form) calcularKmViagem(form);
   const titleEl   = document.getElementById('entry-title');
   const subEl     = document.getElementById('entry-sub');
   const submitBtn = document.getElementById('entry-submit');
@@ -1143,6 +1146,7 @@ function openNewForm(t){
     if(mesInput) mesInput.value = month + '-01';
   }
 
+  if(t === 'viagens' && form) calcularKmViagem(form);
   const titleEl   = document.getElementById('entry-title');
   const subEl     = document.getElementById('entry-sub');
   const submitBtn = document.getElementById('entry-submit');
@@ -1172,6 +1176,7 @@ function closeForm(t){
     if(mesInput) mesInput.value = month + '-01';
   }
 
+  if(t === 'viagens' && form) calcularKmViagem(form);
   const titleEl   = document.getElementById('entry-title');
   const submitBtn = document.getElementById('entry-submit');
   const cancelBtn = document.getElementById('entry-cancel');
@@ -1258,6 +1263,7 @@ function tablePage(t){
         : '';
       inp = `<input name="${k}" type="${type}" ${type === 'number' ? 'min="0" step="0.01"' : ''} ${val} ${req === true ? 'required' : ''}>`;
     }
+    if(t === 'viagens' && k === 'km_rodados') inp = '<input name="km_rodados" type="number" min="0" step="0.01" readonly required placeholder="Calculado automaticamente">';
     return `<div class="field"><label>${label}</label>${inp}</div>`;
   }).join('');
 
@@ -1299,7 +1305,7 @@ function tablePage(t){
       </div>
       <button type="button" class="alt sm" onclick="closeForm('${t}')">✕ Fechar</button>
     </div>
-    <form id="entry" onsubmit="saveRow(event,'${t}')">
+    <form id="entry" oninput="if('${t}' === 'viagens') calcularKmViagem(this)" onsubmit="saveRow(event,'${t}')">
       <div class="fields">${fields}</div>
       <div class="btn-row" style="margin-top:16px">
         <button type="submit" id="entry-submit">Salvar no Supabase</button>
@@ -1307,6 +1313,15 @@ function tablePage(t){
       </div>
     </form>
   </div>`;
+}
+
+function calcularKmViagem(form){
+  const inicial = form.elements.namedItem('km_inicial');
+  const final = form.elements.namedItem('km_final');
+  const rodados = form.elements.namedItem('km_rodados');
+  if(!inicial || !final || !rodados) return;
+  const a = Number(inicial.value), b = Number(final.value);
+  rodados.value = inicial.value !== '' && final.value !== '' && Number.isFinite(a) && Number.isFinite(b) && b >= a ? String(Number((b-a).toFixed(2))) : '';
 }
 
 async function saveRow(e, t){
@@ -1323,6 +1338,16 @@ async function saveRow(e, t){
   if(t === 'metas' && o.mes?.slice(8) !== '01')
     return msg('Meta: use o primeiro dia do mês.', true);
 
+  if(t === 'viagens'){
+    calcularKmViagem(e.target);
+    const a = Number(o.km_inicial), b = Number(o.km_final);
+    if(!Number.isFinite(a) || !Number.isFinite(b) || b < a || o.km_inicial === undefined || o.km_final === undefined)
+      return msg('Informe KM inicial e final válidos; o final não pode ser menor.', true);
+    o.km_rodados = Number((b-a).toFixed(2));
+    // Prévia: mantém gravação legada até migração do banco.
+    delete o.km_inicial;
+    delete o.km_final;
+  }
   const btn = e.target.querySelector('button[type="submit"]');
   if(btn){ btn.disabled = true; btn.textContent = 'Salvando…'; }
 
