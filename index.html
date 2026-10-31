@@ -457,6 +457,36 @@ tbody tr:hover{background:rgba(245,197,66,.05)}
  .app-main .dash>.kpi-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
 }
 
+
+/* Visual premium do painel, inspirado na referência aprovada */
+:root{--sj-gold:#ffd21a}
+body{background:#030a18}
+.topbar{background:#030b1d;border-bottom:1px solid rgba(255,210,26,.18)}
+.topbar-inner{max-width:1600px}
+.wrap{max-width:1600px;padding:16px 16px 56px}
+.app-shell{gap:16px}
+.sidebar{background:linear-gradient(165deg,#0c2349 0%,#06142e 100%);border:1px solid #1b396b;border-radius:19px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.sidebar .navbtn{color:#e2eaff;font-weight:650}
+.sidebar .navbtn.active{background:linear-gradient(115deg,#ffe32b,#ffc400);color:#101622;box-shadow:0 5px 18px rgba(255,199,0,.28)}
+.sidebar .navbtn .ico svg{width:19px;height:19px}
+.sidebar-section>label{color:#9eb8e7}
+.dashboard-hero{border:1px solid #ffda36;border-radius:18px;background:linear-gradient(115deg,#ffdf29 0%,#ffc400 50%,#e9aa00 70%,#ffda26 100%);box-shadow:0 8px 25px rgba(244,178,0,.18);min-height:94px}
+.dashboard-hero h1{font-size:clamp(29px,3.2vw,48px);font-weight:900}
+.dashboard-hero-month{display:none}
+.dashboard-hero-caption strong{font-size:16px}
+.dash>.kpi-grid>.kpi{background:linear-gradient(155deg,#102449,#07162f);border:1px solid #254577;border-bottom:3px solid #ffd21a;border-radius:16px;box-shadow:0 8px 22px rgba(0,0,0,.14)}
+.dash>.kpi-grid>.kpi .kpi-label{color:#9bb4df}
+.dash>.kpi-grid>.kpi .kpi-value{color:#f7f9ff;font-weight:900}
+.dash>.kpi-grid>.kpi .kpi-ico{border:1px solid rgba(255,204,0,.4);background:#192d4d;color:#ffda1b}
+.dash>.panel{background:linear-gradient(155deg,#0e2248,#08152f);border:1px solid #223e70;border-radius:18px}
+.dash>.panel .kpi{background:linear-gradient(155deg,#0d2043,#07152f);border:1px solid #203c70;border-radius:15px}
+.dash>.panel .panel-head button{border-color:#ffce17;color:#f4f6ff}
+@media(min-width:1451px){.app-main .dash>.kpi-grid{grid-template-columns:repeat(6,minmax(0,1fr))}}
+@media(min-width:901px) and (max-width:1450px){.app-main .dash>.kpi-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:900px){.sidebar{border-radius:14px}.dashboard-hero{min-height:0}}
+:root[data-theme="light"] body{background:var(--bg)}
+:root[data-theme="light"] .sidebar{background:var(--surface)}
+
 </style>
 </head>
 <body>
