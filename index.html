@@ -536,6 +536,115 @@ body{background:#030a18}
  .panel,.kpi,.modal,.sidebar,.goal,.alert{transition:none!important}
 }
 
+
+/* ===== COMPACTAÇÃO v4 — DeepSeek, preservando visual dourado ===== */
+.wrap{padding:12px 12px 40px;max-width:1600px}
+.app-shell{gap:10px}
+.panel{padding:13px 14px;margin:7px 0}
+.panel h2{font-size:15.5px}
+.panel .sub{font-size:11.5px;margin-bottom:8px}
+.panel.tight{padding:11px}
+.dash .panel{padding:11px 13px;margin:6px 0 !important}
+.dash > .panel + .panel{margin-top:6px !important}
+.dash > .kpi-grid + .panel,.dash > .panel + .kpi-grid,.dash > .grid + .panel{margin-top:8px !important}
+.dash .panel h2{font-size:14.5px}
+.dash .panel .sub{font-size:11.5px;margin-bottom:6px}
+.dash .panel-head{margin-bottom:10px}
+.dash .grid,.dash .kpi-grid{gap:7px}
+.dash .kpi{padding:9px 11px;border-radius:11px}
+.dash .kpi-top{margin-bottom:5px;gap:5px}
+.dash .kpi-label{font-size:9.5px;letter-spacing:.4px}
+.dash .kpi-ico{width:22px;height:22px;border-radius:6px}
+.dash .kpi-ico svg{width:11px;height:11px}
+.dash .kpi-value{font-size:15px}
+.dash .trend{font-size:9.5px;padding:2px 6px;margin-top:4px}
+.dash>.kpi-grid>.kpi{padding:11px 12px !important}
+.dash>.kpi-grid .kpi-value{font-size:clamp(15px,1.5vw,19px) !important}
+.dash .chart{height:110px;padding:6px 2px 0;gap:8px}
+.dash .legend{font-size:10.5px;margin-top:8px}
+.dash .goal{padding:10px 12px;border-radius:11px}
+.dash .goal-head{margin-bottom:5px}
+.dash .goal-head b{font-size:12.5px}
+.dash .goal-values{font-size:11px;margin-bottom:5px}
+.dash h3{font-size:13px;margin:10px 0 7px}
+.dash .dash-title{font-size:14.5px;margin:12px 0 8px}
+.dash .veh-card{padding:11px 13px;border-radius:12px}
+.dash .veh-card-header{margin-bottom:10px;padding-bottom:8px;gap:8px}
+.dash .veh-title{font-size:16px}
+.dash .veh-subtitle{font-size:11.5px;margin-top:2px}
+.dash .veh-badge-rpk{font-size:13px;padding:4px 10px;border-radius:9px}
+.dash .veh-grid{gap:7px;margin-bottom:10px}
+.dash .veh-box{padding:8px 10px;gap:3px;border-radius:9px}
+.dash .veh-box-label{font-size:9.5px}
+.dash .veh-box-value{font-size:14px}
+.dash .veh-box-sub{font-size:10.5px}
+.dash .veh-meta-area{padding:9px 11px;border-radius:9px}
+.dash .veh-meta-header{margin-bottom:7px;font-size:11px}
+.dash .veh-meta-header b{font-size:12px}
+.dash .veh-selector-wrap{padding:9px 11px;margin-bottom:9px}
+.dash .veh-selector-wrap label{font-size:11px;margin-bottom:5px}
+.dash .veh-selector-wrap select{padding:9px 11px;font-size:13px;border-radius:9px}
+.dash .alert{padding:8px 10px;font-size:11.5px;margin-bottom:5px;border-radius:9px}
+.dashboard-hero{padding:14px 20px;margin:0 0 8px;min-height:0;border-radius:14px}
+.dashboard-hero h1{font-size:clamp(22px,2.5vw,34px)}
+.dashboard-hero-icon{width:38px;height:38px}
+.dashboard-hero-icon svg{width:34px;height:34px}
+.dashboard-hero-caption{font-size:12px}
+.dashboard-hero-caption strong{font-size:13.5px}
+.toolbar{padding:11px 13px;margin-top:10px;gap:9px}
+.toolbar .field{max-width:180px}
+.fields{gap:9px}
+.field label{margin-bottom:4px;font-size:11px}
+input,select{padding:9px 11px;font-size:13.5px}
+button{padding:9px 15px;font-size:13px}
+button.sm{padding:6px 10px;font-size:11.5px}
+.sidebar{padding:10px 9px;gap:7px}
+.sidebar .nav{gap:1px;padding:6px 0}
+.sidebar .navbtn{padding:7px 9px;font-size:11.5px;min-height:32px}
+.sidebar .navbtn .ico svg{width:15px;height:15px}
+.sidebar-section>label{font-size:9.5px}
+thead th{padding:8px 9px;font-size:9.5px}
+tbody td{padding:8px 9px;font-size:12px}
+.app-top-controls{padding:10px 13px;margin-bottom:6px}
+.app-horizontal-nav{padding:6px 2px 10px;margin-bottom:2px}
+.modal{padding:18px}
+.grid{gap:8px}
+.kpi{padding:11px 12px}
+.kpi-label{font-size:10.5px}
+.kpi-value{font-size:19px}
+.pend-table th,.pend-table td{padding:9px 8px}
+@media(max-width:900px){
+.app-shell{gap:8px}
+.dashboard-hero{padding:12px 14px;margin-bottom:6px}
+.dashboard-hero-caption{font-size:11.5px}
+}
+@media(max-width:760px){
+.wrap{padding:9px 9px 36px}
+.panel{padding:11px;margin:6px 0}
+.dash .panel{padding:10px 11px;margin:5px 0 !important}
+.dash .kpi{padding:8px 9px}
+.dash>.kpi-grid>.kpi{padding:9px 10px !important}
+.dash .kpi-value{font-size:14.5px}
+.dash .chart{height:100px}
+.dashboard-hero{padding:11px 13px}
+.dashboard-hero h1{font-size:clamp(20px,5vw,26px)}
+.dashboard-hero-icon{width:32px;height:32px}
+.dashboard-hero-icon svg{width:28px;height:28px}
+.fields{gap:8px}
+.app-horizontal-nav .navbtn{padding:7px 10px;font-size:11.5px}
+}
+@media(max-width:420px){
+.dash .panel{padding:9px 10px}
+.dash .kpi{padding:7px 8px}
+.dash .kpi-value{font-size:13.5px}
+.dash .veh-box-value{font-size:13px}
+.dash .veh-card{padding:10px 11px}
+.dashboard-hero{padding:10px 12px}
+.dashboard-hero h1{font-size:19px}
+}
+/* Acessibilidade: áreas clicáveis preservadas em telas de toque */
+@media(pointer:coarse){.sidebar .navbtn{min-height:40px}button{min-height:40px}}
+
 </style>
 </head>
 <body>
