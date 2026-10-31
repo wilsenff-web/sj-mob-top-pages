@@ -443,6 +443,20 @@ tbody tr:hover{background:rgba(245,197,66,.05)}
 @media(max-width:370px){.dash>.kpi-grid{grid-template-columns:1fr}}
 :root[data-theme="light"] .dashboard-hero{color:#111}
 
+
+/* Sidebar preservada com dashboard dourado e cartões compactos */
+@media(min-width:901px){
+ .sidebar{top:68px;max-height:calc(100dvh - 84px);gap:9px;padding:12px;scrollbar-width:thin;scrollbar-color:#34466e transparent}
+ .sidebar::-webkit-scrollbar{width:6px}
+ .sidebar::-webkit-scrollbar-thumb{background:#34466e;border-radius:10px}
+ .sidebar .nav{gap:2px;padding:8px 0}
+ .sidebar .navbtn{padding:8px 10px;font-size:12.5px;min-height:36px}
+}
+.app-main .dashboard-hero{margin-top:0}
+@media(min-width:901px) and (max-width:1450px){
+ .app-main .dash>.kpi-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+
 </style>
 </head>
 <body>
@@ -500,12 +514,24 @@ tbody tr:hover{background:rgba(245,197,66,.05)}
 
   <!-- ============ 3. APP ============ -->
 <section id="app" class="hide">
-  <div class="app-top-controls">
-    <div class="field app-month"><label for="month">Mês de referência</label><input id="month" type="month"></div>
-    <div class="app-top-actions"><span class="sync" id="syncInfo"></span><button class="alt" onclick="refresh()">↻ Atualizar</button><button class="ghost" onclick="logout()">Sair</button></div>
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Menu lateral">
+      <div class="sidebar-section">
+        <label for="month">Mês de referência</label>
+        <input id="month" type="month">
+      </div>
+      <nav class="nav" id="nav" aria-label="Navegação principal"></nav>
+      <div class="sidebar-footer">
+        <span class="sync" id="syncInfo"></span>
+        <button class="alt" onclick="refresh()">↻ Atualizar</button>
+        <button class="ghost" onclick="logout()">Sair</button>
+      </div>
+    </aside>
+    <div class="app-main">
+      <section id="content"></section>
+    </div>
   </div>
-  <nav class="nav app-horizontal-nav" id="nav" aria-label="Navegação principal"></nav>
-  <section id="content"></section>
+</section>
 </section>
     </div>
   </div>
