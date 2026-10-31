@@ -956,7 +956,9 @@ async function connect(){
       toast('Conexão configurada. Faça login.');
     }
   }catch(e){
-    msg(e.message, true);
+    console.error('Falha na conexão Supabase:', e);
+    show('setup');
+    msg('Não foi possível conectar: ' + e.message, true);
   }
 }
 
@@ -1854,6 +1856,7 @@ async function salvarBaixa(e,id){
    ========================================================= */
 (function boot(){
   applyTheme(localStorage.getItem('sj_theme') || 'dark');
+  show('setup');
   try{
     const c = JSON.parse(localStorage.getItem('sj_config') || 'null');
     if(c){
