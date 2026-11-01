@@ -2033,10 +2033,43 @@ async function securityTest(){
   }
 }
 
+/* Backup manual: exportação somente leitura, sob RLS da sessão administrativa.
+   Nunca incluir tokens de sessão ou chaves de acesso no arquivo. */
+async function baixarBackupFrota(){
+ if(!session || !isAdmin || session.user.id!==ADMIN_UID)return msg('Acesso restrito ao administrador.',true);
+ if(!confirm('Baixar uma cópia dos dados do SJ MOB TOP neste dispositivo? O arquivo contém dados pessoais e financeiros. Guarde-o em local privado.'))return;
+ const btn=document.getElementById('backup-download');
+ if(btn){btn.disabled=true;btn.textContent='Preparando backup…';}
+ try{
+   const tables=['motoristas','veiculos','viagens','financeiro','pendencias','pagamentos_pendencias','manutencoes','metas','comprovantes_motoristas'];
+   const exported={app:'SJ MOB TOP',schema_version:1,created_at:new Date().toISOString(),admin_user_id:session.user.id,scope:'dados de tabelas (sem arquivos anexos)',tables:{}};
+   for(const t of tables){
+     const rows=[];
+     let start=0;
+     while(true){
+       const {data:page,error}=await client.from(t).select('*').range(start,start+499);
+       if(error)throw Error('Tabela '+t+': '+error.message);
+       rows.push(...(page||[]));
+       if(!page||page.length<500)break;
+       start+=500;
+       if(start>100000)throw Error('Limite de segurança excedido na tabela '+t);
+     }
+     exported.tables[t]=rows;
+   }
+   const stamp=new Date().toISOString().replace(/[:.]/g,'-');
+   const blob=new Blob([JSON.stringify(exported,null,2)],{type:'application/json;charset=utf-8'});
+   const url=URL.createObjectURL(blob),link=document.createElement('a');
+   link.href=url;link.download='SJ-MOB-TOP-backup-'+stamp+'.json';
+   document.body.appendChild(link);link.click();link.remove();
+   setTimeout(()=>URL.revokeObjectURL(url),30000);
+   toast('Backup dos dados preparado. Confira o arquivo na pasta Downloads.');
+ }catch(e){msg('Backup não concluído: '+e.message,true);}
+ finally{if(btn){btn.disabled=false;btn.textContent='↓ Baixar backup dos dados';}}
+}
 function security(){
   return `
   <div class="panel">
-    <h2>Segurança e testes</h2>
+    <h2>Segurança e Backup</h2>
     <p class="sub">Usuário atual: <b>${esc(session.user.email)}</b></p>
     <p style="font-size:13.5px;line-height:1.6;color:var(--muted)">
       O navegador usa somente a chave pública. As políticas <b>RLS</b> do Supabase devem proteger as seis tabelas.
