@@ -718,8 +718,8 @@ tbody td{padding:8px 9px;font-size:12px}
 
   <!-- ============ 2. LOGIN ============ -->
   <section id="auth" class="panel narrow hide">
-    <h2>2. Entrar no sistema</h2>
-    <p class="sub">Acesse com o usuário criado no Supabase Authentication.</p>
+    <h2>Entrar no SJ MOB TOP</h2>
+    <p class="sub">Use seu e-mail e senha para acessar sua área.</p>
     <div class="fields">
       <div class="field"><label for="email">E-mail</label><input id="email" type="email" autocomplete="username" placeholder="voce@empresa.com"></div>
       <div class="field"><label for="password">Senha</label><input id="password" type="password" autocomplete="current-password" placeholder="••••••••"></div>
@@ -728,7 +728,7 @@ tbody td{padding:8px 9px;font-size:12px}
       <button onclick="signIn()">Entrar</button>
       <button class="alt" onclick="resetPassword()">Recuperar senha</button>
     </div>
-    <p style="margin:16px 0 0"><small>Crie seu usuário em <b>Authentication → Users</b> no Supabase. Este sistema não oferece cadastro público.</small></p>
+    <p style="margin:16px 0 0"><small>Acesso exclusivo para contas autorizadas. Motoristas devem ter o cadastro vinculado pelo administrador.</small></p>
   </section>
 
   <!-- RECUPERAÇÃO DE SENHA -->
@@ -1007,7 +1007,8 @@ async function carregarComprovantes(){
  comprovantesReady=false;
  data.comprovantes_motoristas=[];
  if(!client||!session)return;
- try{data.comprovantes_motoristas=await lerTodos('comprovantes_motoristas');}
+ const expectedUser=session.user.id;
+ try{const rows=await lerTodos('comprovantes_motoristas');if(session?.user?.id!==expectedUser)return;data.comprovantes_motoristas=rows;}
  catch(error){if(error.code!=='42P01'&&error.code!=='PGRST205')console.warn('Comprovantes indisponíveis:',error.message);return;}
  comprovantesReady=true;
 }
@@ -1155,7 +1156,8 @@ async function connect(){
       if(recoveryActive) return;
       if(!s){ data={}; search={}; driverRecord=null; isAdmin=false; comprovantesReady=false; pendenciasReady=false; $('content').innerHTML=''; $('nav').innerHTML=''; $('modal-root').innerHTML=''; show('auth'); setIdentity(); }
       else if(s.user.id!==previousUser || event==='SIGNED_IN' && !driverRecord && !isAdmin){
-        data={}; driverRecord=null; isAdmin=s.user.id===ADMIN_UID;
+        data={}; search={}; lastSync=null; driverRecord=null; comprovantesReady=false; pendenciasReady=false; isAdmin=s.user.id===ADMIN_UID;
+        $('content').textContent='Carregando sua área…'; $('nav').innerHTML=''; $('modal-root').innerHTML='';
         active=isAdmin?'dashboard':'viagens'; show('app'); setIdentity(); setTimeout(refresh,0);
       }else{setIdentity();}
     });
@@ -1266,6 +1268,7 @@ async function refresh(silent = false){
     if(!isAdmin){
       const {data:m,error:me}=await client.from('motoristas').select('id,nome,user_id,status').eq('auth_user_id',session.user.id).eq('status','ativo').maybeSingle();
       if(me) throw me;
+      if(session?.user?.id!==expectedUser)return;
       if(!m){ $('content').textContent='Seu login ainda não foi vinculado a um motorista ativo. Contate o administrador.'; $('nav').innerHTML=''; return; }
       driverRecord=m;
       for(const t of ['veiculos','viagens']){
@@ -1291,6 +1294,7 @@ async function refresh(silent = false){
     else console.warn('Atualização automática indisponível:', e);
   }finally{
     refreshBusy = false;
+    if(session && session.user.id!==expectedUser)setTimeout(refresh,0);
   }
 }
 
@@ -2242,8 +2246,10 @@ const categoriasPend=['Diária atrasada','Pedágio','Multa de trânsito','Abaste
 let pendenciasReady=false;
 async function carregarPendencias(){
  if(!client || !session) return;
+ const expectedUser=session.user.id;
  try{
   const [p,g]=await Promise.all([lerTodos('pendencias'),lerTodos('pagamentos_pendencias')]);
+  if(session?.user?.id!==expectedUser)return;
   data.pendencias=p;data.pagamentos_pendencias=g;pendenciasReady=true;
  }catch(error){pendenciasReady=false;data.pendencias=[];data.pagamentos_pendencias=[];console.warn('Pendências indisponíveis:',error.message);}
 }
