@@ -777,7 +777,7 @@ tbody td{padding:8px 9px;font-size:12px}
 </section>
 </main>
 
-<footer class="footer">SJ MOB TOP · Martins · v2.8 · acesso individual e dados protegidos</footer>
+<footer class="footer">SJ MOB TOP · Martins · v2.9 · acesso individual e dados protegidos</footer>
 
 <div id="toasts" aria-live="polite" aria-atomic="false"></div>
 <div id="modal-root"></div>
@@ -1702,7 +1702,24 @@ async function removeRow(t, id){
     render();
     await refresh();
     toast(t === 'financeiro'?'Lançamento excluído. Caixa e Dashboard recalculados.':'Registro excluído.');
-  }catch(error){msg('Erro ao excluir: '+error.message,true);}
+  }catch(error){
+    if(t === 'motoristas' && error.code === '23503'){
+      if(record.status === 'inativo') return msg('Este motorista já está inativo. O cadastro permanece para preservar viagens, pendências e pagamentos vinculados.',true);
+      const ok = await confirmDialog('Este motorista possui viagens, pendências ou outros registros vinculados. Deseja desativar '+record.nome+' e preservar todo o histórico? Ele não poderá acessar a área de lançamentos. Para excluir definitivamente, primeiro resolva os registros vinculados nas respectivas abas.');
+      if(!ok) return;
+      try{
+        const {data:updated,error:updateError} = await client.from('motoristas').update({status:'inativo'}).eq('id',id).select('id,status').maybeSingle();
+        if(updateError) throw updateError;
+        if(!updated || updated.status !== 'inativo') throw new Error('Desativação não confirmada. Atualize a página.');
+        record.status='inativo';
+        render();
+        await refresh();
+        toast('Motorista desativado. Viagens, pendências e pagamentos preservados.');
+      }catch(updateError){msg('Não foi possível desativar: '+updateError.message,true);}
+      return;
+    }
+    msg('Erro ao excluir: '+error.message,true);
+  }
 }
 
 /* =========================================================
