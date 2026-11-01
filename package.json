@@ -1,0 +1,1 @@
+{"name":"sj-mob-top","version":"2.7.0","private":true,"type":"module","scripts":{"test":"node tests/operacao.mjs && node tests/backup-anexos.mjs && node tests/planilha.mjs"},"devDependencies":{"fflate":"0.8.2"},"engines":{"node":">=24"}}
