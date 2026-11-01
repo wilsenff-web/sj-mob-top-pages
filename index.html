@@ -1790,7 +1790,7 @@ function vehiclePerformance(){
    contratos/diárias/comissões; somente valores lançados no Financeiro
    e vinculados ao motorista são reconhecidos como receitas da empresa. */
 function driverPerformance(){
-  const trips = (data.viagens || []).filter(x => x.data_viagem?.startsWith(month));
+  const trips = (data.viagens || []).filter(x => x.data_viagem?.startsWith(month) && (x.status_conferencia || 'aprovada') === 'aprovada');
   const fin = (data.financeiro || []).filter(x => x.data_lancamento?.startsWith(month));
   const drivers = (data.motoristas || []);
   if(!drivers.length) return `<div class="panel" style="margin-top:16px"><h2>Desempenho por motorista</h2><p class="sub">Nenhum motorista cadastrado.</p></div>`;
