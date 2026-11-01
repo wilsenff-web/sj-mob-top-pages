@@ -955,7 +955,7 @@ function driverPage(){
  <h3>Comprovantes enviados</h3>
  <div class="scroll"><table><thead><tr><th>Data</th><th>Valor</th><th>Situação</th><th>Arquivo</th></tr></thead><tbody>
  ${(data.comprovantes_motoristas||[]).map(c=>`<tr><td>${esc(c.data_pagamento)}</td><td>${brl(c.valor)}</td><td>${esc(c.status)}</td><td><button type="button" class="alt sm" onclick="abrirComprovante('${esc(c.arquivo_path)}')">Ver</button></td></tr>`).join('')||'<tr><td colspan="4">Nenhum comprovante enviado</td></tr>'}</tbody></table></div></section>
- <section class="panel"><h2>Minhas viagens</h2><div style="overflow:auto"><table><thead><tr><th>Data</th><th>Trajeto</th><th>KM</th><th>Faturamento</th><th>Conferência</th></tr></thead><tbody>${rows||'<tr><td colspan="4">Nenhuma viagem</td></tr>'}</tbody></table></div></section>`;
+ <section class="panel"><h2>Minhas viagens</h2><div style="overflow:auto"><table><thead><tr><th>Data</th><th>Trajeto</th><th>KM</th><th>Faturamento</th><th>Conferência</th></tr></thead><tbody>${rows||'<tr><td colspan="5">Nenhuma viagem</td></tr>'}</tbody></table></div></section>`;
 }
 async function carregarComprovantes(){
  comprovantesReady=false;
@@ -1039,7 +1039,7 @@ function painelComprovantes(){
  const rows=data.comprovantes_motoristas||[];
  return `<section class="panel"><h2>Comprovantes dos motoristas</h2>
  <p class="sub">Confira os arquivos antes de confirmar. Confirmação não registra receita nem quita pendências automaticamente.</p>
- <div class="scroll"><table><thead><tr><th>Motorista</th><th>Data</th><th>Valor</th><th>Status</th><th>Arquivo</th><th>Conferência</th></tr></thead><tbody>
+ <div class="scroll"><table><thead><tr><th>Motorista</th><th>Data</th><th>Valor</th><th>Status</th><th>Arquivo</th><th>Conferência</th><th>Financeiro</th></tr></thead><tbody>
  ${rows.map(c=>`<tr><td>${esc(lookup('motoristas',c.motorista_id))}</td><td>${esc(c.data_pagamento)}</td><td>${brl(c.valor)}</td><td>${esc(c.status)}</td><td><button type="button" class="alt sm" onclick="abrirComprovante('${esc(c.arquivo_path)}')">Ver</button></td><td>${c.status==='pendente'?`<button type="button" onclick="revisarComprovante('${esc(c.id)}','confirmado')">Confirmar</button> <button type="button" class="alt sm" onclick="revisarComprovante('${esc(c.id)}','rejeitado')">Rejeitar</button>`:'—'}</td><td>${(data.financeiro||[]).some(f=>f.comprovante_id===c.id)?'<span class="badge ok">Registrado</span>':c.status==='confirmado'?`<button type="button" onclick="registrarRecebimentoComprovante('${esc(c.id)}')">Registrar recebimento</button>`:'—'}</td></tr>`).join('')||'<tr><td colspan="7">Nenhum comprovante recebido</td></tr>'}</tbody></table></div></section>`;
 }
 async function saveDriverTrip(e){
