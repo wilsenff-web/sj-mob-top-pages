@@ -1,3 +1,7 @@
+-- CANCELADO POR DECISÃO DO PROPRIETÁRIO EM 31/10/2026.
+-- NÃO EXECUTAR. Os 27 registros da conta antiga são dados de teste e NÃO devem ser migrados.
+-- Mantido apenas como histórico de revisão. Nenhuma alteração foi aplicada ao banco.
+
 -- SJ MOB TOP | MIGRACAO DE PROPRIEDADE v1 — REVISAR ANTES DE EXECUTAR
 -- Nao altera Auth, nao apaga dados, nao modifica RLS.
 -- Base: 27 registros da conta antiga + 1 motorista ja na conta principal.
