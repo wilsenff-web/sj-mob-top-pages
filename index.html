@@ -927,6 +927,7 @@ function options(type){
 const ADMIN_UID = '92d8d744-f382-44ad-bcc3-f951765ffa73';
 let isAdmin = false;
 let driverRecord = null;
+let comprovantesReady = false;
 function driverPage(){
  if(!driverRecord) return '<section class="panel"><h2>Vinculação pendente</h2></section>';
  const vehicles=(data.veiculos||[]).map(v=>`<option value="${esc(v.id)}">${esc(v.placa||'')} • ${esc(v.modelo||'')}</option>`).join('');
@@ -943,7 +944,77 @@ function driverPage(){
  <div class="field"><label>Faturamento (R$)</label><input name="faturamento" type="number" min="0" step="0.01" required></div>
  <div class="field"><label>Observações</label><input name="observacoes"></div>
  <div class="btn-row"><button type="submit">Salvar viagem</button></div></form></section>
+ <section class="panel"><h2>Enviar comprovante de pagamento</h2>
+ <p class="sub">Anexe o comprovante de um pagamento feito ao administrador. O envio fica pendente de conferência e não dá baixa automática em dívidas.</p>
+ ${comprovantesReady ? `<form onsubmit="enviarComprovante(event)" class="fields">
+ <div class="field"><label>Valor pago (R$)</label><input name="valor" type="number" min="0.01" step="0.01" required></div>
+ <div class="field"><label>Data do pagamento</label><input name="data_pagamento" type="date" required></div>
+ <div class="field"><label>Observação (opcional)</label><input name="observacao" maxlength="300"></div>
+ <div class="field"><label>Comprovante (imagem ou PDF, até 5 MB)</label><input name="arquivo" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" required></div>
+ <div class="btn-row"><button type="submit">📎 Enviar comprovante</button></div></form>` : '<p class="sub">Módulo de comprovantes ainda não ativado no Supabase.</p>'}
+ <h3>Comprovantes enviados</h3>
+ <div class="scroll"><table><thead><tr><th>Data</th><th>Valor</th><th>Situação</th><th>Arquivo</th></tr></thead><tbody>
+ ${(data.comprovantes_motoristas||[]).map(c=>`<tr><td>${esc(c.data_pagamento)}</td><td>${brl(c.valor)}</td><td>${esc(c.status)}</td><td><button type="button" class="alt sm" onclick="abrirComprovante('${esc(c.arquivo_path)}')">Ver</button></td></tr>`).join('')||'<tr><td colspan="4">Nenhum comprovante enviado</td></tr>'}</tbody></table></div></section>
  <section class="panel"><h2>Minhas viagens</h2><div style="overflow:auto"><table><thead><tr><th>Data</th><th>Trajeto</th><th>KM</th><th>Faturamento</th></tr></thead><tbody>${rows||'<tr><td colspan="4">Nenhuma viagem</td></tr>'}</tbody></table></div></section>`;
+}
+async function carregarComprovantes(){
+ comprovantesReady=false;
+ data.comprovantes_motoristas=[];
+ if(!client||!session)return;
+ const {data:rows,error}=await client.from('comprovantes_motoristas').select('*').order('created_at',{ascending:false}).limit(500);
+ if(error){if(error.code!=='42P01'&&error.code!=='PGRST205')console.warn('Comprovantes indisponíveis:',error.message);return;}
+ data.comprovantes_motoristas=rows||[];
+ comprovantesReady=true;
+}
+async function enviarComprovante(e){
+ e.preventDefault();
+ if(isAdmin||!driverRecord||!session||!comprovantesReady)return;
+ const form=e.target, f=new FormData(form), file=f.get('arquivo');
+ const allowed=['image/jpeg','image/png','image/webp','application/pdf'];
+ const valor=Number(f.get('valor'));
+ if(!(file instanceof File)||!allowed.includes(file.type)||file.size>5242880||file.size===0)
+   return msg('Escolha uma imagem ou PDF válido de até 5 MB.',true);
+ if(!Number.isFinite(valor)||valor<=0)return msg('Informe o valor pago.',true);
+ const ext={'image/jpeg':'jpg','image/png':'png','image/webp':'webp','application/pdf':'pdf'}[file.type];
+ const path=session.user.id+'/'+crypto.randomUUID()+'.'+ext;
+ const btn=form.querySelector('button[type=submit]');btn.disabled=true;
+ try{
+   const {error:uploadError}=await client.storage.from('sj-comprovantes').upload(path,file,{contentType:file.type,upsert:false});
+   if(uploadError)throw uploadError;
+   const {error:saveError}=await client.from('comprovantes_motoristas').insert({
+     user_id:driverRecord.user_id,motorista_id:driverRecord.id,enviado_por:session.user.id,
+     valor,data_pagamento:String(f.get('data_pagamento')),observacao:String(f.get('observacao')||'').slice(0,300),
+     arquivo_path:path
+   });
+   if(saveError)throw new Error('Arquivo enviado, mas registro não concluído. Contate o administrador. '+saveError.message);
+   await carregarComprovantes();render();toast('Comprovante enviado. Aguardando conferência do administrador.');
+ }catch(err){msg('Falha no comprovante: '+err.message,true);}
+ finally{btn.disabled=false;}
+}
+async function abrirComprovante(path){
+ if(!client||!session)return;
+ const c=(data.comprovantes_motoristas||[]).find(x=>x.arquivo_path===path);
+ if(!c)return msg('Comprovante não encontrado.',true);
+ const {data:link,error}=await client.storage.from('sj-comprovantes').createSignedUrl(path,60);
+ if(error)return msg('Não foi possível abrir: '+error.message,true);
+ window.open(link.signedUrl,'_blank','noopener,noreferrer');
+}
+async function revisarComprovante(id,status){
+ if(!isAdmin||!['confirmado','rejeitado'].includes(status))return;
+ const c=(data.comprovantes_motoristas||[]).find(x=>x.id===id);
+ if(!c||c.status!=='pendente')return;
+ if(!confirm(status==='confirmado'?'Confirmar conferência deste comprovante? Isso não lança receita automaticamente.':'Rejeitar este comprovante?'))return;
+ const {error}=await client.from('comprovantes_motoristas').update({status}).eq('id',id).eq('status','pendente');
+ if(error)return msg('Falha ao revisar: '+error.message,true);
+ await carregarComprovantes();render();toast('Comprovante revisado.');
+}
+function painelComprovantes(){
+ if(!comprovantesReady)return '<div class="panel"><h2>Comprovantes dos motoristas</h2><p class="sub">Módulo ainda não ativado no Supabase.</p></div>';
+ const rows=data.comprovantes_motoristas||[];
+ return `<section class="panel"><h2>Comprovantes dos motoristas</h2>
+ <p class="sub">Confira os arquivos antes de confirmar. Confirmação não registra receita nem quita pendências automaticamente.</p>
+ <div class="scroll"><table><thead><tr><th>Motorista</th><th>Data</th><th>Valor</th><th>Status</th><th>Arquivo</th><th>Conferência</th></tr></thead><tbody>
+ ${rows.map(c=>`<tr><td>${esc(lookup('motoristas',c.motorista_id))}</td><td>${esc(c.data_pagamento)}</td><td>${brl(c.valor)}</td><td>${esc(c.status)}</td><td><button type="button" class="alt sm" onclick="abrirComprovante('${esc(c.arquivo_path)}')">Ver</button></td><td>${c.status==='pendente'?`<button type="button" onclick="revisarComprovante('${esc(c.id)}','confirmado')">Confirmar</button> <button type="button" class="alt sm" onclick="revisarComprovante('${esc(c.id)}','rejeitado')">Rejeitar</button>`:'—'}</td></tr>`).join('')||'<tr><td colspan="6">Nenhum comprovante recebido</td></tr>'}</tbody></table></div></section>`;
 }
 async function saveDriverTrip(e){
  e.preventDefault();
@@ -1111,6 +1182,7 @@ async function refresh(silent = false){
         if(error) throw error;
         data[t]=d||[];
       }
+      await carregarComprovantes();
       render();return;
     }
     for(const t of Object.keys(specs)){
@@ -1119,6 +1191,7 @@ async function refresh(silent = false){
       data[t] = d || [];
     }
     await carregarPendencias();
+    await carregarComprovantes();
     lastSync = new Date();
     render();
     if(!silent) toast('Dados sincronizados com o Supabase.');
@@ -1156,7 +1229,7 @@ function render(){
     : '';
 
   $('content').innerHTML =
-    active === 'dashboard' ? dashboard() :
+    active === 'dashboard' ? dashboard() + painelComprovantes() :
     active === 'seguranca' ? security() :
     active === 'pendencias' ? pendenciasPage() :
     tablePage(active);
