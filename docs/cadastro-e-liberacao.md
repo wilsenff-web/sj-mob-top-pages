@@ -1,29 +1,22 @@
-# Cadastro próprio e liberação — v2.4
+# Cadastro e liberação — v2.5
 
-## Preparado no sistema
+## Fluxo simples autorizado
 
-A página de entrada contém Criar minha conta de motorista. O motorista informa nome, telefone, e-mail e escolhe uma senha de pelo menos 12 caracteres, repetida para conferência. A senha é enviada somente ao Supabase Auth, não é incluída nas tabelas operacionais, backups ou solicitações de aprovação. O administrador não recebe essa senha.
+Em 01/11/2026, o proprietário confirmou expressamente que ele verifica o motorista e autorizou retirar a confirmação de e-mail. No Supabase, Allow new users to sign up está ativo e Confirm email foi desativado. A consulta de configurações confirmou `disable_signup: false` e `mailer_autoconfirm: true`. Não foi alterada a exigência de senha nem a liberação administrativa.
 
-Com a confirmação de e-mail habilitada, o motorista confirma o link recebido e entra no sistema. Após entrar, uma solicitação pendente é gravada. Contas antigas sem nome nos dados de apresentação preenchem um formulário simples para solicitar acesso.
+1. O motorista abre o sistema, clica em Criar minha conta de motorista e informa nome, telefone, e-mail e a própria senha (mínimo de 12 caracteres, repetida para conferência).
+2. O Auth cria uma sessão imediatamente, sem enviar confirmação por e-mail. O sistema grava uma solicitação pendente e mostra Aguardando liberação.
+3. O administrador entra em Acessos, confere a identidade e os contatos pessoalmente, escolhe vincular ao cadastro existente ou criar novo cadastro e clica em Liberar acesso.
+4. O motorista clica em Verificar liberação e acessa apenas a própria área de viagens e comprovantes.
 
-Antes da aprovação, a conta vê somente sua solicitação e os botões Verificar liberação e Sair. Não vê frota, financeiro ou viagens. Não há liberação com base em metadados de usuário: a autorização continua dependendo de um cadastro ativo de motorista vinculado pelo administrador.
+O administrador não vê a senha. O e-mail é apenas um identificador informado pelo solicitante: sua propriedade não é verificada neste modo. Não liberar só por reconhecer um nome ou endereço; conferir a pessoa antes. Usuários pendentes não podem aprovar a si mesmos ou consultar a frota/financeiro. Os cadastros e vínculos anteriores foram preservados.
 
-O administrador recebe aviso no Dashboard e no menu Acessos. Confere nome/e-mail/telefone e escolhe vincular a um cadastro já existente ou criar um novo (respeitando o limite de 15). A aprovação é transacional; não troca automaticamente uma vinculação existente de outra pessoa. Recusar não apaga a conta ou o histórico. Cadastros anteriores continuam funcionando.
+## Teste pelo proprietário
 
-## Cadastro ativado; envio de e-mails ainda necessário
+Abra uma janela anônima para não sair da sessão administrativa. Crie uma conta com outro e-mail que ainda não exista no sistema e uma senha escolhida por você. A nova conta deve mostrar Aguardando liberação. Na janela normal, entre como administrador, abra Acessos e escolha conscientemente o cadastro de motorista para o teste (ou criar novo, respeitando o limite de 15). Depois da liberação, volte à janela anônima e clique em Verificar liberação. Nenhuma conta real foi criada automaticamente pelo assistente.
 
-Em 01/11/2026, após autenticação do proprietário no painel, foi ativado Allow new users to sign up. O endpoint público confirmou `disable_signup: false` e `mailer_autoconfirm: false`. A confirmação de e-mail foi mantida. A Site URL e a URL autorizada de retorno apontam para https://wilsenff-web.github.io/sj-mob-top-pages/.
+## Verificação e limites
 
-O painel SMTP confirmou que o envio personalizado está desativado. O serviço padrão do Supabase envia apenas para e-mails de membros da equipe do projeto. Portanto, antes do teste real de um novo motorista externo, é necessário configurar um serviço SMTP/remetente. Não desativar confirmação de e-mail para contornar essa limitação. Não foi criada conta real de teste, aprovada solicitação real nem alterada senha existente.
+Testes de lógica: senha repetida, sessão imediata, mensagem de espera, HTML escapado, escolha explícita do vínculo. Testes transacionais PostgreSQL já validados e revertidos: bloqueio antes da aprovação, autoaprovação negada, liberação pelo administrador, novo cadastro e vínculo existente, aprovação duplicada negada, acesso final somente de motorista. As novas funções são SECURITY INVOKER e a tabela de solicitações usa RLS. Sem acesso anônimo a solicitações ou aprovação.
 
-Referência: https://supabase.com/docs/guides/auth/auth-smtp
-
-## Verificação executada
-
-Testes PostgreSQL com identidades diferentes, revertidos ao final: pedido pendente sem acesso à frota; autoaprovação negada; criação de novo cadastro e vinculação a cadastro existente pelo administrador; revisão duplicada negada; aprovado acessa apenas o cadastro próprio e não o Financeiro. Leitura anônima e execução anônima da aprovação negadas. Funções novas usam SECURITY INVOKER e RLS; a nova tabela tem políticas específicas.
-
-Testes de lógica validam confirmação de senha e e-mail, tela de espera sem lançamentos e seleção explícita do cadastro a vincular. A criação real pelo navegador aguarda a configuração externa acima; testes com mocks não substituem esse passo.
-
-A tabela `sj_solicitacoes_motoristas` foi incluída nos backups manuais e no backup do Drive. Um teste de backup semanal após a alteração retornou HTTP 200. O cron semanal continua domingo às 03h em Brasília.
-
-Alertas preexistentes de auditoria estão documentados em [revisao-operacional-v2.2.md](revisao-operacional-v2.2.md). Nenhum novo alerta apareceu nesta alteração.
+As solicitações fazem parte dos backups manuais e semanais. O SMTP personalizado continua desativado: não é necessário para criar contas neste modo, mas recuperação de senha e outros e-mails para destinatários externos ainda dependem de configurar um remetente. A retirada da confirmação não configura entrega de e-mails.
