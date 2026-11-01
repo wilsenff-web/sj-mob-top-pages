@@ -2035,6 +2035,54 @@ async function securityTest(){
 
 /* Backup manual: exportação somente leitura, sob RLS da sessão administrativa.
    Nunca incluir tokens de sessão ou chaves de acesso no arquivo. */
+/* Planilha XLSX importável no Google Planilhas; não envia dados a terceiros. */
+async function carregarBibliotecaPlanilhas(){
+ if(window.XLSX)return;
+ await new Promise((resolve,reject)=>{
+  const script=document.createElement('script');
+  script.src='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+  script.onload=()=>window.XLSX?resolve():reject(Error('Biblioteca de planilhas indisponível'));
+  script.onerror=()=>reject(Error('Não foi possível carregar a biblioteca de planilhas. Verifique a conexão.'));
+  document.head.appendChild(script);
+ });
+}
+async function exportarBackupGooglePlanilhas(){
+ if(!session || !isAdmin || session.user.id!==ADMIN_UID)return msg('Acesso restrito ao administrador.',true);
+ if(!confirm('Exportar os registros para um arquivo Excel compatível com Google Planilhas? Contém informações pessoais e financeiras; mantenha-o privado.'))return;
+ const btn=document.getElementById('backup-sheets');
+ if(btn){btn.disabled=true;btn.textContent='Preparando planilha…';}
+ try{
+  await carregarBibliotecaPlanilhas();
+  const tables=['motoristas','veiculos','viagens','financeiro','pendencias','pagamentos_pendencias','manutencoes','metas','comprovantes_motoristas'];
+  const book=XLSX.utils.book_new();
+  for(const table of tables){
+   const rows=[];
+   let start=0;
+   while(true){
+    const {data:page,error}=await client.from(table).select('*').range(start,start+499);
+    if(error)throw Error('Tabela '+table+': '+error.message);
+    rows.push(...(page||[]));
+    if(!page||page.length<500)break;
+    start+=500;
+    if(start>100000)throw Error('Limite de segurança excedido na tabela '+table);
+   }
+   const cols=[...new Set(rows.flatMap(row=>Object.keys(row)))];
+   const values=[cols,...rows.map(row=>cols.map(key=>{
+    const v=row[key];
+    if(v===null||v===undefined)return '';
+    if(typeof v==='object')return JSON.stringify(v);
+    return typeof v==='string' && /^[=+@\\-]/.test(v) ? "'"+v : v;
+   }))];
+   const sheet=XLSX.utils.aoa_to_sheet(values.length&&cols.length?values:[['Sem registros']]);
+   sheet['!cols']=cols.map(k=>({wch:Math.min(42,Math.max(14,k.length+4))}));
+   XLSX.utils.book_append_sheet(book,sheet,table.slice(0,31));
+  }
+  const filename='SJ-MOB-TOP-Google-Planilhas-'+new Date().toISOString().slice(0,10)+'.xlsx';
+  XLSX.writeFile(book,filename,{compression:true});
+  toast('Planilha exportada. Importe o arquivo XLSX no Google Planilhas.');
+ }catch(e){msg('Não foi possível exportar a planilha: '+e.message,true);}
+ finally{if(btn){btn.disabled=false;btn.textContent='▦ Exportar para Google Planilhas';}}
+}
 async function baixarBackupFrota(){
  if(!session || !isAdmin || session.user.id!==ADMIN_UID)return msg('Acesso restrito ao administrador.',true);
  if(!confirm('Baixar uma cópia dos dados do SJ MOB TOP neste dispositivo? O arquivo contém dados pessoais e financeiros. Guarde-o em local privado.'))return;
@@ -2077,7 +2125,7 @@ function security(){
     <div class="panel" style="margin-top:18px;padding:16px">
       <h3>Backup manual da frota</h3>
       <p class="sub">Exporte os registros da frota, financeiro, pendências, manutenção, metas e informações dos comprovantes em JSON.</p>
-      <div class="btn-row" style="margin-top:12px"><button type="button" id="backup-download" onclick="baixarBackupFrota()">↓ Baixar backup dos dados</button></div>
+      <div class="btn-row" style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap"><button type="button" id="backup-download" onclick="baixarBackupFrota()">↓ Baixar backup dos dados</button><button type="button" class="alt" id="backup-sheets" onclick="exportarBackupGooglePlanilhas()">▦ Exportar para Google Planilhas</button></div><p class="sub" style="margin-top:10px">O botão gera um arquivo .xlsx com abas separadas. Para abrir no Google Planilhas, envie o arquivo ao Google Drive e escolha Abrir com → Planilhas Google. Não há envio automático para sua conta Google.</p>
       <p class="sub" style="margin-top:12px">Somente administrador. Não inclui arquivos PDF e imagens anexados. Backup automático e restauração ainda não estão ativos.</p>
     </div>
     <div class="btn-row" style="margin-top:16px">
