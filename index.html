@@ -924,6 +924,48 @@ function options(type){
     .map(r => `<option value="${esc(r.id)}">${esc(lookup(t, r.id))}</option>`).join('');
 }
 
+const ADMIN_UID = '92d8d744-f382-44ad-bcc3-f951765ffa73';
+let isAdmin = false;
+let driverRecord = null;
+function driverPage(){
+ if(!driverRecord) return '<section class="panel"><h2>Vinculação pendente</h2></section>';
+ const vehicles=(data.veiculos||[]).map(v=>`<option value="${esc(v.id)}">${esc(v.placa||'')} • ${esc(v.modelo||'')}</option>`).join('');
+ const rows=(data.viagens||[]).map(v=>`<tr><td>${esc(v.data_viagem||'')}</td><td>${esc(v.origem||'')} → ${esc(v.destino||'')}</td><td>${num(v.km_rodados||0)} km</td><td>${brl(v.faturamento||0)}</td></tr>`).join('');
+ return `<section class="panel"><h2>Minhas viagens — ${esc(driverRecord.nome)}</h2>
+ <p class="sub">Lançamento exclusivo do motorista. Veículos cadastrados da frota.</p>
+ <form onsubmit="saveDriverTrip(event)" class="fields">
+ <div class="field"><label>Data</label><input name="data_viagem" type="date" required></div>
+ <div class="field"><label>Veículo</label><select name="veiculo_id" required><option value="">Selecione</option>${vehicles}</select></div>
+ <div class="field"><label>Origem</label><input name="origem" required maxlength="200"></div>
+ <div class="field"><label>Destino</label><input name="destino" required maxlength="200"></div>
+ <div class="field"><label>KM inicial</label><input name="km_inicial" type="number" min="0" step="0.01" required></div>
+ <div class="field"><label>KM final</label><input name="km_final" type="number" min="0" step="0.01" required></div>
+ <div class="field"><label>Faturamento (R$)</label><input name="faturamento" type="number" min="0" step="0.01" required></div>
+ <div class="field"><label>Observações</label><input name="observacoes"></div>
+ <div class="btn-row"><button type="submit">Salvar viagem</button></div></form></section>
+ <section class="panel"><h2>Minhas viagens</h2><div style="overflow:auto"><table><thead><tr><th>Data</th><th>Trajeto</th><th>KM</th><th>Faturamento</th></tr></thead><tbody>${rows||'<tr><td colspan="4">Nenhuma viagem</td></tr>'}</tbody></table></div></section>`;
+}
+async function saveDriverTrip(e){
+ e.preventDefault();
+ if(isAdmin || !driverRecord || !session) return msg('Motorista não identificado.',true);
+ const f=new FormData(e.target), a=Number(f.get('km_inicial')), b=Number(f.get('km_final'));
+ if(!Number.isFinite(a)||!Number.isFinite(b)||b<a) return msg('KM final deve ser maior ou igual ao inicial.',true);
+ const origem=String(f.get('origem')||'').trim(), destino=String(f.get('destino')||'').trim();
+ if(!origem||!destino) return msg('Informe origem e destino.',true);
+ const btn=e.target.querySelector('button[type="submit"]');btn.disabled=true;
+ try{
+  const {error}=await client.from('viagens').insert({
+   user_id:driverRecord.user_id,motorista_id:driverRecord.id,veiculo_id:f.get('veiculo_id'),
+   data_viagem:f.get('data_viagem'),origem,destino,km_inicial:a,km_final:b,
+   km_rodados:Number((b-a).toFixed(2)),faturamento:Number(f.get('faturamento')),
+   observacoes:String(f.get('observacoes')||'')
+  });
+  if(error) throw error;
+  await refresh();toast('Viagem registrada com sucesso.');
+ }catch(err){msg('Erro ao salvar viagem: '+err.message,true);}
+ finally{btn.disabled=false;}
+}
+
 /* =========================================================
    CONEXÃO / AUTH
    ========================================================= */
@@ -967,12 +1009,14 @@ async function connect(){
       }
       if(recoveryActive) return;
       if(!s){ show('auth'); setIdentity(); }
-      else { show('app'); setIdentity(); setTimeout(refresh, 0); }
+      else { isAdmin = s.user.id === ADMIN_UID; driverRecord = null; active = isAdmin ? 'dashboard' : 'viagens'; show('app'); setIdentity(); setTimeout(refresh, 0); }
     });
 
     const {data:d, error} = await client.auth.getSession();
     if(error) throw error;
     session = d.session;
+    isAdmin = !!session && session.user.id === ADMIN_UID;
+    active = isAdmin ? 'dashboard' : 'viagens';
 
     if(recoveryActive || recoveryFromLink()){
       recoveryActive = true;
@@ -1045,6 +1089,18 @@ async function logout(){
 async function refresh(){
   if(!session) return;
   try{
+    if(!isAdmin){
+      const {data:m,error:me}=await client.from('motoristas').select('id,nome,user_id,status').eq('auth_user_id',session.user.id).eq('status','ativo').maybeSingle();
+      if(me) throw me;
+      if(!m){ $('content').textContent='Seu login ainda não foi vinculado a um motorista ativo. Contate o administrador.'; $('nav').innerHTML=''; return; }
+      driverRecord=m;
+      for(const t of ['veiculos','viagens']){
+        const {data:d,error}=await client.from(t).select('*').limit(5000);
+        if(error) throw error;
+        data[t]=d||[];
+      }
+      render();return;
+    }
     for(const t of Object.keys(specs)){
       const {data:d, error} = await client.from(t).select('*').limit(5000);
       if(error) throw Error(t + ': ' + error.message);
@@ -1062,10 +1118,16 @@ async function refresh(){
 /* =========================================================
    NAVEGAÇÃO / RENDER
    ========================================================= */
-function nav(t){ active = t; render(); }
+function nav(t){ if(!isAdmin && t !== 'viagens') return; active = t; render(); }
 
 function render(){
   if(!session) return;
+  if(!isAdmin){
+    $('nav').innerHTML = '<button class="navbtn active">Viagens</button>';
+    $('syncInfo').textContent = 'Acesso do motorista';
+    $('content').innerHTML = driverPage();
+    return;
+  }
 
   const tabs = ['dashboard','motoristas','veiculos','viagens','financeiro','pendencias','manutencoes','metas','seguranca'];
   $('nav').innerHTML = tabs.map(t => {
@@ -1146,6 +1208,7 @@ function setRevenueSource(v){
 }
 
 function editRow(t, id){
+  if(!isAdmin) return msg('Acesso restrito.',true);
   const record = (data[t] || []).find(x => x.id === id);
   if(!record) return msg("Registro não encontrado.", true);
 
@@ -1378,6 +1441,7 @@ function calcularKmViagem(form){
 
 async function saveRow(e, t){
   e.preventDefault();
+  if(!isAdmin) return msg('Use o formulário exclusivo de viagens.',true);
   const f = new FormData(e.target);
   const o = {};
   for(const [k, v] of f.entries()){
@@ -1415,6 +1479,7 @@ async function saveRow(e, t){
 }
 
 async function removeRow(t, id){
+  if(!isAdmin) return msg('Acesso restrito.',true);
   const ok = await confirmDialog('Excluir este registro definitivamente? Esta ação não pode ser desfeita.');
   if(!ok) return;
   const {error} = await client.from(t).delete().eq('id', id);
