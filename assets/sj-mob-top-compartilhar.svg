@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+<rect width="1200" height="630" fill="#081426"/>
+<rect width="1200" height="12" fill="#ffcb19"/>
+<path d="M760 630 1100 0h100L860 630Z" fill="#10213a"/>
+<path d="M1098 0 758 630" stroke="#ffcb19" stroke-width="2" opacity=".3"/>
+<rect x="80" y="127" width="194" height="194" rx="42" fill="#ffcb19"/>
+<text x="177" y="257" text-anchor="middle" fill="#081426" font-family="DejaVu Sans" font-weight="bold" font-size="98">SJ</text>
+<path d="M118 287h118" stroke="#081426" stroke-width="7"/>
+<path d="M164 287h27" stroke="#ffcb19" stroke-width="7"/>
+<text x="312" y="222" fill="#fff" font-family="DejaVu Sans" font-weight="bold" font-size="80">MOB TOP</text>
+<text x="318" y="278" fill="#ffcb19" font-family="DejaVu Sans" font-size="26" letter-spacing="4">GESTÃO DE FROTA</text>
+<text x="82" y="409" fill="#fff" font-family="DejaVu Sans" font-weight="bold" font-size="39">Área do motorista</text>
+<text x="84" y="452" fill="#b5c0cf" font-family="DejaVu Sans" font-size="25">Viagens, quilometragem e pagamentos em um só lugar.</text>
+<rect x="82" y="494" width="349" height="60" rx="13" fill="#ffcb19"/>
+<text x="109" y="533" fill="#081426" font-family="DejaVu Sans" font-weight="bold" font-size="24">ACESSE O SISTEMA</text>
+<path d="M384 514l12 10-12 10m-20-10h30" fill="none" stroke="#081426" stroke-width="3"/>
+</svg>
