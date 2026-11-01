@@ -777,7 +777,7 @@ tbody td{padding:8px 9px;font-size:12px}
 </section>
 </main>
 
-<footer class="footer">SJ MOB TOP · Martins · v2.5 · acesso individual e dados protegidos</footer>
+<footer class="footer">SJ MOB TOP · Martins · v2.6 · acesso individual e dados protegidos</footer>
 
 <div id="toasts" aria-live="polite" aria-atomic="false"></div>
 <div id="modal-root"></div>
@@ -2168,11 +2168,12 @@ function security(){
       <h3>Backup manual da frota</h3>
       <p class="sub">Exporte os registros da frota, financeiro, pendências, manutenção, metas e informações dos comprovantes em JSON.</p>
       <div class="btn-row" style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap"><button type="button" id="backup-download" onclick="baixarBackupFrota()">↓ Baixar backup dos dados</button><button type="button" class="alt" id="backup-sheets" onclick="exportarBackupGooglePlanilhas()">▦ Exportar para Google Planilhas</button></div><p class="sub" style="margin-top:10px">O botão gera um arquivo .xlsx com abas separadas. Para abrir no Google Planilhas, envie o arquivo ao Google Drive e escolha Abrir com → Planilhas Google. Não há envio automático para sua conta Google.</p>
-      <p class="sub" style="margin-top:12px">Somente administrador. Não inclui arquivos PDF e imagens anexados. A restauração deve ser conferida antes de importar dados; este painel não sobrescreve registros.</p>
+      <p class="sub" style="margin-top:12px">Os downloads locais JSON e Excel contêm somente registros. Para incluir imagens e PDFs dos comprovantes, use o backup do Google Drive abaixo. Este painel não sobrescreve registros.</p>
     </div>
     <div class="panel" style="margin-top:18px;padding:16px">
       <h3>Conexão com Google Drive</h3>
-      <p class="sub">Backup semanal configurado para <b>domingo às 3h (Brasília)</b>, mesmo com o sistema fechado. Mantenha o Google Drive autorizado. Os arquivos anexados não estão incluídos.</p>
+      <p class="sub">Backup de <b>registros e arquivos anexados</b>, configurado para <b>domingo às 3h (Brasília)</b>, mesmo com o sistema fechado. Inclui imagens e PDFs dos comprovantes dentro do arquivo JSON, com verificação de integridade. Mantenha o Google Drive autorizado.</p>
+      <p class="sub">Limite atual: 40 MB por backup, incluindo anexos codificados. Se um arquivo não puder ser lido, o backup não é concluído como se estivesse completo.</p>
       <div class="btn-row" style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
         <button type="button" id="google-drive-connect" onclick="conectarGoogleDrive()">Conectar Google Drive</button>
         <button type="button" class="alt" id="google-drive-status" onclick="verificarGoogleDrive()">Verificar conexão</button>
@@ -2240,7 +2241,7 @@ async function verificarGoogleDrive(){
 
 async function salvarBackupNoDrive(){
  if(!isAdmin||!session||session.user.id!==ADMIN_UID)return msg('Acesso restrito.',true);
- if(!confirm('Enviar ao Google Drive uma cópia dos registros da frota, incluindo dados pessoais e financeiros? Os arquivos anexados não estão incluídos.'))return;
+ if(!confirm('Enviar ao Google Drive uma cópia dos registros da frota e dos arquivos anexados, incluindo dados pessoais e financeiros?'))return;
  const btn=document.getElementById('google-drive-backup');
  if(btn){btn.disabled=true;btn.textContent='Enviando backup…';}
  feedbackGoogleDrive('Preparando backup e enviando ao Google Drive…');
@@ -2249,7 +2250,7 @@ async function salvarBackupNoDrive(){
   if(authError||!auth.session?.access_token)throw Error('Sua sessão expirou.');
   const {data,error}=await client.functions.invoke('google-drive-backup',{body:{action:'manual'},headers:{Authorization:'Bearer '+auth.session.access_token}});
   if(error||!data||!data.ok)throw Error(data?.error||'Não foi possível salvar o backup. Verifique se a função google-drive-backup está publicada.');
-  feedbackGoogleDrive('Backup salvo no Google Drive: '+data.file_name+'. Atenção: arquivos anexados não estão incluídos.');
+  feedbackGoogleDrive('Backup salvo no Google Drive: '+data.file_name+'. Anexos incluídos: '+Number(data.attachment_count||0)+'. '+(data.integrity_verified?'Integridade verificada.':''));
   msg('Backup salvo no Google Drive.');
  }catch(e){feedbackGoogleDrive(e.message||'Erro no backup');msg(e.message||'Erro no backup',true);}
  finally{if(btn){btn.disabled=false;btn.textContent='Salvar backup no Drive';}}
