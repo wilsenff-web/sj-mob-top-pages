@@ -645,6 +645,20 @@ tbody td{padding:8px 9px;font-size:12px}
 /* Acessibilidade: áreas clicáveis preservadas em telas de toque */
 @media(pointer:coarse){.sidebar .navbtn{min-height:40px}button{min-height:40px}}
 
+
+/* Formulários do motorista: campos alinhados e ações em linha própria */
+.driver-action-panel .btn-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.driver-action-panel .btn-row button{min-height:42px;max-width:100%;white-space:normal}
+.driver-entry-panel .driver-fields{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px 12px;align-items:end}
+.driver-entry-panel .driver-fields .field{min-width:0;width:100%}
+.driver-entry-panel .driver-fields .field label{display:block;min-height:18px;margin-bottom:5px}
+.driver-entry-panel .driver-fields .field input,
+.driver-entry-panel .driver-fields .field select{display:block;width:100%;min-width:0;max-width:100%;box-sizing:border-box}
+.driver-entry-panel .driver-fields .field input[type=file]{padding:9px 8px;font-size:12px;overflow:hidden}
+.driver-entry-panel .driver-form-actions{grid-column:1/-1;display:flex;gap:10px;align-items:center;justify-content:flex-start;flex-wrap:wrap;padding-top:4px}
+.driver-entry-panel .driver-form-actions button{min-height:40px;max-width:100%;white-space:normal}
+@media(max-width:950px){.driver-entry-panel .driver-fields{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:540px){.driver-entry-panel .driver-fields{grid-template-columns:minmax(0,1fr)}.driver-entry-panel .driver-form-actions button{width:100%}.driver-action-panel .btn-row button{flex:1 1 180px}}
 </style>
 </head>
 <body>
@@ -942,14 +956,14 @@ function driverPage(){
  if(!driverRecord) return '<section class="panel"><h2>Vinculação pendente</h2></section>';
  const vehicles=(data.veiculos||[]).map(v=>`<option value="${esc(v.id)}">${esc(v.placa||'')} • ${esc(v.modelo||'')}</option>`).join('');
  const rows=(data.viagens||[]).map(v=>`<tr><td>${esc(v.data_viagem||'')}</td><td>${esc(v.origem||'')} → ${esc(v.destino||'')}</td><td>${num(v.km_rodados||0)} km</td><td>${brl(v.faturamento||0)}</td><td>${badge(v.status_conferencia||'aprovada')}</td></tr>`).join('');
- return `<section class="panel"><h2>Área do motorista — ${esc(driverRecord.nome)}</h2>
+ return `<section class="panel driver-action-panel"><h2>Área do motorista — ${esc(driverRecord.nome)}</h2>
  <p class="sub">Escolha uma ação para abrir o formulário. Seus registros ficam organizados logo abaixo.</p>
  <div class="btn-row" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
  <button type="button" onclick="toggleDriverForm('viagem')">＋ Registrar viagem do dia</button>
  ${comprovantesReady?'<button type="button" class="alt" onclick="toggleDriverForm(\'comprovante\')">📎 Enviar comprovante</button>':''}
  </div></section>
- <section class="panel" id="driver-form-viagem" style="display:none"><h2>Registrar viagem do dia</h2>
- <form onsubmit="saveDriverTrip(event)" class="fields">
+ <section class="panel driver-entry-panel" id="driver-form-viagem" style="display:none"><h2>Registrar viagem do dia</h2>
+ <form onsubmit="saveDriverTrip(event)" class="fields driver-fields">
  <div class="field"><label>Data</label><input name="data_viagem" type="date" required></div>
  <div class="field"><label>Veículo</label><select name="veiculo_id" required><option value="">Selecione</option>${vehicles}</select></div>
  <div class="field"><label>Origem</label><input name="origem" required maxlength="200"></div>
@@ -958,15 +972,15 @@ function driverPage(){
  <div class="field"><label>KM final</label><input name="km_final" type="number" min="0" step="0.01" required></div>
  <div class="field"><label>Faturamento (R$)</label><input name="faturamento" type="number" min="0" step="0.01" required></div>
  <div class="field"><label>Observações</label><input name="observacoes"></div>
- <div class="btn-row"><button type="submit">Registrar viagem do dia</button> <button type="button" class="alt" onclick="toggleDriverForm(\'viagem\')">Cancelar</button></div></form></section>
- <section class="panel" id="driver-form-comprovante" style="display:none"><h2>Enviar comprovante de pagamento</h2>
+ <div class="btn-row driver-form-actions"><button type="submit">Registrar viagem do dia</button> <button type="button" class="alt" onclick="toggleDriverForm(\'viagem\')">Cancelar</button></div></form></section>
+ <section class="panel driver-entry-panel" id="driver-form-comprovante" style="display:none"><h2>Enviar comprovante de pagamento</h2>
  <p class="sub">Anexe o comprovante de um pagamento feito ao administrador. O envio fica pendente de conferência e não dá baixa automática em dívidas.</p>
- ${comprovantesReady ? `<form onsubmit="enviarComprovante(event)" class="fields">
+ ${comprovantesReady ? `<form onsubmit="enviarComprovante(event)" class="fields driver-fields">
  <div class="field"><label>Valor pago (R$)</label><input name="valor" type="number" min="0.01" step="0.01" required></div>
  <div class="field"><label>Data do pagamento</label><input name="data_pagamento" type="date" required></div>
  <div class="field"><label>Observação (opcional)</label><input name="observacao" maxlength="300"></div>
  <div class="field"><label>Comprovante (imagem ou PDF, até 5 MB)</label><input name="arquivo" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" required></div>
- <div class="btn-row"><button type="submit">Confirmar envio do comprovante</button> <button type="button" class="alt" onclick="toggleDriverForm(\'comprovante\')">Cancelar</button></div></form>` : '<p class="sub">Módulo de comprovantes ainda não ativado no Supabase.</p>'}
+ <div class="btn-row driver-form-actions"><button type="submit">Confirmar envio do comprovante</button> <button type="button" class="alt" onclick="toggleDriverForm(\'comprovante\')">Cancelar</button></div></form>` : '<p class="sub">Módulo de comprovantes ainda não ativado no Supabase.</p>'}
  </section><section class="panel"><h2>Comprovantes enviados</h2>
  <div class="scroll"><table><thead><tr><th>Data</th><th>Valor</th><th>Situação</th><th>Arquivo</th></tr></thead><tbody>
  ${(data.comprovantes_motoristas||[]).map(c=>`<tr><td>${esc(c.data_pagamento)}</td><td>${brl(c.valor)}</td><td>${esc(c.status)}</td><td><button type="button" class="alt sm" onclick="abrirComprovante('${esc(c.arquivo_path)}')">Ver</button></td></tr>`).join('')||'<tr><td colspan="4">Nenhum comprovante enviado</td></tr>'}</tbody></table></div></section>
