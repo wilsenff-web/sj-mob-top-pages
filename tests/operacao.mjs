@@ -88,5 +88,10 @@ assert.ok(nodes.get('cadastro-feedback').textContent.includes('confirme a conta'
 context.signupEvent.target.values.confirmacao='diferente';
 await run('cadastrarMinhaConta(signupEvent)');
 assert.equal(signupCalls,1);
-console.log('PASS cadastro exige senhas iguais; confirmação de e-mail; espera sem viagens; aprovação exige escolher o vínculo');
+context.signupEvent.target.values.confirmacao='Fixture-password-12';
+context.mockSignUp=async()=>({data:{session:{user:{id:'new-pending-user'}}},error:null});
+await run('cadastrarMinhaConta(signupEvent)');
+assert.ok(nodes.get('cadastro-feedback').textContent.includes('Aguarde a liberação'));
+assert.ok(nodes.get('cadastro-feedback').textContent.includes('Não precisa confirmar por e-mail'));
+console.log('PASS cadastro com senha própria, sessão imediata e espera pela liberação; fallback antigo preservado');
 console.log('ALL FRONTEND TESTS PASSED');
