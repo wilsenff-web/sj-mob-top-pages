@@ -2128,6 +2128,15 @@ function security(){
       <div class="btn-row" style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap"><button type="button" id="backup-download" onclick="baixarBackupFrota()">↓ Baixar backup dos dados</button><button type="button" class="alt" id="backup-sheets" onclick="exportarBackupGooglePlanilhas()">▦ Exportar para Google Planilhas</button></div><p class="sub" style="margin-top:10px">O botão gera um arquivo .xlsx com abas separadas. Para abrir no Google Planilhas, envie o arquivo ao Google Drive e escolha Abrir com → Planilhas Google. Não há envio automático para sua conta Google.</p>
       <p class="sub" style="margin-top:12px">Somente administrador. Não inclui arquivos PDF e imagens anexados. Backup automático e restauração ainda não estão ativos.</p>
     </div>
+    <div class="panel" style="margin-top:18px;padding:16px">
+      <h3>Conexão com Google Drive</h3>
+      <p class="sub">Autorize sua conta Google para preparar o backup na nuvem. Esta conexão ainda não envia arquivos nem ativa backup semanal.</p>
+      <div class="btn-row" style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
+        <button type="button" id="google-drive-connect" onclick="conectarGoogleDrive()">Conectar Google Drive</button>
+        <button type="button" class="alt" id="google-drive-status" onclick="verificarGoogleDrive()">Verificar conexão</button>
+      </div>
+      <p id="google-drive-feedback" class="sub" role="status" aria-live="polite" style="margin-top:10px">Conexão ainda não verificada.</p>
+    </div>
     <div class="btn-row" style="margin-top:16px">
       <button onclick="securityTest()">Testar leitura com minha conta</button>
     </div>
@@ -2138,6 +2147,53 @@ function security(){
   </div>`;
 }
 
+
+/* Google Drive OAuth — somente autorização, sem upload/cron. */
+async function chamarGoogleDrive(action){
+ if(!client || !session || !isAdmin || session.user.id!==ADMIN_UID)throw Error('Acesso restrito ao administrador.');
+ const {data:auth,error:authError}=await client.auth.getSession();
+ if(authError || !auth.session?.access_token)throw Error('Sua sessão expirou. Entre novamente no SJ MOB TOP.');
+ const {data,error}=await client.functions.invoke('google-drive-oauth',{
+   body:{action},
+   headers:{Authorization:'Bearer '+auth.session.access_token}
+ });
+ if(error)throw Error('Não foi possível consultar a função Google Drive. Confira a publicação e as configurações.');
+ if(!data || typeof data!=='object' || data.error)throw Error(data?.error||'Resposta inválida do Google Drive.');
+ return data;
+}
+function feedbackGoogleDrive(text){
+ const el=document.getElementById('google-drive-feedback');
+ if(el)el.textContent=text;
+}
+async function conectarGoogleDrive(){
+ const btn=document.getElementById('google-drive-connect');
+ if(btn)btn.disabled=true;
+ feedbackGoogleDrive('Preparando autorização segura…');
+ // Abrir janela durante o clique para evitar bloqueio de pop-ups.
+ const popup=window.open('about:blank','sj_google_drive_oauth','width=620,height=740');
+ try{
+  const result=await chamarGoogleDrive('start');
+  const url=new URL(result.authorization_url);
+  if(url.protocol!=='https:' || url.hostname!=='accounts.google.com')throw Error('Endereço de autorização inesperado.');
+  if(popup && !popup.closed){popup.location.href=url.href;popup.focus();}
+  else{feedbackGoogleDrive('O navegador bloqueou a janela. Permita pop-ups e tente novamente.');return;}
+  feedbackGoogleDrive('Autorize no Google e depois clique em “Verificar conexão”.');
+ }catch(err){
+  if(popup&&!popup.closed)popup.close();
+  feedbackGoogleDrive(err.message||'Falha na autorização.');
+  msg(err.message||'Falha na autorização.',true);
+ }finally{if(btn)btn.disabled=false;}
+}
+async function verificarGoogleDrive(){
+ const btn=document.getElementById('google-drive-status');
+ if(btn)btn.disabled=true;
+ feedbackGoogleDrive('Consultando conexão…');
+ try{
+  const result=await chamarGoogleDrive('status');
+  feedbackGoogleDrive(result.connected?'Google Drive autorizado. Backup automático ainda não está ativo.':'Google Drive ainda não autorizado.');
+ }catch(err){feedbackGoogleDrive(err.message||'Não foi possível verificar a conexão.');msg(err.message||'Erro de conexão.',true);}
+ finally{if(btn)btn.disabled=false;}
+}
 
 /* ============== PENDÊNCIAS (MÓDULO ISOLADO) ============== */
 const categoriasPend=['Diária atrasada','Pedágio','Multa de trânsito','Abastecimento','Adiantamento de dinheiro','Empréstimo','Mau uso do veículo','Outras dívidas'];
