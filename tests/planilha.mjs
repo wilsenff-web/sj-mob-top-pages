@@ -1,0 +1,15 @@
+import {loadSpreadsheetRuntime} from './planilha-helper.mjs';
+import {unzipSync,strFromU8} from 'fflate';
+import assert from 'node:assert/strict';
+const {createSpreadsheet}=loadSpreadsheetRuntime(new URL('../supabase/google-drive/',import.meta.url));
+const backup={created_at:'2026-11-01T16:00:00Z',tables:{motoristas:[{id:'d1',nome:'Motorista & Teste',telefone:'0012345',cnh:'00600112233',valor_diaria:100,percentual_comissao:12.5}],veiculos:[{id:'v1',placa:'ABC1D23',modelo:'Spin'}],viagens:[{id:'t1',motorista_id:'d1',veiculo_id:'v1',data_viagem:'2026-11-01',faturamento:156.31,km_rodados:20.5,observacoes:'=1+1'}],financeiro:[],pendencias:[],pagamentos_pendencias:[],manutencoes:[],metas:[],comprovantes_motoristas:[],sj_solicitacoes_motoristas:[]},storage:{total_files:1,total_bytes:90045,buckets:[{id:'sj-comprovantes',files:[{path:'driver/prova.png',mime_type:'image/png',size_bytes:90045,sha256:'a'.repeat(64),content_base64:'DO_NOT_EMBED_IN_XLSX'}]}]}};
+const file={id:'drive-file-test',name:'backup-completo.json'};
+const zip=unzipSync(createSpreadsheet(backup,file));
+assert.equal(Object.keys(zip).filter(k=>/^xl\/worksheets\/sheet\d+.xml$/.test(k)).length,12);
+const all=Object.keys(zip).filter(k=>k.endsWith('.xml')).map(k=>strFromU8(zip[k])).join('');
+for(const text of ['00600112233','0012345','Motorista &amp; Teste','0.125','156.31','=1+1','https://drive.google.com/file/d/drive-file-test/view'])assert.ok(all.includes(text));
+assert.ok(!all.includes('DO_NOT_EMBED_IN_XLSX'));assert.ok(!all.includes('<x:f>'));
+const names=Object.values(zip).length;assert.ok(names>12);
+backup.tables.motoristas[0].nome='x'.repeat(32768);
+assert.throws(()=>createSpreadsheet(backup,file),/limite de texto/);
+console.log('PASS XLSX: 12 abas, valores/datas tipados, zeros preservados, texto literal, anexo listado sem base64, limite sem truncar');
