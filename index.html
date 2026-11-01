@@ -731,6 +731,33 @@ tbody td{padding:8px 9px;font-size:12px}
 .driver-debt-summary{display:flex;gap:20px;flex-wrap:wrap;margin:12px 0}
 .driver-debt-summary strong{display:block;font-size:21px;color:var(--danger)}
 
+
+/* Histórico administrativo de viagens: seis colunas, sem rolagem lateral. */
+.trips-table{width:100%;min-width:0!important;table-layout:fixed}
+.trips-table th,.trips-table td{white-space:normal;overflow-wrap:anywhere;padding:11px 8px;vertical-align:top}
+.trips-table th:nth-child(1){width:11%}.trips-table th:nth-child(2){width:21%}
+.trips-table th:nth-child(3){width:25%}.trips-table th:nth-child(4){width:10%}
+.trips-table th:nth-child(5){width:13%}.trips-table th:nth-child(6){width:20%}
+.trips-table .trip-person strong,.trips-table .trip-person small{display:block}
+.trips-table .trip-person small{margin-top:4px;line-height:1.4}
+.trips-table .trip-route{display:block;line-height:1.5}
+.trip-details{margin-top:7px;font-size:12px}
+.trip-details summary{cursor:pointer;color:var(--muted);padding:4px 0}
+.trip-details dl{margin:8px 0;display:grid;gap:5px}
+.trip-details dt{font-weight:700;color:var(--muted)}.trip-details dd{margin:0;white-space:pre-wrap}
+.trip-row-actions{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}
+.trip-row-actions button{max-width:100%;white-space:normal}
+.trips-scroll{max-width:100%;min-width:0}
+@media(max-width:760px){
+ .trips-table thead{display:none}
+ .trips-table tbody{display:block}
+ .trips-table tr{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);border:1px solid var(--border);border-radius:12px;margin-bottom:10px;background:var(--surface);overflow:hidden}
+ .trips-table td{display:block;min-width:0;border:0;padding:9px 11px}
+ .trips-table td::before{content:attr(data-label);display:block;color:var(--muted);font-size:11px;font-weight:700;margin-bottom:5px}
+ .trips-table td:nth-child(3),.trips-table td:last-child,.trips-table td.empty{grid-column:1/-1}
+ .trip-row-actions{justify-content:flex-start}
+}
+
 </style>
 </head>
 <body>
@@ -831,7 +858,7 @@ tbody td{padding:8px 9px;font-size:12px}
 </section>
 </main>
 
-<footer class="footer">SJ MOB TOP · Martins · v2.12 · acesso individual e dados protegidos</footer>
+<footer class="footer">SJ MOB TOP · Martins · v2.13 · acesso individual e dados protegidos</footer>
 
 <div id="toasts" aria-live="polite" aria-atomic="false"></div>
 <div id="modal-root"></div>
@@ -1617,6 +1644,18 @@ function closeForm(t){
 }
 
 function rowHtml(t, r){
+  if(t==='viagens'){
+    const v=(data.veiculos||[]).find(v=>v.id===r.veiculo_id);
+    const files=comprovantesDaViagem(r.id);
+    return `<tr>
+      <td data-label="Data">${esc(fmtDate(r.data_viagem))}</td>
+      <td data-label="Motorista / veículo" class="trip-person"><strong>${esc(lookup('motoristas',r.motorista_id))}</strong><small>${esc(v?v.placa+' · '+v.modelo:lookup('veiculos',r.veiculo_id))}</small></td>
+      <td data-label="Trajeto"><span class="trip-route">${esc(r.origem||'—')} → ${esc(r.destino||'—')}</span><details class="trip-details"><summary>Detalhes da viagem</summary><dl><dt>KM inicial / final</dt><dd>${r.km_inicial==null?'—':num(r.km_inicial)} / ${r.km_final==null?'—':num(r.km_final)}</dd><dt>Observações</dt><dd>${esc(r.observacoes||'Sem observações')}</dd><dt>Conferência</dt><dd>${esc(r.status_conferencia||'aprovada')}</dd></dl>${files}</details></td>
+      <td data-label="KM rodados">${num(r.km_rodados||0)}</td>
+      <td data-label="Valor">${brl(r.faturamento||0)}</td>
+      <td data-label="Ações"><div class="trip-row-actions"><button class="sm" onclick="editRow('viagens','${r.id}')">Editar</button><button class="sm danger" onclick="removeRow('viagens','${r.id}')">Excluir</button></div></td>
+    </tr>`;
+  }
   const s = specs[t];
   const divida = t === 'motoristas' && pendenciasReady ? resumoDividasMotoristas().motoristas.find(d=>d.id===r.id) : null;
   return `<tr>
@@ -1630,7 +1669,7 @@ function rowHtml(t, r){
 function rowsHtml(t, q){
   const s = specs[t];
   const list = visibleRows(t, q);
-  if(!list.length) return `<tr><td class="empty" colspan="${s.cols.length + 1}">Nenhum registro encontrado.</td></tr>`;
+  if(!list.length) return `<tr><td class="empty" colspan="${t==='viagens'?6:s.cols.length + 1}">Nenhum registro encontrado.</td></tr>`;
   return list.map(r => rowHtml(t, r)).join('');
 }
 
@@ -1714,11 +1753,10 @@ function tablePage(t){
         <button onclick="openNewForm('${t}')">＋ Novo registro</button>
       </div>
     </div>
-    <div class="scroll">
-      <table>
+    <div class="scroll ${t==='viagens'?'trips-scroll':''}">
+      <table class="${t==='viagens'?'trips-table':''}">
         <thead><tr>
-          ${s.cols.map(c => `<th>${c[1]}</th>`).join('')}
-          <th style="text-align:right">Ação</th>
+          ${t==='viagens'?'<th>Data</th><th>Motorista / veículo</th><th>Trajeto</th><th>KM</th><th>Valor</th><th style="text-align:right">Ações</th>':s.cols.map(c => `<th>${c[1]}</th>`).join('')+'<th style="text-align:right">Ação</th>'}
         </tr></thead>
         <tbody id="tbody-${t}">${rowsHtml(t, q)}</tbody>
       </table>
