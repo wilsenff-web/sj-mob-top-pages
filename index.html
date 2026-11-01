@@ -2130,10 +2130,11 @@ function security(){
     </div>
     <div class="panel" style="margin-top:18px;padding:16px">
       <h3>Conexão com Google Drive</h3>
-      <p class="sub">Autorize sua conta Google para preparar o backup na nuvem. Esta conexão ainda não envia arquivos nem ativa backup semanal.</p>
+      <p class="sub">Conecte o Google Drive e salve uma cópia dos registros. Os anexos não estão incluídos. O backup semanal depende de agendamento no servidor.</p>
       <div class="btn-row" style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
         <button type="button" id="google-drive-connect" onclick="conectarGoogleDrive()">Conectar Google Drive</button>
         <button type="button" class="alt" id="google-drive-status" onclick="verificarGoogleDrive()">Verificar conexão</button>
+        <button type="button" class="alt" id="google-drive-backup" onclick="salvarBackupNoDrive()">Salvar backup no Drive</button>
       </div>
       <p id="google-drive-feedback" class="sub" role="status" aria-live="polite" style="margin-top:10px">Conexão ainda não verificada.</p>
     </div>
@@ -2193,6 +2194,23 @@ async function verificarGoogleDrive(){
   feedbackGoogleDrive(result.connected?'Google Drive autorizado. Backup automático ainda não está ativo.':'Google Drive ainda não autorizado.');
  }catch(err){feedbackGoogleDrive(err.message||'Não foi possível verificar a conexão.');msg(err.message||'Erro de conexão.',true);}
  finally{if(btn)btn.disabled=false;}
+}
+
+async function salvarBackupNoDrive(){
+ if(!isAdmin||!session||session.user.id!==ADMIN_UID)return msg('Acesso restrito.',true);
+ if(!confirm('Enviar ao Google Drive uma cópia dos registros da frota, incluindo dados pessoais e financeiros? Os arquivos anexados não estão incluídos.'))return;
+ const btn=document.getElementById('google-drive-backup');
+ if(btn){btn.disabled=true;btn.textContent='Enviando backup…';}
+ feedbackGoogleDrive('Preparando backup e enviando ao Google Drive…');
+ try{
+  const {data:auth,error:authError}=await client.auth.getSession();
+  if(authError||!auth.session?.access_token)throw Error('Sua sessão expirou.');
+  const {data,error}=await client.functions.invoke('google-drive-backup',{body:{action:'manual'},headers:{Authorization:'Bearer '+auth.session.access_token}});
+  if(error||!data||!data.ok)throw Error(data?.error||'Não foi possível salvar o backup. Verifique se a função google-drive-backup está publicada.');
+  feedbackGoogleDrive('Backup salvo no Google Drive: '+data.file_name+'. Atenção: arquivos anexados não estão incluídos.');
+  msg('Backup salvo no Google Drive.');
+ }catch(e){feedbackGoogleDrive(e.message||'Erro no backup');msg(e.message||'Erro no backup',true);}
+ finally{if(btn){btn.disabled=false;btn.textContent='Salvar backup no Drive';}}
 }
 
 /* ============== PENDÊNCIAS (MÓDULO ISOLADO) ============== */
