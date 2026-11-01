@@ -1,6 +1,7 @@
 // SJ MOB TOP — Backup de registros e anexos no Google Drive (manual + cron).
 // JSON v2: anexos em base64 com tamanho e SHA-256; originais nunca são alterados.
 import {createClient} from "npm:@supabase/supabase-js@2";
+import {createSpreadsheet,XLSX_MIME} from "./planilha.ts";
 const env=(name:string)=>Deno.env.get(name)||"";
 const url=env("SUPABASE_URL"),serviceKey=env("SUPABASE_SERVICE_ROLE_KEY");
 const admin=env("SJ_ADMIN_UID");
@@ -107,14 +108,14 @@ async function collectAttachments(baseBytes:number,requiredPaths:string[]){
  return {encoding:"base64",total_files:files.length,total_bytes:totalBytes,buckets:[{id:bucket,files}]};
 }
 
-async function upload(accessToken:string,filename:string,content:string){
- const metadata=JSON.stringify({name:filename,mimeType:"application/json",description:"SJ MOB TOP — tabelas e anexos completos em JSON v2"});
+async function upload(accessToken:string,filename:string,content:string|Uint8Array,mimeType="application/json"){
+ const bytes=typeof content==="string"?new TextEncoder().encode(content):content;
+ const metadata=JSON.stringify({name:filename,mimeType,description:"SJ MOB TOP — backup de dados; JSON com anexos e planilha XLSX"});
  const boundary="sjmobtop_"+crypto.randomUUID();
- const payload="--"+boundary+"\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n"+metadata+"\r\n--"+boundary+"\r\nContent-Type: application/json\r\n\r\n"+content+"\r\n--"+boundary+"--";
+ const payload=new Blob(["--"+boundary+"\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n"+metadata+"\r\n--"+boundary+"\r\nContent-Type: "+mimeType+"\r\n\r\n",bytes,"\r\n--"+boundary+"--"]);
  const response=await fetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,size,webViewLink,sha256Checksum",{method:"POST",headers:{"authorization":"Bearer "+accessToken,"content-type":"multipart/related; boundary="+boundary},body:payload});
  const data=await response.json();
  if(!response.ok||!data.id)throw Error("Google Drive recusou o upload");
- const bytes=new TextEncoder().encode(content);
  if(Number(data.size)!==bytes.byteLength)throw Error("Tamanho do backup no Drive não confere. Verificação falhou.");
  const expectedHash=await sha256(bytes);
  let storedHash=data.sha256Checksum;
@@ -146,6 +147,10 @@ Deno.serve(async(req)=>{
   if(new TextEncoder().encode(content).byteLength>40*1024*1024)throw Error("Backup maior que 40 MB: requer exportação em partes");
   const name="SJ-MOB-TOP-"+body.action+"-"+new Date().toISOString().replace(/[:.]/g,"-")+".json";
   const file=await upload(accessToken,name,content);
-  return json({ok:true,file_name:file.name,file_id:file.id,created_at:backup.created_at,scope:backup.scope,attachment_count:storage.total_files,attachment_bytes:storage.total_bytes,integrity_verified:file.integrity_verified,sha256:file.sha256,schema_version:2});
+  const workbook=createSpreadsheet(completeBackup,{id:file.id,name:file.name});
+  if(workbook.byteLength>MAX_BACKUP_BYTES)throw Error("Backup JSON salvo; a planilha excede 40 MB e requer exportação em partes.");
+  const spreadsheet=await upload(accessToken,name.replace(/\.json$/,".xlsx"),workbook,XLSX_MIME);
+  return json({ok:true,file_name:file.name,file_id:file.id,created_at:backup.created_at,scope:backup.scope,attachment_count:storage.total_files,attachment_bytes:storage.total_bytes,integrity_verified:file.integrity_verified,sha256:file.sha256,schema_version:2,spreadsheet_file_id:spreadsheet.id,spreadsheet_file_name:spreadsheet.name,spreadsheet_integrity_verified:spreadsheet.integrity_verified,spreadsheet_url:"https://drive.google.com/file/d/"+spreadsheet.id+"/view"});
  }catch(e){console.error("Drive backup failed:",e instanceof Error?e.message:"unknown");return json({error:e instanceof Error?e.message:"Falha ao criar backup"},500);}
 });
+
