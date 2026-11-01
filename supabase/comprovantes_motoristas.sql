@@ -44,11 +44,18 @@ create policy sj_comprovante_admin_update on public.comprovantes_motoristas
 create or replace function public.sj_comprovante_guard()
 returns trigger language plpgsql set search_path=public as $$
 begin
- if tg_op='UPDATE' then
+ if tg_op='INSERT' then
+   if new.status <> 'pendente' or new.reviewed_at is not null then
+     raise exception 'Novo comprovante deve estar pendente e sem revisão';
+   end if;
+ elsif tg_op='UPDATE' then
    if (new.id,new.user_id,new.motorista_id,new.enviado_por,new.valor,new.data_pagamento,new.observacao,new.arquivo_path,new.created_at)
       is distinct from
       (old.id,old.user_id,old.motorista_id,old.enviado_por,old.valor,old.data_pagamento,old.observacao,old.arquivo_path,old.created_at)
    then raise exception 'Campos do comprovante são imutáveis'; end if;
+   if new.reviewed_at is distinct from old.reviewed_at then
+     raise exception 'Data de revisão não pode ser definida manualmente';
+   end if;
    if new.status <> old.status and old.status <> 'pendente' then
      raise exception 'Comprovante já revisado'; end if;
    if new.status <> 'pendente' then new.reviewed_at=now(); end if;
@@ -56,7 +63,7 @@ begin
  return new;
 end $$;
 drop trigger if exists sj_comprovante_guard_trigger on public.comprovantes_motoristas;
-create trigger sj_comprovante_guard_trigger before update on public.comprovantes_motoristas
+create trigger sj_comprovante_guard_trigger before insert or update on public.comprovantes_motoristas
 for each row execute function public.sj_comprovante_guard();
 
 insert into storage.buckets(id,name,public,file_size_limit,allowed_mime_types)
