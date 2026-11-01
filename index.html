@@ -864,7 +864,7 @@ tbody td{padding:8px 9px;font-size:12px}
 </section>
 </main>
 
-<footer class="footer">SJ MOB TOP · Martins · v2.14 · acesso individual e dados protegidos</footer>
+<footer class="footer">SJ MOB TOP · Martins · v2.15 · acesso individual e dados protegidos</footer>
 
 <div id="toasts" aria-live="polite" aria-atomic="false"></div>
 <div id="modal-root"></div>
@@ -1137,11 +1137,11 @@ function driverPage(){
  </div></section>
  <section class="panel driver-entry-panel" id="driver-form-viagem" style="display:none"><h2>Registrar viagem do dia</h2>
  <form onsubmit="saveDriverTrip(event)" class="driver-form"><div class="fields driver-fields">
- <div class="field"><label>Data</label><input name="data_viagem" type="date" value="${hojeBrasilia()}" required></div>
- <div class="field"><label>Veículo</label><select name="veiculo_id" required><option value="">Selecione</option>${vehicles}</select></div>
+ <div class="field"><label>Data</label><input name="data_viagem" type="date" value="${hojeBrasilia()}" required onchange="preencherKmInicial(this.form)"></div>
+ <div class="field"><label>Veículo</label><select name="veiculo_id" required onchange="preencherKmInicial(this.form)"><option value="">Selecione</option>${vehicles}</select></div>
  <div class="field"><label>Origem</label><input name="origem" required maxlength="200"></div>
  <div class="field"><label>Destino</label><input name="destino" required maxlength="200"></div>
- <div class="field"><label>KM inicial</label><input name="km_inicial" type="number" min="0" step="0.01" oninput="calcularKmViagem(this.form)" required></div>
+ <div class="field"><label>KM inicial</label><input name="km_inicial" type="number" min="0" step="0.01" oninput="calcularKmViagem(this.form)" required><small data-km-hint role="status">Escolha o veículo e a data para buscar o último KM final.</small></div>
  <div class="field"><label>KM final</label><input name="km_final" type="number" min="0" step="0.01" oninput="calcularKmViagem(this.form)" required></div>
  <div class="field"><label>KM rodados</label><input name="km_rodados" type="number" readonly placeholder="Calculado automaticamente"></div>
  <div class="field"><label>Faturamento (R$)</label><input name="faturamento" type="number" min="0" step="0.01" required></div>
@@ -1252,6 +1252,7 @@ function painelComprovantes(){
 async function saveDriverTrip(e){
  e.preventDefault();
  if(isAdmin || !driverRecord || !session) return msg('Motorista não identificado.',true);
+ if(e.target.dataset.kmLoading==='true')return msg('Aguarde a consulta do KM inicial.',true);
  const f=new FormData(e.target), a=Number(f.get('km_inicial')), b=Number(f.get('km_final'));
  if(!Number.isFinite(a)||!Number.isFinite(b)||a<0||b<a) return msg('Informe KM válido; o final deve ser maior ou igual ao inicial.',true);
  const faturamento=Number(f.get('faturamento'));
@@ -1748,6 +1749,7 @@ function tablePage(t){
         : '';
       inp = `<input name="${k}" type="${type}" ${type === 'number' ? 'min="0" step="0.01"' : ''} ${val} ${req === true ? 'required' : ''}>`;
     }
+    if(t === 'viagens' && k === 'km_inicial') inp += '<small data-km-hint role="status">Escolha o veículo e a data para buscar o último KM final.</small>';
     if(t === 'viagens' && k === 'km_rodados') inp = '<input name="km_rodados" type="number" min="0" step="0.01" readonly required placeholder="Calculado automaticamente">';
     return `<div class="field"><label>${label}</label>${inp}</div>`;
   }).join('');
@@ -1789,7 +1791,7 @@ function tablePage(t){
       </div>
       <button type="button" class="alt sm" onclick="closeForm('${t}')">✕ Fechar</button>
     </div>
-    <form id="entry" oninput="if('${t}' === 'viagens') calcularKmViagem(this)" onsubmit="saveRow(event,'${t}')">
+    <form id="entry" onchange="if('${t}'==='viagens' && ['veiculo_id','data_viagem'].includes(event.target.name)) preencherKmInicial(this)" oninput="if('${t}' === 'viagens') calcularKmViagem(this)" onsubmit="saveRow(event,'${t}')">
       <div class="fields">${fields}</div>
       <div class="btn-row" style="margin-top:16px">
         <button type="submit" id="entry-submit">Salvar no Supabase</button>
@@ -1799,6 +1801,34 @@ function tablePage(t){
   </div>`;
 }
 
+async function preencherKmInicial(form){
+ const inicial=form?.elements.namedItem('km_inicial'),final=form?.elements.namedItem('km_final'),veiculo=form?.elements.namedItem('veiculo_id'),date=form?.elements.namedItem('data_viagem'),hint=form?.querySelector('[data-km-hint]');
+ if(!inicial||!veiculo||!date)return;
+ if(isAdmin&&form.id==='entry'&&editingRow?.table==='viagens'){
+  if(hint)hint.textContent='Edição de viagem: os KM já registrados foram preservados. Confira antes de salvar.';
+  return;
+ }
+ const token=String(Number(form.dataset.kmToken||0)+1);form.dataset.kmToken=token;
+ form.dataset.kmLoading='false';inicial.readOnly=false;inicial.value='';if(final)final.value='';calcularKmViagem(form);
+ const id=veiculo.value,day=date.value;
+ if(!id||!/^\d{4}-\d{2}-\d{2}$/.test(day)){if(hint)hint.textContent='Escolha o veículo e a data para buscar o último KM final.';return;}
+ if(!client||!session)return;
+ form.dataset.kmLoading='true';inicial.readOnly=true;if(hint)hint.textContent='Consultando o último KM final deste veículo…';
+ try{
+  const {data:reading,error}=await client.rpc('sj_ultimo_km_veiculo',{p_veiculo_id:id,p_data:day});
+  if(form.dataset.kmToken!==token||veiculo.value!==id||date.value!==day)return;
+  if(error)throw error;
+  if(reading?.km_final!==null&&reading?.km_final!==undefined&&Number.isFinite(Number(reading.km_final))){
+   inicial.value=String(Number(reading.km_final));
+   if(hint)hint.textContent='Preenchido com o KM final da viagem de '+fmtDate(reading.data_viagem)+(reading.situacao==='pendente'?' (aguardando conferência).':'.')+' Confira o odômetro do veículo.';
+  }else if(hint)hint.textContent='Sem KM final anterior nesta data. Informe o KM inicial do odômetro.';
+  calcularKmViagem(form);
+ }catch(error){
+  if(form.dataset.kmToken===token&&hint)hint.textContent='Não foi possível consultar o histórico. Informe o KM inicial conferindo o odômetro ou selecione o veículo novamente.';
+ }finally{
+  if(form.dataset.kmToken===token){form.dataset.kmLoading='false';inicial.readOnly=false;}
+ }
+}
 function calcularKmViagem(form){
   const inicial = form.elements.namedItem('km_inicial');
   const final = form.elements.namedItem('km_final');
@@ -1811,6 +1841,7 @@ function calcularKmViagem(form){
 async function saveRow(e, t){
   e.preventDefault();
   if(!isAdmin) return msg('Use o formulário exclusivo de viagens.',true);
+  if(t==='viagens'&&e.target.dataset.kmLoading==='true')return msg('Aguarde a consulta do KM inicial.',true);
   const f = new FormData(e.target);
   const o = {};
   const editing = editingRow?.table === t ? editingRow : null;
