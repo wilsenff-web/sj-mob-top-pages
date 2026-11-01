@@ -11,7 +11,14 @@ const adminUid=env("SJ_ADMIN_UID");
 const redirectUri=env("GOOGLE_OAUTH_REDIRECT_URI");
 const encryptionSecret=env("GOOGLE_TOKEN_ENCRYPTION_KEY");
 const db=createClient(supabaseUrl,serviceKey,{auth:{persistSession:false,autoRefreshToken:false}});
-const json=(obj:unknown,status=200)=>new Response(JSON.stringify(obj),{status,headers:{"content-type":"application/json","cache-control":"no-store"}});
+const corsHeaders={
+ "Access-Control-Allow-Origin":"https://wilsenff-web.github.io",
+ "Access-Control-Allow-Methods":"POST, OPTIONS",
+ "Access-Control-Allow-Headers":"authorization, x-client-info, apikey, content-type, x-supabase-api-version",
+ "Access-Control-Max-Age":"3600",
+ "Vary":"Origin"
+};
+const json=(obj:unknown,status=200)=>new Response(JSON.stringify(obj),{status,headers:{"content-type":"application/json","cache-control":"no-store",...corsHeaders}});
 const b64url=(bytes:Uint8Array)=>btoa(String.fromCharCode(...bytes)).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
 const bytesFromBase64=(value:string)=>Uint8Array.from(atob(value),c=>c.charCodeAt(0));
 async function digest(value:string){
@@ -37,6 +44,7 @@ function resultPage(success:boolean){
  return new Response("<!doctype html><html lang='pt-BR'><meta charset='utf-8'><title>SJ MOB TOP</title><body><h2>"+message+"</h2></body></html>",{status:success?200:400,headers:{"content-type":"text/html; charset=utf-8","cache-control":"no-store","content-security-policy":"default-src 'none'; style-src 'unsafe-inline'; frame-ancestors 'none'"}});
 }
 Deno.serve(async(req)=>{
+ if(req.method==="OPTIONS")return new Response(null,{status:204,headers:corsHeaders});
  try{
   if(!supabaseUrl||!serviceKey||!clientId||!clientSecret||!adminUid||!redirectUri||!encryptionSecret)return json({error:"Missing server configuration"},503);
   const url=new URL(req.url);
