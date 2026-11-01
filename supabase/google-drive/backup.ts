@@ -22,7 +22,7 @@ const db=createClient(url,serviceKey,{auth:{persistSession:false,autoRefreshToke
 const origin="https://wilsenff-web.github.io";
 const cors={"Access-Control-Allow-Origin":origin,"Access-Control-Allow-Methods":"POST,OPTIONS","Access-Control-Allow-Headers":"authorization,apikey,x-client-info,content-type,x-supabase-api-version","Vary":"Origin"};
 const json=(value:unknown,status=200)=>new Response(JSON.stringify(value),{status,headers:{"content-type":"application/json","cache-control":"no-store",...cors}});
-const tables=["motoristas","veiculos","viagens","financeiro","pendencias","pagamentos_pendencias","manutencoes","metas","comprovantes_motoristas"];
+const tables=["motoristas","veiculos","viagens","financeiro","pendencias","pagamentos_pendencias","manutencoes","metas","comprovantes_motoristas","sj_solicitacoes_motoristas"];
 async function adminRequest(req:Request){
  const jwt=req.headers.get("authorization")?.match(/^Bearer (.+)$/i)?.[1];
  if(!jwt)return false;
