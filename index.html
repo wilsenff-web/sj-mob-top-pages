@@ -777,7 +777,7 @@ tbody td{padding:8px 9px;font-size:12px}
 </section>
 </main>
 
-<footer class="footer">SJ MOB TOP · Martins · v2.9 · acesso individual e dados protegidos</footer>
+<footer class="footer">SJ MOB TOP · Martins · v2.10 · acesso individual e dados protegidos</footer>
 
 <div id="toasts" aria-live="polite" aria-atomic="false"></div>
 <div id="modal-root"></div>
@@ -2345,8 +2345,26 @@ function linhasPendencias(list){
  const color=st==='Quitada'?'#49d7a5':st==='Parcial'?'#f8c63c':'#ff7676';
  const pagamentos=(data.pagamentos_pendencias||[]).filter(x=>x.pendencia_id===p.id);
  const hist=pagamentos.map(x=>`<div class="pend-payment"><span>${esc(String(x.data_pagamento||'').split('-').reverse().join('/'))} · ${reaisPend(x.valor)} · ${esc(x.forma||'—')}</span><button type="button" class="alt sm" onclick="emitirRecibo('${x.id}')">PDF</button></div>`).join('');
- return `<tr><td><strong>${esc(lookup('motoristas',p.motorista_id))}</strong></td><td>${esc(p.categoria)}<small class="pend-description">${esc(p.descricao||'')}</small></td><td>${esc(p.vencimento||'—')}</td><td>${reaisPend(p.valor)}</td><td>${reaisPend(pagoPend(p.id))}</td><td><strong>${reaisPend(saldo)}</strong></td><td><span class="badge ${st==='Quitada'?'ok':st==='Vencida'?'danger':st==='Parcial'?'warn':'muted'}">${st}</span></td><td><div class="pend-actions">${saldo>0?`<button class="sm" onclick="abrirBaixa('${p.id}')">Dar baixa</button>`:''}${pagamentos.length?`<details class="pend-history"><summary>Pagamentos (${pagamentos.length})</summary><div class="pend-payment-list">${hist}</div></details>`:'<small class="pend-description">Sem pagamentos</small>'}</div></td></tr>`;
+ return `<tr><td><strong>${esc(lookup('motoristas',p.motorista_id))}</strong></td><td>${esc(p.categoria)}<small class="pend-description">${esc(p.descricao||'')}</small></td><td>${esc(p.vencimento||'—')}</td><td>${reaisPend(p.valor)}</td><td>${reaisPend(pagoPend(p.id))}</td><td><strong>${reaisPend(saldo)}</strong></td><td><span class="badge ${st==='Quitada'?'ok':st==='Vencida'?'danger':st==='Parcial'?'warn':'muted'}">${st}</span></td><td><div class="pend-actions">${saldo>0?`<button class="sm" onclick="abrirBaixa('${p.id}')">Dar baixa</button>`:''}${pagamentos.length?`<details class="pend-history"><summary>Pagamentos (${pagamentos.length})</summary><div class="pend-payment-list">${hist}</div></details>`:'<small class="pend-description">Sem pagamentos</small>'}<button type="button" class="sm danger" onclick="excluirPendencia('${p.id}')">Excluir</button></div></td></tr>`;
  }).join('')||'<tr><td colspan="8">Nenhuma pendência encontrada.</td></tr>';
+}
+async function excluirPendencia(id){
+ if(!isAdmin) return msg('Acesso restrito.',true);
+ const p=(data.pendencias||[]).find(x=>x.id===id);
+ if(!p) return msg('Pendência não encontrada. Atualize a página.',true);
+ const pagamentos=(data.pagamentos_pendencias||[]).filter(x=>x.pendencia_id===id);
+ const aviso='Excluir a pendência de '+lookup('motoristas',p.motorista_id)+' no valor de '+reaisPend(p.valor)+'? '+(pagamentos.length?'Também serão excluídos '+pagamentos.length+' pagamento(s) vinculados, somando '+reaisPend(pagamentos.reduce((s,x)=>s+Number(x.valor||0),0))+'. Esses valores sairão do caixa de pagamentos de pendências. ':'')+'Esta ação não pode ser desfeita. O cadastro do motorista e suas viagens serão preservados.';
+ if(!await confirmDialog(aviso)) return;
+ try{
+  const {data:deletedId,error}=await client.rpc('sj_excluir_pendencia',{p_pendencia_id:id,p_excluir_pagamentos:pagamentos.length>0});
+  if(error) throw error;
+  if(deletedId!==id) throw new Error('Não foi possível confirmar a exclusão.');
+  data.pendencias=(data.pendencias||[]).filter(x=>x.id!==id);
+  data.pagamentos_pendencias=(data.pagamentos_pendencias||[]).filter(x=>x.pendencia_id!==id);
+  render();
+  await refresh();
+  toast('Pendência excluída. Saldos e caixa de pendências recalculados.');
+ }catch(error){msg('Erro ao excluir pendência: '+error.message,true);}
 }
 function filtrarPendencias(){const id=$('pend-filtro').value,situacao=$('pend-situacao')?.value||'todas';$('pend-linhas').innerHTML=linhasPendencias((data.pendencias||[]).filter(p=>(!id||p.motorista_id===id)&&(situacao==='todas'||(situacao==='quitadas'?statusPend(p)==='Quitada':statusPend(p)!=='Quitada'))));}
 async function salvarPendencia(e){
