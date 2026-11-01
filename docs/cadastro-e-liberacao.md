@@ -10,9 +10,13 @@ Antes da aprovação, a conta vê somente sua solicitação e os botões Verific
 
 O administrador recebe aviso no Dashboard e no menu Acessos. Confere nome/e-mail/telefone e escolhe vincular a um cadastro já existente ou criar um novo (respeitando o limite de 15). A aprovação é transacional; não troca automaticamente uma vinculação existente de outra pessoa. Recusar não apaga a conta ou o histórico. Cadastros anteriores continuam funcionando.
 
-## Configuração externa ainda necessária
+## Cadastro ativado; envio de e-mails ainda necessário
 
-Na verificação de 01/11/2026, o endpoint público de configurações do Auth retornou `disable_signup: true`, `mailer_autoconfirm: false`, com e-mail habilitado. O frontend não consegue alterar essa configuração. Para efetuar o teste real de criação, é necessário habilitar novos cadastros no painel de Authentication (Sign In / Providers), mantendo a confirmação de e-mail. Também conferir entrega SMTP e limites de e-mail do projeto antes de distribuir para todos os motoristas. Não foi criada conta real de teste nem alterada senha existente.
+Em 01/11/2026, após autenticação do proprietário no painel, foi ativado Allow new users to sign up. O endpoint público confirmou `disable_signup: false` e `mailer_autoconfirm: false`. A confirmação de e-mail foi mantida. A Site URL e a URL autorizada de retorno apontam para https://wilsenff-web.github.io/sj-mob-top-pages/.
+
+O painel SMTP confirmou que o envio personalizado está desativado. O serviço padrão do Supabase envia apenas para e-mails de membros da equipe do projeto. Portanto, antes do teste real de um novo motorista externo, é necessário configurar um serviço SMTP/remetente. Não desativar confirmação de e-mail para contornar essa limitação. Não foi criada conta real de teste, aprovada solicitação real nem alterada senha existente.
+
+Referência: https://supabase.com/docs/guides/auth/auth-smtp
 
 ## Verificação executada
 
