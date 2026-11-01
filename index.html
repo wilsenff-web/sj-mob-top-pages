@@ -2074,6 +2074,12 @@ function security(){
     <p style="font-size:13.5px;line-height:1.6;color:var(--muted)">
       O navegador usa somente a chave pública. As políticas <b>RLS</b> do Supabase devem proteger as seis tabelas.
     </p>
+    <div class="panel" style="margin-top:18px;padding:16px">
+      <h3>Backup manual da frota</h3>
+      <p class="sub">Exporte os registros da frota, financeiro, pendências, manutenção, metas e informações dos comprovantes em JSON.</p>
+      <div class="btn-row" style="margin-top:12px"><button type="button" id="backup-download" onclick="baixarBackupFrota()">↓ Baixar backup dos dados</button></div>
+      <p class="sub" style="margin-top:12px">Somente administrador. Não inclui arquivos PDF e imagens anexados. Backup automático e restauração ainda não estão ativos.</p>
+    </div>
     <div class="btn-row" style="margin-top:16px">
       <button onclick="securityTest()">Testar leitura com minha conta</button>
     </div>
