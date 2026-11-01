@@ -729,7 +729,17 @@ tbody td{padding:8px 9px;font-size:12px}
       <button onclick="signIn()">Entrar</button>
       <button class="alt" onclick="resetPassword()">Recuperar senha</button>
     </div>
-    <p style="margin:16px 0 0"><small>Acesso exclusivo para contas autorizadas. Motoristas devem ter o cadastro vinculado pelo administrador.</small></p>
+    <p style="margin:16px 0 0"><small>Já tem conta? Entre acima. Novos motoristas criam a própria senha abaixo e aguardam a liberação do administrador.</small></p>
+    <details style="margin-top:18px"><summary style="cursor:pointer;font-weight:700;color:var(--accent)">Criar minha conta de motorista</summary>
+    <form id="cadastro-motorista" onsubmit="cadastrarMinhaConta(event)" style="margin-top:14px"><div class="fields">
+      <div class="field"><label for="cadastro-nome">Nome completo</label><input id="cadastro-nome" name="nome" required minlength="2" maxlength="120" autocomplete="name"></div>
+      <div class="field"><label for="cadastro-telefone">Telefone</label><input id="cadastro-telefone" name="telefone" type="tel" required maxlength="40" autocomplete="tel"></div>
+      <div class="field"><label for="cadastro-email">Seu e-mail</label><input id="cadastro-email" name="email" type="email" required autocomplete="email"></div>
+      <div class="field"><label for="cadastro-senha">Crie sua senha</label><input id="cadastro-senha" name="senha" type="password" required minlength="12" autocomplete="new-password"></div>
+      <div class="field"><label for="cadastro-confirmacao">Repita sua senha</label><input id="cadastro-confirmacao" name="confirmacao" type="password" required minlength="12" autocomplete="new-password"></div>
+    </div><p class="sub">Use pelo menos 12 caracteres. Sua senha é pessoal e não aparece para o administrador.</p>
+    <div class="btn-row" style="margin-top:14px"><button type="submit">Criar conta e solicitar acesso</button></div>
+    <p class="sub" id="cadastro-feedback" role="status" aria-live="polite" style="margin-top:12px"></p></form></details>
   </section>
 
   <!-- RECUPERAÇÃO DE SENHA -->
@@ -767,7 +777,7 @@ tbody td{padding:8px 9px;font-size:12px}
 </section>
 </main>
 
-<footer class="footer">SJ MOB TOP · Martins · v2.3 · acesso individual e dados protegidos</footer>
+<footer class="footer">SJ MOB TOP · Martins · v2.4 · acesso individual e dados protegidos</footer>
 
 <div id="toasts" aria-live="polite" aria-atomic="false"></div>
 <div id="modal-root"></div>
@@ -1157,7 +1167,7 @@ async function connect(){
       if(recoveryActive) return;
       if(!s){ data={}; search={}; driverRecord=null; isAdmin=false; comprovantesReady=false; pendenciasReady=false; $('content').innerHTML=''; $('nav').innerHTML=''; $('modal-root').innerHTML=''; show('auth'); setIdentity(); }
       else if(s.user.id!==previousUser || event==='SIGNED_IN' && !driverRecord && !isAdmin){
-        data={}; search={}; lastSync=null; driverRecord=null; comprovantesReady=false; pendenciasReady=false; isAdmin=s.user.id===ADMIN_UID;
+        data={}; search={}; lastSync=null; driverRecord=null; acessoSolicitacao=null; comprovantesReady=false; pendenciasReady=false; isAdmin=s.user.id===ADMIN_UID;
         $('content').textContent='Carregando sua área…'; $('nav').innerHTML=''; $('modal-root').innerHTML='';
         active=isAdmin?'dashboard':'viagens'; show('app'); setIdentity(); setTimeout(refresh,0);
       }else{setIdentity();}
@@ -1270,7 +1280,7 @@ async function refresh(silent = false){
       const {data:m,error:me}=await client.from('motoristas').select('id,nome,user_id,status').eq('auth_user_id',session.user.id).eq('status','ativo').maybeSingle();
       if(me) throw me;
       if(session?.user?.id!==expectedUser)return;
-      if(!m){ $('content').textContent='Seu login ainda não foi vinculado a um motorista ativo. Contate o administrador.'; $('nav').innerHTML=''; return; }
+      if(!m){driverRecord=null;data={};await carregarMeuPedidoAcesso();if(session?.user?.id!==expectedUser)return;render();return;}
       driverRecord=m;
       for(const t of ['veiculos','viagens']){
         const rows=await lerTodos(t);
@@ -1287,6 +1297,7 @@ async function refresh(silent = false){
     }
     await carregarPendencias();
     await carregarComprovantes();
+    await carregarPedidosAcesso();
     lastSync = new Date();
     render();
     if(!silent) toast('Dados sincronizados com o Supabase.');
@@ -1307,15 +1318,15 @@ function nav(t){ if(!isAdmin && t !== 'viagens') return; active = t; render(); }
 function render(){
   if(!session) return;
   if(!isAdmin){
-    $('nav').innerHTML = '<button class="navbtn active">Viagens</button>';
-    $('syncInfo').textContent = 'Acesso do motorista';
-    $('content').innerHTML = driverPage();
+    $('nav').innerHTML = driverRecord?'<button class="navbtn active">Viagens</button>':'';
+    $('syncInfo').textContent = driverRecord?'Acesso do motorista':'Liberação de acesso';
+    $('content').innerHTML = driverRecord?driverPage():aguardandoAcessoPage();
     return;
   }
 
-  const tabs = ['dashboard','motoristas','veiculos','viagens','cobrancas','financeiro','pendencias','manutencoes','metas','seguranca'];
+  const tabs = ['dashboard','acessos','motoristas','veiculos','viagens','cobrancas','financeiro','pendencias','manutencoes','metas','seguranca'];
   $('nav').innerHTML = tabs.map(t => {
-    const label = t === 'dashboard' ? 'Dashboard' : t === 'seguranca' ? 'Segurança' : t === 'pendencias' ? 'Pendências' : t==='cobrancas'?'Cobranças':specs[t].title;
+    const label = t === 'dashboard' ? 'Dashboard' : t==='acessos'?'Acessos'+((data.sj_solicitacoes_motoristas||[]).some(x=>x.status==='pendente')?' ('+(data.sj_solicitacoes_motoristas||[]).filter(x=>x.status==='pendente').length+')':'') : t === 'seguranca' ? 'Segurança' : t === 'pendencias' ? 'Pendências' : t==='cobrancas'?'Cobranças':specs[t].title;
     return `<button class="navbtn${active === t ? ' active' : ''}" onclick="nav('${t}')">
       <span class="ico">${(ICONS[t] || (t === 'pendencias' ? '◉' : ''))}</span><span>${label}</span></button>`;
   }).join('');
@@ -1325,7 +1336,8 @@ function render(){
     : '';
 
   $('content').innerHTML =
-    active === 'dashboard' ? dashboard() + painelViagensPendentes() + painelComprovantes() :
+    active === 'dashboard' ? painelAvisoAcessos() + dashboard() + painelViagensPendentes() + painelComprovantes() :
+    active === 'acessos' ? acessosPage() :
     active === 'seguranca' ? security() :
     active === 'cobrancas' ? cobrancasPage() :
     active === 'pendencias' ? pendenciasPage() :
@@ -2083,7 +2095,7 @@ async function exportarBackupGooglePlanilhas(){
  if(btn){btn.disabled=true;btn.textContent='Preparando planilha…';}
  try{
   await carregarBibliotecaPlanilhas();
-  const tables=['motoristas','veiculos','viagens','financeiro','pendencias','pagamentos_pendencias','manutencoes','metas','comprovantes_motoristas'];
+  const tables=['motoristas','veiculos','viagens','financeiro','pendencias','pagamentos_pendencias','manutencoes','metas','comprovantes_motoristas','sj_solicitacoes_motoristas'];
   const book=XLSX.utils.book_new();
   for(const table of tables){
    const rows=[];
@@ -2119,7 +2131,7 @@ async function baixarBackupFrota(){
  const btn=document.getElementById('backup-download');
  if(btn){btn.disabled=true;btn.textContent='Preparando backup…';}
  try{
-   const tables=['motoristas','veiculos','viagens','financeiro','pendencias','pagamentos_pendencias','manutencoes','metas','comprovantes_motoristas'];
+   const tables=['motoristas','veiculos','viagens','financeiro','pendencias','pagamentos_pendencias','manutencoes','metas','comprovantes_motoristas','sj_solicitacoes_motoristas'];
    const exported={app:'SJ MOB TOP',schema_version:1,created_at:new Date().toISOString(),admin_user_id:session.user.id,scope:'dados de tabelas (sem arquivos anexos)',tables:{}};
    for(const t of tables){
      const rows=[];
@@ -2452,6 +2464,94 @@ async function lancarCobrancaMotorista(e){
   cobrancaDraftRef='';await refresh();toast('Cobrança lançada em Pendências. Registre o pagamento quando receber.');
  }catch(err){msg(err.code==='23505'?'Esta cobrança já foi registrada. Atualize o histórico antes de tentar novamente.':'Falha ao lançar: '+err.message,true);}
  finally{btn.disabled=false;}
+}
+
+
+/* Cadastro próprio: senha no Supabase Auth; liberação somente administrativa. */
+let acessoSolicitacao=null;
+let acessosReady=false;
+async function cadastrarMinhaConta(e){
+ e.preventDefault();if(!client)return msg('Aguarde a conexão.',true);
+ const form=e.target,values=new FormData(form),password=String(values.get('senha')||''),confirmation=String(values.get('confirmacao')||'');
+ const feedback=$('cadastro-feedback'),btn=form.querySelector('button[type=submit]');
+ if(password.length<12||password!==confirmation){feedback.textContent='Use pelo menos 12 caracteres e repita a mesma senha.';return;}
+ const nome=String(values.get('nome')||'').trim(),telefone=String(values.get('telefone')||'').trim(),email=String(values.get('email')||'').trim();
+ if(nome.length<2||!telefone||!email)return msg('Preencha nome, telefone e e-mail.',true);
+ btn.disabled=true;feedback.textContent='Criando sua conta…';
+ try{
+  const {data:result,error}=await client.auth.signUp({email,password,options:{data:{nome,telefone},emailRedirectTo:'https://wilsenff-web.github.io/sj-mob-top-pages/'}});
+  if(error)throw error;
+  form.reset();
+  if(result.session){feedback.textContent='Conta criada. Sua solicitação será enviada para liberação.';setTimeout(refresh,0);}
+  else{feedback.textContent='Confira seu e-mail e confirme a conta pelo link recebido. Depois entre aqui com sua senha: sua solicitação ficará aguardando liberação. Se já tinha conta, use Entrar ou Recuperar senha.';toast('Confira também a pasta de spam do seu e-mail.');}
+ }catch(error){
+  feedback.textContent=error.code==='signup_disabled'?'O cadastro ainda está bloqueado no serviço de acesso. O administrador precisa ativar novos cadastros.':error.message||'Não foi possível criar a conta. Tente novamente.';
+ }finally{btn.disabled=false;}
+}
+async function carregarMeuPedidoAcesso(){
+ if(!session||isAdmin)return;
+ const expected=session.user.id;
+ let {data:row,error}=await client.from('sj_solicitacoes_motoristas').select('*').eq('auth_user_id',expected).maybeSingle();
+ if(error)throw error;if(session?.user?.id!==expected)return;
+ acessoSolicitacao=row;
+ const nome=String(session.user.user_metadata?.nome||'').trim().slice(0,120);
+ if(!row&&nome.length>=2){
+  const {error:insertError}=await client.from('sj_solicitacoes_motoristas').insert({auth_user_id:expected,nome,telefone:String(session.user.user_metadata?.telefone||'').slice(0,40),email:session.user.email});
+  if(insertError&&insertError.code!=='23505')throw insertError;
+  const result=await client.from('sj_solicitacoes_motoristas').select('*').eq('auth_user_id',expected).maybeSingle();
+  if(result.error)throw result.error;if(session?.user?.id!==expected)return;acessoSolicitacao=result.data;
+ }
+}
+function aguardandoAcessoPage(){
+ const r=acessoSolicitacao;
+ const heading=!r?'Solicitar liberação':r.status==='pendente'?'Aguardando liberação':r.status==='recusada'?'Solicitação não aprovada':'Seu acesso não está ativo';
+ return `<section class="panel narrow"><h2>${heading}</h2><p class="sub">Conta: ${esc(session?.user?.email||'')}</p>
+ ${r?`<p>${r.status==='pendente'?'Sua solicitação foi enviada. Aguarde o administrador conferir e liberar o cadastro.':r.status==='recusada'?'Entre em contato com o administrador para conferir seu cadastro.':'Entre em contato com o administrador para verificar sua vinculação ou ativação.'}</p><p><b>Nome informado:</b> ${esc(r.nome)}</p>`:
+ `<p>Informe seus dados para o administrador identificar o cadastro correto. Seus dados de acesso continuam pessoais.</p><form onsubmit="solicitarMeuAcesso(event)"><div class="fields"><div class="field"><label>Nome completo</label><input name="nome" minlength="2" maxlength="120" required></div><div class="field"><label>Telefone</label><input name="telefone" type="tel" maxlength="40" required></div></div><div class="btn-row" style="margin-top:14px"><button type="submit">Solicitar liberação</button></div></form>`}
+ <div class="btn-row" style="margin-top:18px"><button class="alt" onclick="refresh()">Verificar liberação</button><button class="alt" onclick="logout()">Sair</button></div>
+ <p class="sub" style="margin-top:14px">Você ainda não pode consultar veículos, viagens ou dados da administração.</p></section>`;
+}
+async function solicitarMeuAcesso(e){
+ e.preventDefault();if(!session||isAdmin)return;
+ const form=e.target,f=new FormData(form),btn=form.querySelector('button[type=submit]');btn.disabled=true;
+ try{const {error}=await client.from('sj_solicitacoes_motoristas').insert({auth_user_id:session.user.id,nome:String(f.get('nome')||'').trim(),telefone:String(f.get('telefone')||'').trim(),email:session.user.email});if(error&&error.code!=='23505')throw error;await refresh();}
+ catch(error){msg('Não foi possível solicitar: '+error.message,true);}
+ finally{btn.disabled=false;}
+}
+async function carregarPedidosAcesso(){
+ acessosReady=false;if(!isAdmin)return;
+ const expected=session?.user.id;
+ const rows=await lerTodos('sj_solicitacoes_motoristas');
+ if(session?.user?.id!==expected||!isAdmin)return;
+ data.sj_solicitacoes_motoristas=rows;acessosReady=true;
+}
+function painelAvisoAcessos(){
+ const count=(data.sj_solicitacoes_motoristas||[]).filter(x=>x.status==='pendente').length;
+ return count?`<section class="panel"><h2>${count} solicitação(ões) de acesso</h2><p class="sub">Novos motoristas aguardam sua conferência e liberação.</p><button onclick="nav('acessos')">Conferir solicitações</button></section>`:'';
+}
+function acessosPage(){
+ const rows=(data.sj_solicitacoes_motoristas||[]).slice().sort((a,b)=>String(b.created_at).localeCompare(String(a.created_at)));
+ return `<section class="panel"><h2>Liberação de motoristas</h2><p class="sub">Compartilhe o link do sistema. Cada motorista escolhe “Criar minha conta”, confirma o e-mail e entra com a própria senha. Aqui você confere a solicitação e escolhe o cadastro correto antes de liberar.</p><p><a href="https://wilsenff-web.github.io/sj-mob-top-pages/" target="_blank" rel="noopener">Abrir link para os motoristas</a></p><p class="sub">Você não vê nem precisa criar a senha do motorista. Confira a identidade e o e-mail antes da liberação.</p></section>
+ <section class="panel"><h2>Aguardando liberação (${rows.filter(r=>r.status==='pendente').length})</h2>
+ ${!acessosReady?'<p>Solicitações ainda não carregadas. Clique em Atualizar.</p>':''}
+ ${rows.filter(r=>r.status==='pendente').map(r=>{
+ const candidates=(data.motoristas||[]).filter(m=>!m.auth_user_id||m.auth_user_id===r.auth_user_id);
+ return `<div class="panel"><h3>${esc(r.nome)}</h3><p>${esc(r.email)} · ${esc(r.telefone||'Sem telefone')}</p><p class="sub">Solicitado em ${fmtDate(r.created_at)}</p>
+ <div class="field"><label for="acesso-destino-${r.id}">Como liberar este motorista?</label><select id="acesso-destino-${r.id}"><option value="">Selecione para evitar cadastro duplicado</option>${candidates.map(m=>`<option value="${m.id}">Vincular ao cadastro: ${esc(m.nome)}${m.status!=='ativo'?' (será ativado)':''}</option>`).join('')}<option value="novo">Criar novo cadastro de motorista</option></select></div><div class="btn-row" style="margin-top:14px"><button onclick="revisarPedidoAcesso('${r.id}','aprovada',this)">Liberar acesso</button><button class="alt" onclick="revisarPedidoAcesso('${r.id}','recusada',this)">Recusar</button></div></div>`;
+ }).join('')||'<p class="sub">Nenhuma solicitação pendente. Novos pedidos aparecerão após o motorista confirmar o e-mail e entrar.</p>'}</section>
+ <section class="panel"><h2>Solicitações revisadas</h2><div class="scroll"><table><thead><tr><th>Nome</th><th>E-mail</th><th>Decisão</th><th>Cadastro vinculado</th></tr></thead><tbody>${rows.filter(r=>r.status!=='pendente').map(r=>`<tr><td>${esc(r.nome)}</td><td>${esc(r.email)}</td><td>${esc(r.status)}</td><td>${r.motorista_id?esc(lookup('motoristas',r.motorista_id)):'—'}</td></tr>`).join('')||'<tr><td colspan="4">Nenhuma solicitação revisada</td></tr>'}</tbody></table></div></section>`;
+}
+async function revisarPedidoAcesso(id,decision,button){
+ if(!isAdmin||!['aprovada','recusada'].includes(decision))return;
+ const r=(data.sj_solicitacoes_motoristas||[]).find(x=>x.id===id&&x.status==='pendente');if(!r)return;
+ const destination=$('acesso-destino-'+id)?.value;
+ if(decision==='aprovada'&&!destination)return msg('Escolha vincular ao cadastro correto ou criar um novo.',true);
+ const name=destination==='novo'?'um novo cadastro':lookup('motoristas',destination);
+ const ok=await confirmDialog(decision==='aprovada'?`Liberar ${r.nome} (${r.email}) e vincular a ${name}? Essa conta terá acesso somente à área de motorista.`:`Recusar a solicitação de ${r.nome} (${r.email})?` ,decision==='aprovada'?'Liberar acesso':'Recusar');
+ if(!ok)return;button.disabled=true;
+ try{const {error}=await client.rpc('sj_revisar_acesso_motorista',{p_solicitacao_id:id,p_decisao:decision,p_motorista_id:decision==='aprovada'&&destination!=='novo'?destination:null,p_criar_cadastro:decision==='aprovada'&&destination==='novo'});if(error)throw error;await refresh();toast(decision==='aprovada'?'Acesso do motorista liberado.':'Solicitação recusada.');}
+ catch(error){msg('Não foi possível revisar: '+error.message,true);}
+ finally{button.disabled=false;}
 }
 
 
