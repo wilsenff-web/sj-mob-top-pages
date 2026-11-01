@@ -764,15 +764,9 @@ tbody td{padding:8px 9px;font-size:12px}
     </div>
   </div>
 </section>
-</section>
-    </div>
-  </div>
-</section>
-  </section>
-
 </main>
 
-<footer class="footer">SJ MOB TOP · v2 · dados protegidos por RLS no Supabase</footer>
+<footer class="footer">SJ MOB TOP · Martins · v2.2 · acesso individual e dados protegidos</footer>
 
 <div id="toasts" aria-live="polite" aria-atomic="false"></div>
 <div id="modal-root"></div>
@@ -788,7 +782,12 @@ let client = null;
 let session = null;
 let active = 'dashboard';
 let data = {};
-let month = new Date().toISOString().slice(0, 7);
+function hojeBrasilia(date = new Date()){
+  const parts = new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(date);
+  const value = type => parts.find(p=>p.type===type).value;
+  return `${value('year')}-${value('month')}-${value('day')}`;
+}
+let month = hojeBrasilia().slice(0, 7);
 let search = {};
 let lastSync = null;
 
@@ -981,12 +980,13 @@ function driverPage(){
  </div></section>
  <section class="panel driver-entry-panel" id="driver-form-viagem" style="display:none"><h2>Registrar viagem do dia</h2>
  <form onsubmit="saveDriverTrip(event)" class="driver-form"><div class="fields driver-fields">
- <div class="field"><label>Data</label><input name="data_viagem" type="date" required></div>
+ <div class="field"><label>Data</label><input name="data_viagem" type="date" value="${hojeBrasilia()}" required></div>
  <div class="field"><label>Veículo</label><select name="veiculo_id" required><option value="">Selecione</option>${vehicles}</select></div>
  <div class="field"><label>Origem</label><input name="origem" required maxlength="200"></div>
  <div class="field"><label>Destino</label><input name="destino" required maxlength="200"></div>
- <div class="field"><label>KM inicial</label><input name="km_inicial" type="number" min="0" step="0.01" required></div>
- <div class="field"><label>KM final</label><input name="km_final" type="number" min="0" step="0.01" required></div>
+ <div class="field"><label>KM inicial</label><input name="km_inicial" type="number" min="0" step="0.01" oninput="calcularKmViagem(this.form)" required></div>
+ <div class="field"><label>KM final</label><input name="km_final" type="number" min="0" step="0.01" oninput="calcularKmViagem(this.form)" required></div>
+ <div class="field"><label>KM rodados</label><input name="km_rodados" type="number" readonly placeholder="Calculado automaticamente"></div>
  <div class="field"><label>Faturamento (R$)</label><input name="faturamento" type="number" min="0" step="0.01" required></div>
  <div class="field"><label>Observações</label><input name="observacoes"></div>
  </div><div class="btn-row driver-form-actions"><button type="submit">Registrar viagem do dia</button> <button type="button" class="alt" onclick="toggleDriverForm(\'viagem\')">Cancelar</button></div></form></section>
@@ -994,7 +994,7 @@ function driverPage(){
  <p class="sub">Anexe o comprovante de um pagamento feito ao administrador. O envio fica pendente de conferência e não dá baixa automática em dívidas.</p>
  ${comprovantesReady ? `<form onsubmit="enviarComprovante(event)" class="driver-form"><div class="fields driver-fields">
  <div class="field"><label>Valor pago (R$)</label><input name="valor" type="number" min="0.01" step="0.01" required></div>
- <div class="field"><label>Data do pagamento</label><input name="data_pagamento" type="date" required></div>
+ <div class="field"><label>Data do pagamento</label><input name="data_pagamento" type="date" value="${hojeBrasilia()}" required></div>
  <div class="field"><label>Observação (opcional)</label><input name="observacao" maxlength="300"></div>
  <div class="field"><label>Comprovante (imagem ou PDF, até 5 MB)</label><input name="arquivo" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" required></div>
  </div><div class="btn-row driver-form-actions"><button type="submit">Enviar comprovante</button> <button type="button" class="alt" onclick="toggleDriverForm(\'comprovante\')">Cancelar</button></div></form>` : '<p class="sub">Módulo de comprovantes ainda não ativado no Supabase.</p>'}
@@ -1007,9 +1007,8 @@ async function carregarComprovantes(){
  comprovantesReady=false;
  data.comprovantes_motoristas=[];
  if(!client||!session)return;
- const {data:rows,error}=await client.from('comprovantes_motoristas').select('*').order('created_at',{ascending:false}).limit(500);
- if(error){if(error.code!=='42P01'&&error.code!=='PGRST205')console.warn('Comprovantes indisponíveis:',error.message);return;}
- data.comprovantes_motoristas=rows||[];
+ try{data.comprovantes_motoristas=await lerTodos('comprovantes_motoristas');}
+ catch(error){if(error.code!=='42P01'&&error.code!=='PGRST205')console.warn('Comprovantes indisponíveis:',error.message);return;}
  comprovantesReady=true;
 }
 async function enviarComprovante(e){
@@ -1092,7 +1091,9 @@ async function saveDriverTrip(e){
  e.preventDefault();
  if(isAdmin || !driverRecord || !session) return msg('Motorista não identificado.',true);
  const f=new FormData(e.target), a=Number(f.get('km_inicial')), b=Number(f.get('km_final'));
- if(!Number.isFinite(a)||!Number.isFinite(b)||b<a) return msg('KM final deve ser maior ou igual ao inicial.',true);
+ if(!Number.isFinite(a)||!Number.isFinite(b)||a<0||b<a) return msg('Informe KM válido; o final deve ser maior ou igual ao inicial.',true);
+ const faturamento=Number(f.get('faturamento'));
+ if(!Number.isFinite(faturamento)||faturamento<0)return msg('Informe um valor de viagem válido.',true);
  const origem=String(f.get('origem')||'').trim(), destino=String(f.get('destino')||'').trim();
  if(!origem||!destino) return msg('Informe origem e destino.',true);
  const btn=e.target.querySelector('button[type="submit"]');btn.disabled=true;
@@ -1100,7 +1101,7 @@ async function saveDriverTrip(e){
   const {error}=await client.from('viagens').insert({
    user_id:driverRecord.user_id,motorista_id:driverRecord.id,veiculo_id:f.get('veiculo_id'),
    data_viagem:f.get('data_viagem'),origem,destino,km_inicial:a,km_final:b,
-   km_rodados:Number((b-a).toFixed(2)),faturamento:Number(f.get('faturamento')),
+   km_rodados:Number((b-a).toFixed(2)),faturamento,
    observacoes:String(f.get('observacoes')||'')
   });
   if(error) throw error;
@@ -1144,6 +1145,7 @@ async function connect(){
     localStorage.setItem('sj_config', JSON.stringify({u, k}));
 
     client.auth.onAuthStateChange((event, s) => {
+      const previousUser = session?.user?.id;
       session = s;
       if(event === 'PASSWORD_RECOVERY'){
         recoveryActive = true;
@@ -1151,8 +1153,11 @@ async function connect(){
         return;
       }
       if(recoveryActive) return;
-      if(!s){ show('auth'); setIdentity(); }
-      else { isAdmin = s.user.id === ADMIN_UID; driverRecord = null; active = isAdmin ? 'dashboard' : 'viagens'; show('app'); setIdentity(); setTimeout(refresh, 0); }
+      if(!s){ data={}; search={}; driverRecord=null; isAdmin=false; comprovantesReady=false; pendenciasReady=false; $('content').innerHTML=''; $('nav').innerHTML=''; $('modal-root').innerHTML=''; show('auth'); setIdentity(); }
+      else if(s.user.id!==previousUser || event==='SIGNED_IN' && !driverRecord && !isAdmin){
+        data={}; driverRecord=null; isAdmin=s.user.id===ADMIN_UID;
+        active=isAdmin?'dashboard':'viagens'; show('app'); setIdentity(); setTimeout(refresh,0);
+      }else{setIdentity();}
     });
 
     const {data:d, error} = await client.auth.getSession();
@@ -1230,18 +1235,32 @@ async function logout(){
    SYNC
    ========================================================= */
 let refreshBusy = false;
+async function lerTodos(table){
+ const rows=[];
+ for(let offset=0;;offset+=500){
+   const {data:page,error}=await client.from(table).select('*').order('id',{ascending:true}).range(offset,offset+499);
+   if(error)throw error;
+   rows.push(...(page||[]));
+   if(!page||page.length<500)return rows;
+ }
+}
+function temFormularioAberto(){
+ return !!document.querySelector('#content form:not(.hide) input:focus, #content form:not(.hide) select:focus, #modal-root form')
+   || !!document.querySelector('#content #entry') && !document.querySelector('[id^="form-panel-"]')?.classList.contains('hide');
+}
 // Atualiza o Dashboard administrativo a cada 30 segundos enquanto estiver visível.
 // Sem recarregar a página, sem afetar formulários abertos em outras abas.
 setInterval(() => {
-  if(session && isAdmin && active === 'dashboard' && !document.hidden && !refreshBusy) {
+  if(session && isAdmin && active === 'dashboard' && !document.hidden && !refreshBusy && !temFormularioAberto()) {
     refresh(true);
   }
 }, 30000);
 document.addEventListener('visibilitychange', () => {
-  if(!document.hidden && session && isAdmin && active === 'dashboard' && !refreshBusy) refresh(true);
+  if(!document.hidden && session && isAdmin && active === 'dashboard' && !refreshBusy && !temFormularioAberto()) refresh(true);
 });
 async function refresh(silent = false){
   if(!session || refreshBusy) return;
+  const expectedUser=session.user.id;
   refreshBusy = true;
   try{
     if(!isAdmin){
@@ -1250,17 +1269,17 @@ async function refresh(silent = false){
       if(!m){ $('content').textContent='Seu login ainda não foi vinculado a um motorista ativo. Contate o administrador.'; $('nav').innerHTML=''; return; }
       driverRecord=m;
       for(const t of ['veiculos','viagens']){
-        const {data:d,error}=await client.from(t).select('*').limit(5000);
-        if(error) throw error;
-        data[t]=d||[];
+        const rows=await lerTodos(t);
+        if(session?.user?.id!==expectedUser)return;
+        data[t]=rows;
       }
       await carregarComprovantes();
       render();return;
     }
     for(const t of Object.keys(specs)){
-      const {data:d, error} = await client.from(t).select('*').limit(5000);
-      if(error) throw Error(t + ': ' + error.message);
-      data[t] = d || [];
+      const rows=await lerTodos(t);
+      if(session?.user?.id!==expectedUser)return;
+      data[t]=rows;
     }
     await carregarPendencias();
     await carregarComprovantes();
@@ -1406,6 +1425,7 @@ function cancelEdit(){
 }
 
 function openNewForm(t){
+  if(['motoristas','veiculos'].includes(t) && (data[t]||[]).length>=15)return msg('Limite de 15 '+(t==='motoristas'?'motoristas':'veículos')+' atingido.',true);
   editingRow = null;
   const panel = document.getElementById('form-panel-' + t);
   if(!panel) return;
@@ -1531,10 +1551,10 @@ function tablePage(t){
     if(type === 'select'){
       inp = `<select name="${k}">${req.map(v => `<option value="${v}">${v}</option>`).join('')}</select>`;
     }else if(type === 'driver' || type === 'vehicle'){
-      inp = `<select name="${k}">${options(type)}</select>`;
+      inp = `<select name="${k}" ${req===true?'required':''}>${options(type)}</select>`;
     }else{
       const val = type === 'date'
-        ? (k === 'mes' ? `value="${month}-01"` : `value="${new Date().toISOString().slice(0,10)}"`)
+        ? (k === 'mes' ? `value="${month}-01"` : `value="${hojeBrasilia()}"`)
         : '';
       inp = `<input name="${k}" type="${type}" ${type === 'number' ? 'min="0" step="0.01"' : ''} ${val} ${req === true ? 'required' : ''}>`;
     }
@@ -1604,9 +1624,12 @@ async function saveRow(e, t){
   if(!isAdmin) return msg('Use o formulário exclusivo de viagens.',true);
   const f = new FormData(e.target);
   const o = {};
+  const editing = editingRow?.table === t ? editingRow : null;
+  if(!editing && ['motoristas','veiculos'].includes(t) && (data[t]||[]).length>=15)return msg('Limite de 15 cadastros atingido.',true);
   for(const [k, v] of f.entries()){
-    if(v === '') continue;
     const col = specs[t].cols.find(c => c[0] === k);
+    if(!col)continue;
+    if(v === ''){if(editing && col[3]!==true && col[2]!=='select')o[k]=null;continue;}
     o[k] = col[2] === 'number' ? Number(v) : v;
   }
   if(t === 'metas' && Boolean(o.motorista_id) === Boolean(o.veiculo_id))
@@ -1625,17 +1648,18 @@ async function saveRow(e, t){
   const btn = e.target.querySelector('button[type="submit"]');
   if(btn){ btn.disabled = true; btn.textContent = 'Salvando…'; }
 
-  const editing = editingRow?.table === t ? editingRow : null;
-  const {error} = editing
-    ? await client.from(t).update(o).eq("id", editing.id)
-    : await client.from(t).insert(o);
-  if(error){
+  try{
+   const {error} = editing
+     ? await client.from(t).update(o).eq("id", editing.id)
+     : await client.from(t).insert(o);
+   if(error)throw error;
+   editingRow = null;
+   await refresh();
+   toast(editing ? 'Registro atualizado com sucesso.' : 'Registro salvo com sucesso.');
+  }catch(error){
     if(btn){ btn.disabled = false; btn.textContent = editing ? 'Salvar alterações' : 'Salvar no Supabase'; }
-    return msg('Erro ao salvar: ' + error.message, true);
+    msg('Erro ao salvar: ' + error.message, true);
   }
-  editingRow = null;
-  await refresh();
-  toast(editing ? 'Registro atualizado com sucesso.' : 'Registro salvo com sucesso.');
 }
 
 async function removeRow(t, id){
@@ -1671,7 +1695,7 @@ function exportCsv(t){
   const blob = new Blob(['\ufeff' + csv], {type:'text/csv;charset=utf-8;'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = `sj-mob-top-${t}-${new Date().toISOString().slice(0,10)}.csv`;
+  a.download = `sj-mob-top-${t}-${hojeBrasilia()}.csv`;
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 2000);
   toast(`${list.length} registro(s) exportado(s).`);
@@ -2077,7 +2101,7 @@ async function exportarBackupGooglePlanilhas(){
    sheet['!cols']=cols.map(k=>({wch:Math.min(42,Math.max(14,k.length+4))}));
    XLSX.utils.book_append_sheet(book,sheet,table.slice(0,31));
   }
-  const filename='SJ-MOB-TOP-Google-Planilhas-'+new Date().toISOString().slice(0,10)+'.xlsx';
+  const filename='SJ-MOB-TOP-Google-Planilhas-'+hojeBrasilia()+'.xlsx';
   XLSX.writeFile(book,filename,{compression:true});
   toast('Planilha exportada. Importe o arquivo XLSX no Google Planilhas.');
  }catch(e){msg('Não foi possível exportar a planilha: '+e.message,true);}
@@ -2120,17 +2144,17 @@ function security(){
     <h2>Segurança e Backup</h2>
     <p class="sub">Usuário atual: <b>${esc(session.user.email)}</b></p>
     <p style="font-size:13.5px;line-height:1.6;color:var(--muted)">
-      O navegador usa somente a chave pública. As políticas <b>RLS</b> do Supabase devem proteger as seis tabelas.
+      Somente o administrador acessa a gestão. Motoristas têm login individual e acesso aos próprios lançamentos. As tabelas são protegidas por políticas <b>RLS</b> no Supabase.
     </p>
     <div class="panel" style="margin-top:18px;padding:16px">
       <h3>Backup manual da frota</h3>
       <p class="sub">Exporte os registros da frota, financeiro, pendências, manutenção, metas e informações dos comprovantes em JSON.</p>
       <div class="btn-row" style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap"><button type="button" id="backup-download" onclick="baixarBackupFrota()">↓ Baixar backup dos dados</button><button type="button" class="alt" id="backup-sheets" onclick="exportarBackupGooglePlanilhas()">▦ Exportar para Google Planilhas</button></div><p class="sub" style="margin-top:10px">O botão gera um arquivo .xlsx com abas separadas. Para abrir no Google Planilhas, envie o arquivo ao Google Drive e escolha Abrir com → Planilhas Google. Não há envio automático para sua conta Google.</p>
-      <p class="sub" style="margin-top:12px">Somente administrador. Não inclui arquivos PDF e imagens anexados. Backup automático e restauração ainda não estão ativos.</p>
+      <p class="sub" style="margin-top:12px">Somente administrador. Não inclui arquivos PDF e imagens anexados. A restauração deve ser conferida antes de importar dados; este painel não sobrescreve registros.</p>
     </div>
     <div class="panel" style="margin-top:18px;padding:16px">
       <h3>Conexão com Google Drive</h3>
-      <p class="sub">Conecte o Google Drive e salve uma cópia dos registros. Os anexos não estão incluídos. O backup semanal depende de agendamento no servidor.</p>
+      <p class="sub">Backup semanal configurado para <b>domingo às 3h (Brasília)</b>, mesmo com o sistema fechado. Mantenha o Google Drive autorizado. Os arquivos anexados não estão incluídos.</p>
       <div class="btn-row" style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
         <button type="button" id="google-drive-connect" onclick="conectarGoogleDrive()">Conectar Google Drive</button>
         <button type="button" class="alt" id="google-drive-status" onclick="verificarGoogleDrive()">Verificar conexão</button>
@@ -2191,7 +2215,7 @@ async function verificarGoogleDrive(){
  feedbackGoogleDrive('Consultando conexão…');
  try{
   const result=await chamarGoogleDrive('status');
-  feedbackGoogleDrive(result.connected?'Google Drive autorizado. Backup automático ainda não está ativo.':'Google Drive ainda não autorizado.');
+  feedbackGoogleDrive(result.connected?'Google Drive autorizado. Backup semanal configurado para domingo às 3h, horário de Brasília.':'Google Drive ainda não autorizado. Conecte sua conta para permitir os backups.');
  }catch(err){feedbackGoogleDrive(err.message||'Não foi possível verificar a conexão.');msg(err.message||'Erro de conexão.',true);}
  finally{if(btn)btn.disabled=false;}
 }
@@ -2218,13 +2242,14 @@ const categoriasPend=['Diária atrasada','Pedágio','Multa de trânsito','Abaste
 let pendenciasReady=false;
 async function carregarPendencias(){
  if(!client || !session) return;
- const [p,g]=await Promise.all([client.from('pendencias').select('*').order('created_at',{ascending:false}),client.from('pagamentos_pendencias').select('*')]);
- if(p.error||g.error){pendenciasReady=false;data.pendencias=[];data.pagamentos_pendencias=[];return;}
- data.pendencias=p.data||[];data.pagamentos_pendencias=g.data||[];pendenciasReady=true;
+ try{
+  const [p,g]=await Promise.all([lerTodos('pendencias'),lerTodos('pagamentos_pendencias')]);
+  data.pendencias=p;data.pagamentos_pendencias=g;pendenciasReady=true;
+ }catch(error){pendenciasReady=false;data.pendencias=[];data.pagamentos_pendencias=[];console.warn('Pendências indisponíveis:',error.message);}
 }
 function reaisPend(n){return Number(n||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});}
 function pagoPend(id){return (data.pagamentos_pendencias||[]).filter(x=>x.pendencia_id===id).reduce((a,x)=>a+Number(x.valor||0),0);}
-function statusPend(p){const saldo=Math.max(0,Number(p.valor)-pagoPend(p.id));return saldo<0.005?'Quitada':pagoPend(p.id)>0?'Parcial':p.vencimento&&p.vencimento<new Date().toISOString().slice(0,10)?'Vencida':'Pendente';}
+function statusPend(p){const saldo=Math.max(0,Number(p.valor)-pagoPend(p.id));return saldo<0.005?'Quitada':pagoPend(p.id)>0?'Parcial':p.vencimento&&p.vencimento<hojeBrasilia()?'Vencida':'Pendente';}
 function pendenciasPage(){
  if(!pendenciasReady)return '<div class="panel"><h2>Pendências por motorista</h2><p>Este módulo ainda precisa ser ativado no Supabase. O sistema original continua funcionando normalmente.</p><p>Arquivo de configuração disponível no GitHub: <b>supabase_pendencias.sql</b>. Não execute sem revisar.</p></div>';
  const list=data.pendencias||[],receber=list.reduce((a,p)=>a+Math.max(0,Number(p.valor)-pagoPend(p.id)),0);
@@ -2243,7 +2268,7 @@ function pendenciasPage(){
  <div class="field"><label>Categoria</label><select name="categoria" required>${categoriasPend.map(c=>`<option>${esc(c)}</option>`).join('')}</select></div>
  <div class="field"><label>Descrição / motivo</label><input name="descricao" placeholder="Descreva a cobrança"></div>
  <div class="field"><label>Valor (R$)</label><input name="valor" type="number" min="0.01" step="0.01" required></div>
- <div class="field"><label>Data</label><input name="data_lancamento" type="date" required value="${new Date().toISOString().slice(0,10)}"></div>
+ <div class="field"><label>Data</label><input name="data_lancamento" type="date" required value="${hojeBrasilia()}"></div>
  <div class="field"><label>Vencimento</label><input name="vencimento" type="date"></div></div>
  <div class="btn-row"><button type="submit">Registrar pendência</button></div></form>
  </div>
@@ -2298,7 +2323,7 @@ function abrirBaixa(id){
  <h2>Dar baixa — ${esc(lookup('motoristas',p.motorista_id))}</h2><p>Saldo: ${reaisPend(saldo)}</p>
  <form onsubmit="salvarBaixa(event,'${id}')"><div class="fields">
  <div class="field"><label>Valor pago</label><input name="valor" type="number" min="0.01" max="${saldo.toFixed(2)}" step="0.01" value="${saldo.toFixed(2)}" required></div>
- <div class="field"><label>Data</label><input name="data_pagamento" type="date" value="${new Date().toISOString().slice(0,10)}" required></div>
+ <div class="field"><label>Data</label><input name="data_pagamento" type="date" value="${hojeBrasilia()}" required></div>
  <div class="field"><label>Forma</label><select name="forma">${['PIX','Dinheiro','Cartão de crédito','Cartão de débito','Transferência'].map(x=>`<option>${x}</option>`).join('')}</select></div>
  <div class="field"><label>Observações</label><input name="observacoes"></div></div>
  <div class="btn-row"><button type="submit">Confirmar pagamento</button><button type="button" class="alt" onclick="fecharBaixa()">Cancelar</button></div></form></div></div>`;
@@ -2319,7 +2344,10 @@ async function salvarBaixa(e,id){
   applyTheme(localStorage.getItem('sj_theme') || 'dark');
   show('setup');
   try{
-    const c = JSON.parse(localStorage.getItem('sj_config') || 'null');
+    const c = JSON.parse(localStorage.getItem('sj_config') || 'null') || {
+      u:'https://wdtavnvdkwrwsjbhoiai.supabase.co',
+      k:'sb_publishable_JHopMosl5NCdybIJJfRl-A_9rJmIc7C'
+    };
     if(c){
       $('url').value = c.u;
       $('key').value = c.k;
