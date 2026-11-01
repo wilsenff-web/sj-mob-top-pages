@@ -758,6 +758,12 @@ tbody td{padding:8px 9px;font-size:12px}
  .trip-row-actions{justify-content:flex-start}
 }
 
+.password-field{position:relative;min-width:0}
+.password-field input{padding-right:52px}
+.password-toggle{position:absolute;right:5px;top:50%;transform:translateY(-50%);width:40px;height:40px;min-height:40px;padding:0;display:grid;place-items:center;border:0;border-radius:8px;background:transparent;color:var(--muted);box-shadow:none}
+.password-toggle:hover{background:var(--surface-2);color:var(--text);filter:none}
+.password-toggle:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.password-toggle svg{pointer-events:none}
 </style>
 </head>
 <body>
@@ -804,7 +810,7 @@ tbody td{padding:8px 9px;font-size:12px}
     <p class="sub">Use seu e-mail e senha para acessar sua área.</p>
     <div class="fields">
       <div class="field"><label for="email">E-mail</label><input id="email" type="email" autocomplete="username" placeholder="voce@empresa.com"></div>
-      <div class="field"><label for="password">Senha</label><input id="password" type="password" autocomplete="current-password" placeholder="••••••••"></div>
+      <div class="field"><label for="password">Senha</label><div class="password-field"><input id="password" type="password" autocomplete="current-password" placeholder="••••••••"><button id="password-toggle" class="password-toggle" type="button" aria-label="Mostrar senha" title="Mostrar senha" aria-controls="password" aria-pressed="false" onclick="setLoginPasswordVisibility(document.getElementById('password').type==='password')"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>
     </div>
     <div class="btn-row" style="margin-top:16px">
       <button onclick="signIn()">Entrar</button>
@@ -858,7 +864,7 @@ tbody td{padding:8px 9px;font-size:12px}
 </section>
 </main>
 
-<footer class="footer">SJ MOB TOP · Martins · v2.13 · acesso individual e dados protegidos</footer>
+<footer class="footer">SJ MOB TOP · Martins · v2.14 · acesso individual e dados protegidos</footer>
 
 <div id="toasts" aria-live="polite" aria-atomic="false"></div>
 <div id="modal-root"></div>
@@ -994,6 +1000,15 @@ function applyTheme(t){
   if(b) b.textContent = t === 'light' ? '🌙' : '☀';
   const meta = document.querySelector('meta[name="theme-color"]');
   if(meta) meta.setAttribute('content', t === 'light' ? '#eef2f8' : '#0b0e13');
+}
+function setLoginPasswordVisibility(show){
+ const input=document.getElementById('password'),button=document.getElementById('password-toggle');
+ if(!input||!button)return;
+ input.type=show?'text':'password';
+ button.setAttribute('aria-pressed',String(show));
+ button.setAttribute('aria-label',show?'Ocultar senha':'Mostrar senha');
+ button.title=show?'Ocultar senha':'Mostrar senha';
+ button.innerHTML=show?"<svg viewBox=\"0 0 24 24\" width=\"21\" height=\"21\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" aria-hidden=\"true\"><path d=\"m3 3 18 18M10.6 5.1 12 5c6.5 0 10 7 10 7a18 18 0 0 1-3 3.8M6.2 6.2A20 20 0 0 0 2 12s3.5 7 10 7a12 12 0 0 0 5-1.1\"/><path d=\"M9.9 9.9a3 3 0 0 0 4.2 4.2\"/></svg>":"<svg viewBox=\"0 0 24 24\" width=\"21\" height=\"21\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" aria-hidden=\"true\"><path d=\"M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z\"/><circle cx=\"12\" cy=\"12\" r=\"3\"/></svg>";
 }
 function toggleTheme(){
   applyTheme(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light');
@@ -1340,7 +1355,7 @@ async function signIn(){
     password: $('password').value
   });
   if(error) msg('Login: ' + error.message, true);
-  else { $('password').value = ''; toast('Login realizado.'); }
+  else { $('password').value = ''; setLoginPasswordVisibility(false); toast('Login realizado.'); }
 }
 
 async function resetPassword(){
