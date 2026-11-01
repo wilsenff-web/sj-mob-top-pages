@@ -931,7 +931,7 @@ let comprovantesReady = false;
 function driverPage(){
  if(!driverRecord) return '<section class="panel"><h2>Vinculação pendente</h2></section>';
  const vehicles=(data.veiculos||[]).map(v=>`<option value="${esc(v.id)}">${esc(v.placa||'')} • ${esc(v.modelo||'')}</option>`).join('');
- const rows=(data.viagens||[]).map(v=>`<tr><td>${esc(v.data_viagem||'')}</td><td>${esc(v.origem||'')} → ${esc(v.destino||'')}</td><td>${num(v.km_rodados||0)} km</td><td>${brl(v.faturamento||0)}</td></tr>`).join('');
+ const rows=(data.viagens||[]).map(v=>`<tr><td>${esc(v.data_viagem||'')}</td><td>${esc(v.origem||'')} → ${esc(v.destino||'')}</td><td>${num(v.km_rodados||0)} km</td><td>${brl(v.faturamento||0)}</td><td>${badge(v.status_conferencia||'aprovada')}</td></tr>`).join('');
  return `<section class="panel"><h2>Minhas viagens — ${esc(driverRecord.nome)}</h2>
  <p class="sub">Lançamento exclusivo do motorista. Veículos cadastrados da frota.</p>
  <form onsubmit="saveDriverTrip(event)" class="fields">
@@ -955,7 +955,7 @@ function driverPage(){
  <h3>Comprovantes enviados</h3>
  <div class="scroll"><table><thead><tr><th>Data</th><th>Valor</th><th>Situação</th><th>Arquivo</th></tr></thead><tbody>
  ${(data.comprovantes_motoristas||[]).map(c=>`<tr><td>${esc(c.data_pagamento)}</td><td>${brl(c.valor)}</td><td>${esc(c.status)}</td><td><button type="button" class="alt sm" onclick="abrirComprovante('${esc(c.arquivo_path)}')">Ver</button></td></tr>`).join('')||'<tr><td colspan="4">Nenhum comprovante enviado</td></tr>'}</tbody></table></div></section>
- <section class="panel"><h2>Minhas viagens</h2><div style="overflow:auto"><table><thead><tr><th>Data</th><th>Trajeto</th><th>KM</th><th>Faturamento</th></tr></thead><tbody>${rows||'<tr><td colspan="4">Nenhuma viagem</td></tr>'}</tbody></table></div></section>`;
+ <section class="panel"><h2>Minhas viagens</h2><div style="overflow:auto"><table><thead><tr><th>Data</th><th>Trajeto</th><th>KM</th><th>Faturamento</th><th>Conferência</th></tr></thead><tbody>${rows||'<tr><td colspan="5">Nenhuma viagem</td></tr>'}</tbody></table></div></section>`;
 }
 async function carregarComprovantes(){
  comprovantesReady=false;
@@ -1008,13 +1008,39 @@ async function revisarComprovante(id,status){
  if(error)return msg('Falha ao revisar: '+error.message,true);
  await carregarComprovantes();render();toast('Comprovante revisado.');
 }
+async function conferirViagem(id,status){
+ if(!isAdmin||!['aprovada','rejeitada'].includes(status))return;
+ const v=(data.viagens||[]).find(x=>x.id===id);
+ if(!v||v.status_conferencia!=='pendente')return msg('Esta viagem não está pendente.',true);
+ if(!confirm(status==='aprovada'?'Aprovar esta viagem e incluir seus valores no Dashboard?':'Rejeitar esta viagem? Ela ficará no histórico, fora dos totais aprovados.'))return;
+ const {error}=await client.from('viagens').update({status_conferencia:status}).eq('id',id).eq('status_conferencia','pendente');
+ if(error)return msg('Erro na conferência: '+error.message,true);
+ await refresh();toast('Viagem conferida.');
+}
+function painelViagensPendentes(){
+ const pend=(data.viagens||[]).filter(v=>v.status_conferencia==='pendente');
+ return `<section class="panel"><h2>Viagens aguardando sua aprovação (${pend.length})</h2>
+ <p class="sub">Os valores pendentes não entram no faturamento nem nos KM aprovados.</p>
+ <div class="scroll"><table><thead><tr><th>Motorista</th><th>Data</th><th>Trajeto</th><th>KM</th><th>Faturamento</th><th>Conferência</th></tr></thead><tbody>
+ ${pend.map(v=>`<tr><td>${esc(lookup('motoristas',v.motorista_id))}</td><td>${esc(v.data_viagem)}</td><td>${esc(v.origem||'')} → ${esc(v.destino||'')}</td><td>${num(v.km_rodados||0)}</td><td>${brl(v.faturamento||0)}</td><td><button onclick="conferirViagem('${esc(v.id)}','aprovada')">Aprovar</button> <button class="alt sm" onclick="conferirViagem('${esc(v.id)}','rejeitada')">Rejeitar</button></td></tr>`).join('')||'<tr><td colspan="6">Nenhuma viagem pendente</td></tr>'}</tbody></table></div></section>`;
+}
+async function registrarRecebimentoComprovante(id){
+ if(!isAdmin)return;
+ const c=(data.comprovantes_motoristas||[]).find(x=>x.id===id);
+ if(!c||c.status!=='confirmado')return msg('Confirme o comprovante primeiro.',true);
+ if((data.financeiro||[]).some(f=>f.comprovante_id===id))return msg('Este recebimento já foi registrado.',true);
+ if(!confirm('Registrar '+brl(c.valor)+' no Financeiro como receita vinculada ao comprovante? Verifique antes se não foi lançado manualmente.'))return;
+ const {error}=await client.rpc('sj_registrar_recebimento_comprovante',{p_comprovante_id:id});
+ if(error)return msg('Não foi possível registrar: '+error.message,true);
+ await refresh();toast('Recebimento registrado no Financeiro.');
+}
 function painelComprovantes(){
  if(!comprovantesReady)return '<div class="panel"><h2>Comprovantes dos motoristas</h2><p class="sub">Módulo ainda não ativado no Supabase.</p></div>';
  const rows=data.comprovantes_motoristas||[];
  return `<section class="panel"><h2>Comprovantes dos motoristas</h2>
  <p class="sub">Confira os arquivos antes de confirmar. Confirmação não registra receita nem quita pendências automaticamente.</p>
- <div class="scroll"><table><thead><tr><th>Motorista</th><th>Data</th><th>Valor</th><th>Status</th><th>Arquivo</th><th>Conferência</th></tr></thead><tbody>
- ${rows.map(c=>`<tr><td>${esc(lookup('motoristas',c.motorista_id))}</td><td>${esc(c.data_pagamento)}</td><td>${brl(c.valor)}</td><td>${esc(c.status)}</td><td><button type="button" class="alt sm" onclick="abrirComprovante('${esc(c.arquivo_path)}')">Ver</button></td><td>${c.status==='pendente'?`<button type="button" onclick="revisarComprovante('${esc(c.id)}','confirmado')">Confirmar</button> <button type="button" class="alt sm" onclick="revisarComprovante('${esc(c.id)}','rejeitado')">Rejeitar</button>`:'—'}</td></tr>`).join('')||'<tr><td colspan="6">Nenhum comprovante recebido</td></tr>'}</tbody></table></div></section>`;
+ <div class="scroll"><table><thead><tr><th>Motorista</th><th>Data</th><th>Valor</th><th>Status</th><th>Arquivo</th><th>Conferência</th><th>Financeiro</th></tr></thead><tbody>
+ ${rows.map(c=>`<tr><td>${esc(lookup('motoristas',c.motorista_id))}</td><td>${esc(c.data_pagamento)}</td><td>${brl(c.valor)}</td><td>${esc(c.status)}</td><td><button type="button" class="alt sm" onclick="abrirComprovante('${esc(c.arquivo_path)}')">Ver</button></td><td>${c.status==='pendente'?`<button type="button" onclick="revisarComprovante('${esc(c.id)}','confirmado')">Confirmar</button> <button type="button" class="alt sm" onclick="revisarComprovante('${esc(c.id)}','rejeitado')">Rejeitar</button>`:'—'}</td><td>${(data.financeiro||[]).some(f=>f.comprovante_id===c.id)?'<span class="badge ok">Registrado</span>':c.status==='confirmado'?`<button type="button" onclick="registrarRecebimentoComprovante('${esc(c.id)}')">Registrar recebimento</button>`:'—'}</td></tr>`).join('')||'<tr><td colspan="7">Nenhum comprovante recebido</td></tr>'}</tbody></table></div></section>`;
 }
 async function saveDriverTrip(e){
  e.preventDefault();
@@ -1032,7 +1058,7 @@ async function saveDriverTrip(e){
    observacoes:String(f.get('observacoes')||'')
   });
   if(error) throw error;
-  await refresh();toast('Viagem registrada com sucesso.');
+  await refresh();toast('Viagem enviada. Aguardando conferência do administrador.');
  }catch(err){msg('Erro ao salvar viagem: '+err.message,true);}
  finally{btn.disabled=false;}
 }
@@ -1229,7 +1255,7 @@ function render(){
     : '';
 
   $('content').innerHTML =
-    active === 'dashboard' ? dashboard() + painelComprovantes() :
+    active === 'dashboard' ? dashboard() + painelViagensPendentes() + painelComprovantes() :
     active === 'seguranca' ? security() :
     active === 'pendencias' ? pendenciasPage() :
     tablePage(active);
@@ -1609,7 +1635,7 @@ function exportCsv(t){
    DASHBOARD
    ========================================================= */
 function monthTotals(m){
-  const trips = (data.viagens || []).filter(x => x.data_viagem?.startsWith(m));
+  const trips = (data.viagens || []).filter(x => x.data_viagem?.startsWith(m) && (x.status_conferencia || 'aprovada') === 'aprovada');
   const fin   = (data.financeiro || []).filter(x => x.data_lancamento?.startsWith(m));
   const maint = (data.manutencoes || []).filter(x => x.data_manutencao?.startsWith(m));
 
@@ -1764,7 +1790,7 @@ function vehiclePerformance(){
    contratos/diárias/comissões; somente valores lançados no Financeiro
    e vinculados ao motorista são reconhecidos como receitas da empresa. */
 function driverPerformance(){
-  const trips = (data.viagens || []).filter(x => x.data_viagem?.startsWith(month));
+  const trips = (data.viagens || []).filter(x => x.data_viagem?.startsWith(month) && (x.status_conferencia || 'aprovada') === 'aprovada');
   const fin = (data.financeiro || []).filter(x => x.data_lancamento?.startsWith(month));
   const drivers = (data.motoristas || []);
   if(!drivers.length) return `<div class="panel" style="margin-top:16px"><h2>Desempenho por motorista</h2><p class="sub">Nenhum motorista cadastrado.</p></div>`;
