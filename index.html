@@ -218,6 +218,7 @@ td.actions{text-align:right;white-space:nowrap}
 .modal-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
 
 .hide{display:none!important}
+[hidden]{display:none!important}
 .chip{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--muted);
   background:var(--surface-2);border:1px solid var(--border);padding:5px 11px;border-radius:999px}
 .footer{max-width:1220px;margin:0 auto;padding:0 18px 34px;color:var(--muted);
@@ -766,7 +767,7 @@ tbody td{padding:8px 9px;font-size:12px}
 </section>
 </main>
 
-<footer class="footer">SJ MOB TOP · Martins · v2.2 · acesso individual e dados protegidos</footer>
+<footer class="footer">SJ MOB TOP · Martins · v2.3 · acesso individual e dados protegidos</footer>
 
 <div id="toasts" aria-live="polite" aria-atomic="false"></div>
 <div id="modal-root"></div>
@@ -1312,9 +1313,9 @@ function render(){
     return;
   }
 
-  const tabs = ['dashboard','motoristas','veiculos','viagens','financeiro','pendencias','manutencoes','metas','seguranca'];
+  const tabs = ['dashboard','motoristas','veiculos','viagens','cobrancas','financeiro','pendencias','manutencoes','metas','seguranca'];
   $('nav').innerHTML = tabs.map(t => {
-    const label = t === 'dashboard' ? 'Dashboard' : t === 'seguranca' ? 'Segurança' : t === 'pendencias' ? 'Pendências' : specs[t].title;
+    const label = t === 'dashboard' ? 'Dashboard' : t === 'seguranca' ? 'Segurança' : t === 'pendencias' ? 'Pendências' : t==='cobrancas'?'Cobranças':specs[t].title;
     return `<button class="navbtn${active === t ? ' active' : ''}" onclick="nav('${t}')">
       <span class="ico">${(ICONS[t] || (t === 'pendencias' ? '◉' : ''))}</span><span>${label}</span></button>`;
   }).join('');
@@ -1326,6 +1327,7 @@ function render(){
   $('content').innerHTML =
     active === 'dashboard' ? dashboard() + painelViagensPendentes() + painelComprovantes() :
     active === 'seguranca' ? security() :
+    active === 'cobrancas' ? cobrancasPage() :
     active === 'pendencias' ? pendenciasPage() :
     tablePage(active);
 }
@@ -1491,7 +1493,7 @@ function rowHtml(t, r){
     ${s.cols.map(([k,,type]) => `<td>${cell(k, type, r[k])}</td>`).join('')}
     <td class="actions">
       ${t === 'motoristas' && divida ? `<span class="badge danger" title="Saldo devedor">Dívida: ${reaisPend(divida.saldo)}</span> ` : ''}
-      <button class="sm" onclick="editRow('${t}','${r.id}')">Editar</button> <button class="sm danger" onclick="removeRow('${t}','${r.id}')">Excluir</button>
+      ${t==='motoristas'?`<span class="badge muted">${esc(modalidadeLabel(r.modalidade_cobranca))}</span> <button class="alt sm" onclick="selecionarMotoristaCobranca('${r.id}')">Cobrança</button> `:''}<button class="sm" onclick="editRow('${t}','${r.id}')">Editar</button> <button class="sm danger" onclick="removeRow('${t}','${r.id}')">Excluir</button>
     </td></tr>`;
 }
 
@@ -2342,6 +2344,116 @@ async function salvarBaixa(e,id){
  if(error)throw error;fecharBaixa();await carregarPendencias();render();toast('Pagamento registrado.');
  }catch(err){msg('Pagamento: '+err.message,true);b.disabled=false;}
 }
+
+/* Cobranças: configuração por motorista; lançamento confirmado pelo administrador. */
+let cobrancaMotoristaId='';
+let cobrancaDraftRef='';
+function modalidadeLabel(mode){return {diaria:'Diária',comissao:'Comissão',a_combinar:'A combinar'}[mode]||'Não definido';}
+function modalidadesOptions(mode){return '<option value="">Selecione</option>'+['diaria','comissao','a_combinar'].map(v=>`<option value="${v}" ${mode===v?'selected':''}>${modalidadeLabel(v)}</option>`).join('');}
+function selecionarMotoristaCobranca(id){
+ if(!isAdmin)return;
+ cobrancaMotoristaId=id;cobrancaDraftRef='';active='cobrancas';render();
+}
+function calcularCobrancaValores(mode,values){
+ const n=k=>Number(values[k]);
+ let total;
+ if(mode==='diaria'){
+  if(!Number.isInteger(n('quantidade'))||n('quantidade')<=0||n('quantidade')>36600||!(n('valor_unitario')>0))return {erro:'Informe dias inteiros e o valor da diária.'};
+  total=n('quantidade')*Math.round((n('valor_unitario')+Number.EPSILON)*100)/100;
+ }else if(mode==='comissao'){
+  if(!(n('base_comissao')>0)||!(n('percentual')>0)||n('percentual')>100)return {erro:'Informe a base e um percentual entre 0 e 100.'};
+  total=Math.round(Math.round((n('base_comissao')+Number.EPSILON)*100)*n('percentual')/100)/100;
+ }else if(mode==='a_combinar'){
+  total=Math.round((n('valor_combinado')+Number.EPSILON)*100)/100;
+ }else return {erro:'Escolha a modalidade de cobrança.'};
+ if(!Number.isFinite(total)||total<=0||total>9999999999.99)return {erro:'Informe um valor total válido.'};
+ return {valor:total};
+}
+function ajustarCamposCobranca(form){
+ const mode=form.elements.namedItem('modalidade').value;
+ for(const group of form.querySelectorAll('[data-modalidade]')){
+  const visible=group.dataset.modalidade===mode;
+  group.hidden=!visible;
+  for(const input of group.querySelectorAll('input')){input.disabled=!visible;input.required=visible;}
+ }
+ const description=form.elements.namedItem('descricao');
+ if(description)description.required=mode==='a_combinar';
+ atualizarTotalCobranca();
+}
+function atualizarTotalCobranca(){
+ const form=$('cobranca-lancamento'),out=$('cobranca-total');if(!form||!out)return;
+ const values=Object.fromEntries(new FormData(form).entries());
+ const result=calcularCobrancaValores(values.modalidade,values);
+ out.textContent=result.erro||brl(result.valor);
+}
+function cobrancasPage(){
+ const drivers=data.motoristas||[];
+ if(!drivers.length)return '<section class="panel"><h2>Cobranças por motorista</h2><p class="sub">Cadastre um motorista para definir a cobrança.</p><button onclick="nav(\'motoristas\')">Ir para Motoristas</button></section>';
+ const m=drivers.find(x=>x.id===cobrancaMotoristaId)||drivers[0];
+ cobrancaMotoristaId=m.id;
+ if(!cobrancaDraftRef)cobrancaDraftRef=crypto.randomUUID();
+ const mode=m.modalidade_cobranca||'';
+ const inputMode=(value,body)=>`<div class="fields" data-modalidade="${value}" ${mode===value?'':'hidden'}>${body}</div>`;
+ const field=(label,name,value,type='number',extra='')=>`<div class="field"><label>${label}</label><input name="${name}" type="${type}" value="${esc(value??'')}" ${extra}></div>`;
+ const attrs=value=>mode===value?'required':'disabled';
+ const charges=(data.pendencias||[]).filter(p=>p.motorista_id===m.id&&p.cobranca_detalhes&&String(p.data_lancamento).startsWith(month));
+ const total=charges.reduce((s,p)=>s+Number(p.valor),0),paid=charges.reduce((s,p)=>s+pagoPend(p.id),0);
+ return `<section class="panel"><h2>Cobranças por motorista</h2><p class="sub">Defina como cada motorista paga e registre cada cobrança. Só o administrador pode configurar e lançar.</p>
+ <div class="field" style="margin-top:14px"><label for="cobranca-motorista">Motorista</label><select id="cobranca-motorista" onchange="selecionarMotoristaCobranca(this.value)">${drivers.map(d=>`<option value="${d.id}" ${d.id===m.id?'selected':''}>${esc(d.nome)} · ${modalidadeLabel(d.modalidade_cobranca)}${d.status!=='ativo'?' · inativo':''}</option>`).join('')}</select></div></section>
+ <section class="panel"><h2>Forma de cobrança de ${esc(m.nome)}</h2><p class="sub">Estes valores servem de padrão para os próximos lançamentos. Alterações não mudam cobranças anteriores.</p>
+ <form id="cobranca-config" onsubmit="salvarConfiguracaoCobranca(event)"><div class="fields">
+ <div class="field"><label>Modalidade padrão</label><select name="modalidade" onchange="ajustarCamposCobranca(this.form)">${modalidadesOptions(mode)}</select></div>
+ </div>
+ ${inputMode('diaria',field('Valor da diária (R$)','valor_diaria',m.valor_diaria,'number',`min="0.01" step="0.01" ${attrs('diaria')}`))}
+ ${inputMode('comissao',field('Comissão (%)','percentual_comissao',m.percentual_comissao,'number',`min="0.01" max="100" step="0.01" ${attrs('comissao')}`))}
+ <div class="field"><label>Condições do acordo (opcional)</label><input name="acordo_cobranca" value="${esc(m.acordo_cobranca||'')}" maxlength="500" placeholder="Ex.: comissão somente sobre corridas particulares"></div>
+ <div class="btn-row" style="margin-top:14px"><button type="submit">Salvar configuração</button></div></form></section>
+ <section class="panel"><h2>Lançar cobrança</h2><p class="sub">Informe os dias, a base da comissão ou o valor combinado. Nenhuma cobrança é gerada sozinha. Se já lançou esta cobrança em Pendências, não lance novamente.</p>
+ ${m.status!=='ativo'?'<p class="badge danger">Motorista inativo: ative o cadastro antes de lançar cobranças.</p>':''}
+ <form id="cobranca-lancamento" oninput="atualizarTotalCobranca()" onsubmit="lancarCobrancaMotorista(event)"><input type="hidden" name="referencia" value="${cobrancaDraftRef}">
+ <div class="fields"><div class="field"><label>Modalidade deste lançamento</label><select name="modalidade" required onchange="ajustarCamposCobranca(this.form)">${modalidadesOptions(mode)}</select></div>
+ ${field('Data de referência','data',hojeBrasilia(),'date','required')}${field('Vencimento (opcional)','vencimento','','date')}
+ <div class="field"><label>Veículo (opcional)</label><select name="veiculo_id">${options('vehicle')}</select></div></div>
+ ${inputMode('diaria',field('Quantidade de dias','quantidade',1,'number',`min="1" max="36600" step="1" ${attrs('diaria')}`)+field('Valor por diária (R$)','valor_unitario',m.valor_diaria,'number',`min="0.01" step="0.01" ${attrs('diaria')}`))}
+ ${inputMode('comissao',field('Base da comissão (R$)','base_comissao','','number',`min="0.01" step="0.01" ${attrs('comissao')}`)+field('Comissão (%)','percentual',m.percentual_comissao,'number',`min="0.01" max="100" step="0.01" ${attrs('comissao')}`))}
+ ${inputMode('a_combinar',field('Valor combinado (R$)','valor_combinado','','number',`min="0.01" step="0.01" ${attrs('a_combinar')}`))}
+ <div class="field"><label>Descrição / período cobrado ${mode==='a_combinar'?'(obrigatório)':''}</label><input name="descricao" maxlength="500" ${mode==='a_combinar'?'required':''} value="${esc(m.acordo_cobranca||'')}" placeholder="Ex.: diárias de 01 a 03/11, comissão da semana ou acordo particular"></div>
+ <p><b>Total a cobrar:</b> <output id="cobranca-total" aria-live="polite">Preencha os valores</output></p>
+ <p class="sub">O lançamento cria uma conta a receber. O dinheiro entra no caixa somente ao registrar a baixa em Pendências ou no histórico abaixo.</p>
+ <div class="btn-row" style="margin-top:14px"><button type="submit" ${m.status==='ativo'?'':'disabled'}>Lançar em Pendências</button></div></form></section>
+ <section class="panel"><h2>Cobranças de ${esc(m.nome)} · ${esc(month)}</h2><div class="grid kpi-grid"><div class="kpi"><span class="kpi-label">Lançado</span><div class="kpi-value">${brl(total)}</div></div><div class="kpi"><span class="kpi-label">Recebido dessas cobranças</span><div class="kpi-value">${brl(paid)}</div></div><div class="kpi"><span class="kpi-label">A receber</span><div class="kpi-value">${brl(Math.max(0,total-paid))}</div></div></div>
+ <div class="scroll"><table><thead><tr><th>Data</th><th>Modalidade / descrição</th><th>Valor</th><th>Saldo</th><th>Situação</th><th>Ação</th></tr></thead><tbody>${charges.slice().reverse().map(p=>`<tr><td>${fmtDate(p.data_lancamento)}</td><td><b>${esc(p.categoria)}</b><small class="pend-description">${esc(p.descricao)}</small></td><td>${brl(p.valor)}</td><td>${brl(Math.max(0,Number(p.valor)-pagoPend(p.id)))}</td><td>${badge(statusPend(p))}</td><td>${Number(p.valor)-pagoPend(p.id)>0.005?`<button onclick="abrirBaixa('${p.id}')">Registrar pagamento</button>`:'Quitada'}</td></tr>`).join('')||'<tr><td colspan="6">Nenhuma cobrança lançada por este módulo no mês. Registros antigos continuam em Pendências.</td></tr>'}</tbody></table></div></section>`;
+}
+async function salvarConfiguracaoCobranca(e){
+ e.preventDefault();if(!isAdmin)return;
+ const form=e.target,f=new FormData(form),mode=f.get('modalidade')||null;
+ const o={modalidade_cobranca:mode,valor_diaria:mode==='diaria'?Number(f.get('valor_diaria')):null,percentual_comissao:mode==='comissao'?Number(f.get('percentual_comissao')):null,acordo_cobranca:String(f.get('acordo_cobranca')||'').trim()||null};
+ if(mode==='diaria'&&(!Number.isFinite(o.valor_diaria)||o.valor_diaria<=0))return msg('Informe o valor da diária.',true);
+ if(mode==='comissao'&&(!Number.isFinite(o.percentual_comissao)||o.percentual_comissao<=0||o.percentual_comissao>100))return msg('Informe um percentual entre 0 e 100.',true);
+ const btn=form.querySelector('button[type=submit]');btn.disabled=true;
+ try{const {error}=await client.from('motoristas').update(o).eq('id',cobrancaMotoristaId);if(error)throw error;await refresh();toast('Configuração de cobrança salva.');}
+ catch(err){msg('Não foi possível salvar: '+err.message,true);}
+ finally{btn.disabled=false;}
+}
+async function lancarCobrancaMotorista(e){
+ e.preventDefault();if(!isAdmin||!pendenciasReady)return msg('Pendências indisponíveis.',true);
+ const form=e.target,values=Object.fromEntries(new FormData(form).entries()),result=calcularCobrancaValores(values.modalidade,values);
+ if(result.erro)return msg(result.erro,true);
+ if(values.modalidade==='a_combinar'&&!String(values.descricao||'').trim())return msg('Descreva o acordo combinado.',true);
+ const optional=k=>values[k]!==undefined&&values[k]!==''?Number(values[k]):null;
+ const btn=form.querySelector('button[type=submit]');btn.disabled=true;
+ try{
+  const {error}=await client.rpc('sj_lancar_cobranca_motorista',{
+   p_motorista_id:cobrancaMotoristaId,p_modalidade:values.modalidade,p_data:values.data,p_referencia:values.referencia,
+   p_vencimento:values.vencimento||null,p_veiculo_id:values.veiculo_id||null,p_quantidade:optional('quantidade'),
+   p_valor_unitario:optional('valor_unitario'),p_base_comissao:optional('base_comissao'),p_percentual:optional('percentual'),p_valor_combinado:optional('valor_combinado'),p_descricao:values.descricao||''
+  });
+  if(error)throw error;
+  cobrancaDraftRef='';await refresh();toast('Cobrança lançada em Pendências. Registre o pagamento quando receber.');
+ }catch(err){msg(err.code==='23505'?'Esta cobrança já foi registrada. Atualize o histórico antes de tentar novamente.':'Falha ao lançar: '+err.message,true);}
+ finally{btn.disabled=false;}
+}
+
 
 /* =========================================================
    BOOTSTRAP
