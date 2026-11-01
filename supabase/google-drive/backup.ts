@@ -5,7 +5,19 @@ const env=(name:string)=>Deno.env.get(name)||"";
 const url=env("SUPABASE_URL"),serviceKey=env("SUPABASE_SERVICE_ROLE_KEY");
 const admin=env("SJ_ADMIN_UID");
 const clientId=env("GOOGLE_CLIENT_ID"),clientSecret=env("GOOGLE_CLIENT_SECRET");
-const encryptionKey=env("GOOGLE_TOKEN_ENCRYPTION_KEY"),cronSecret=env("BACKUP_CRON_SECRET");
+const encryptionKey=env("GOOGLE_TOKEN_ENCRYPTION_KEY");
+// SHA-256 of the high-entropy secret held in Vault (sj_mob_top_backup_cron_secret).
+// The plaintext stays in Vault; rotate this verifier together with the Vault secret.
+const cronSecretSha256="e1dfd0a110e823191df093aa71ec6beac684e3c281daf2fb597df6a5f67d2ab5";
+async function cronRequest(req:Request){
+ const secret=req.headers.get("x-backup-cron-secret");
+ if(!secret || secret.length>1024)return false;
+ const hash=new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(secret)));
+ const expected=Uint8Array.from(cronSecretSha256.match(/../g)!,x=>parseInt(x,16));
+ let mismatch=0;
+ for(let i=0;i<hash.length;i++)mismatch|=hash[i]^expected[i];
+ return mismatch===0;
+}
 const db=createClient(url,serviceKey,{auth:{persistSession:false,autoRefreshToken:false}});
 const origin="https://wilsenff-web.github.io";
 const cors={"Access-Control-Allow-Origin":origin,"Access-Control-Allow-Methods":"POST,OPTIONS","Access-Control-Allow-Headers":"authorization,apikey,x-client-info,content-type,x-supabase-api-version","Vary":"Origin"};
@@ -64,7 +76,7 @@ Deno.serve(async(req)=>{
  try{
   if(!url||!serviceKey||!admin||!clientId||!clientSecret||!encryptionKey)return json({error:"Configuração incompleta"},503);
   const body=await req.json().catch(()=>({}));
-  const isCron=body.action==="weekly" && !!cronSecret && req.headers.get("x-backup-cron-secret")===cronSecret;
+  const isCron=body.action==="weekly" && await cronRequest(req);
   if(!isCron&&!(await adminRequest(req)))return json({error:"Acesso restrito"},403);
   if(body.action!=="manual"&&body.action!=="weekly")return json({error:"Ação inválida"},400);
   if(body.action==="weekly"&&!isCron)return json({error:"Agendamento não autorizado"},403);
