@@ -700,6 +700,19 @@ tbody td{padding:8px 9px;font-size:12px}
     <p style="margin:16px 0 0"><small>Crie seu usuário em <b>Authentication → Users</b> no Supabase. Este sistema não oferece cadastro público.</small></p>
   </section>
 
+  <!-- RECUPERAÇÃO DE SENHA -->
+  <section id="recovery" class="panel narrow hide">
+    <h2>Definir nova senha</h2>
+    <p class="sub">Crie uma senha para a conta que recebeu o e-mail de recuperação.</p>
+    <form onsubmit="saveRecoveredPassword(event)">
+      <div class="fields">
+        <div class="field"><label for="new-password">Nova senha</label><input id="new-password" type="password" minlength="12" autocomplete="new-password" required></div>
+        <div class="field"><label for="confirm-password">Confirmar nova senha</label><input id="confirm-password" type="password" minlength="12" autocomplete="new-password" required></div>
+      </div>
+      <div class="btn-row" style="margin-top:16px"><button type="submit">Salvar nova senha</button></div>
+    </form>
+  </section>
+
   <!-- ============ 3. APP ============ -->
 <section id="app" class="hide">
   <div class="app-shell">
@@ -918,7 +931,7 @@ $('month').value = month;
 $('month').onchange = e => { month = e.target.value; render(); };
 
 function show(id){
-  for(const k of ['setup','auth','app']) $(k).classList.toggle('hide', k !== id);
+  for(const k of ['setup','auth','recovery','app']) $(k).classList.toggle('hide', k !== id);
 }
 
 function setIdentity(){
@@ -928,6 +941,9 @@ function setIdentity(){
     <div class="avatar">${esc((email[0] || '?').toUpperCase())}</div>
     <div class="who"><b>${esc(email)}</b><small>conectado</small></div>`;
 }
+
+let recoveryActive = false;
+const recoveryFromLink = () => /(?:[?#&])(type=recovery|token_hash=)/.test(location.href) && (location.href.includes('type=recovery') || location.href.includes('token_hash='));
 
 async function connect(){
   try{
@@ -942,8 +958,14 @@ async function connect(){
     });
     localStorage.setItem('sj_config', JSON.stringify({u, k}));
 
-    client.auth.onAuthStateChange((_event, s) => {
+    client.auth.onAuthStateChange((event, s) => {
       session = s;
+      if(event === 'PASSWORD_RECOVERY'){
+        recoveryActive = true;
+        show('recovery');
+        return;
+      }
+      if(recoveryActive) return;
       if(!s){ show('auth'); setIdentity(); }
       else { show('app'); setIdentity(); setTimeout(refresh, 0); }
     });
@@ -952,6 +974,11 @@ async function connect(){
     if(error) throw error;
     session = d.session;
 
+    if(recoveryActive || recoveryFromLink()){
+      recoveryActive = true;
+      show('recovery');
+      return;
+    }
     if(session){
       show('app'); setIdentity(); await refresh();
       toast('Sessão restaurada com sucesso.');
@@ -978,8 +1005,31 @@ async function signIn(){
 async function resetPassword(){
   const email = $('email').value.trim();
   if(!email) return msg('Digite seu e-mail.', true);
-  const {error} = await client.auth.resetPasswordForEmail(email);
+  const {error} = await client.auth.resetPasswordForEmail(email, {redirectTo: 'https://wilsenff-web.github.io/sj-mob-top-pages/'});
   msg(error ? error.message : 'Se o e-mail estiver cadastrado, você receberá instruções.', !!error);
+}
+
+async function saveRecoveredPassword(e){
+  e.preventDefault();
+  if(!recoveryActive || !session) return msg('Link inválido ou expirado. Solicite outra recuperação.', true);
+  const password = $('new-password').value;
+  if(password.length < 12 || password !== $('confirm-password').value)
+    return msg('Use pelo menos 12 caracteres e confirme a mesma senha.', true);
+  const button = e.target.querySelector('button[type="submit"]');
+  button.disabled = true;
+  try{
+    const {error} = await client.auth.updateUser({password});
+    if(error) throw error;
+    recoveryActive = false;
+    $('new-password').value = '';
+    $('confirm-password').value = '';
+    history.replaceState(null, '', location.pathname);
+    await client.auth.signOut();
+    session = null;
+    show('auth');
+    toast('Senha alterada. Entre com a nova senha.');
+  }catch(error){msg('Não foi possível alterar a senha: ' + error.message, true);}
+  finally{button.disabled = false;}
 }
 
 async function logout(){
