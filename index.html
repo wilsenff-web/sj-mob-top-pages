@@ -866,7 +866,7 @@ tbody td{padding:8px 9px;font-size:12px}
 </section>
 </main>
 
-<footer class="footer">SJ MOB TOP · Martins · v2.16 · acesso individual e dados protegidos</footer>
+<footer class="footer">SJ MOB TOP · Martins · v2.17 · acesso individual e dados protegidos</footer>
 
 <div id="toasts" aria-live="polite" aria-atomic="false"></div>
 <div id="modal-root"></div>
@@ -886,6 +886,16 @@ function hojeBrasilia(date = new Date()){
   const parts = new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(date);
   const value = type => parts.find(p=>p.type===type).value;
   return `${value('year')}-${value('month')}-${value('day')}`;
+}
+function horaBrasilia(date = new Date()){
+ return new Intl.DateTimeFormat('en-GB',{timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(date);
+}
+function horaViagem(value){return /^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/.test(value||'')?String(value).slice(0,5):'';}
+function dataHoraViagem(v){return fmtDate(v.data_viagem)+' · '+(horaViagem(v.hora_inicio)||'Hora não informada');}
+function configurarHoraViagem(form,novo=false){
+ const input=form?.elements.namedItem('hora_inicio');if(!input)return;
+ input.required=novo;
+ if(novo)input.value=horaBrasilia();
 }
 let month = hojeBrasilia().slice(0, 7);
 let dashboardPeriodResolved = false;
@@ -1036,6 +1046,7 @@ const specs = {
   ]},
   viagens:{title:'Viagens',cols:[
     ['data_viagem','Data','date',true],
+    ['hora_inicio','Hora de início','time'],
     ['motorista_id','Motorista','driver',true],
     ['veiculo_id','Veículo','vehicle',true],
     ['tipo_uso','Tipo de uso','select',['trabalho','deslocamento','manutencao','ida_casa','uso_particular']],
@@ -1091,7 +1102,7 @@ let driverRecord = null;
 let comprovantesReady = false;
 let driverTripMonth = null;
 function viagensPorData(rows){
- return rows.slice().sort((a,b)=>String(b.data_viagem||'').localeCompare(String(a.data_viagem||'')) || Number(b.km_inicial||0)-Number(a.km_inicial||0) || String(a.id).localeCompare(String(b.id)));
+ return rows.slice().sort((a,b)=>String(b.data_viagem||'').localeCompare(String(a.data_viagem||'')) || String(b.hora_inicio||'').localeCompare(String(a.hora_inicio||'')) || Number(b.km_inicial||0)-Number(a.km_inicial||0) || String(a.id).localeCompare(String(b.id)));
 }
 function comprovantesDaViagem(id){
  return (data.comprovantes_motoristas||[]).filter(c=>c.viagem_id===id).map(c=>`<button type="button" class="alt sm" onclick="abrirComprovante('${esc(c.arquivo_path)}')">Ver comprovante · ${esc(c.status)}</button>`).join('');
@@ -1104,7 +1115,7 @@ function prepararComprovanteViagem(id){
  const form=panel.querySelector('form');
  form.elements.namedItem('viagem_id').value=id;
  form.elements.namedItem('valor').value=Number((v.tipo_uso||'trabalho')==='trabalho'?v.faturamento:v.valor_uso)||'';
- form.elements.namedItem('observacao').value='Pagamento da viagem de '+fmtDate(v.data_viagem);
+ form.elements.namedItem('observacao').value='Pagamento da viagem de '+dataHoraViagem(v);
  panel.scrollIntoView({behavior:'smooth',block:'start'});
 }
 function painelDividasMotorista(){
@@ -1138,7 +1149,7 @@ function toggleDriverForm(kind){
    if(!el)continue;
    const opening=id===kind && el.style.display==='none';
    el.style.display=opening?'':'none';
-   if(opening){if(id==='viagem')atualizarTipoUso(el.querySelector('form'));el.scrollIntoView({behavior:'smooth',block:'nearest'});}
+   if(opening){if(id==='viagem'){const form=el.querySelector('form');atualizarTipoUso(form);if(!form.elements.namedItem('veiculo_id').value)configurarHoraViagem(form,true);}el.scrollIntoView({behavior:'smooth',block:'nearest'});}
  }
 }
 function driverPage(){
@@ -1147,7 +1158,7 @@ function driverPage(){
  const allTrips=viagensPorData(data.viagens||[]);
  const currentMonth=hojeBrasilia().slice(0,7);
  const selectedMonth=driverTripMonth||(allTrips.some(v=>String(v.data_viagem).startsWith(currentMonth))?currentMonth:String(allTrips[0]?.data_viagem||currentMonth).slice(0,7));
- const rows=allTrips.filter(v=>String(v.data_viagem).startsWith(selectedMonth)).map(v=>`<tr><td>${esc(fmtDate(v.data_viagem))}</td><td>${esc(v.origem||'')} → ${esc(v.destino||'')}<small class="usage-meta">${esc(tipoUsoLabel(v.tipo_uso))}</small></td><td>${num(v.km_rodados||0)} km</td><td>${valorViagemHtml(v)}</td><td>${badge(v.status_conferencia||'aprovada')}</td><td><div class="driver-trip-proof">${comprovantesReady?`<button type="button" class="alt sm" onclick="prepararComprovanteViagem('${v.id}')">Enviar comprovante</button>`:''}${comprovantesDaViagem(v.id)}</div></td></tr>`).join('');
+ const rows=allTrips.filter(v=>String(v.data_viagem).startsWith(selectedMonth)).map(v=>`<tr><td>${esc(dataHoraViagem(v))}</td><td>${esc(v.origem||'')} → ${esc(v.destino||'')}<small class="usage-meta">${esc(tipoUsoLabel(v.tipo_uso))}</small></td><td>${num(v.km_rodados||0)} km</td><td>${valorViagemHtml(v)}</td><td>${badge(v.status_conferencia||'aprovada')}</td><td><div class="driver-trip-proof">${comprovantesReady?`<button type="button" class="alt sm" onclick="prepararComprovanteViagem('${v.id}')">Enviar comprovante</button>`:''}${comprovantesDaViagem(v.id)}</div></td></tr>`).join('');
  return `<section class="panel driver-action-panel"><h2>Área do motorista — ${esc(driverRecord.nome)}</h2>
  <p class="sub">Escolha uma ação para abrir o formulário. Seus registros ficam organizados logo abaixo.</p>
  <div class="btn-row" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
@@ -1157,11 +1168,12 @@ function driverPage(){
  <section class="panel driver-entry-panel" id="driver-form-viagem" style="display:none"><h2>Registrar viagem do dia</h2>
  <form onsubmit="saveDriverTrip(event)" class="driver-form"><div class="fields driver-fields">
  <div class="field"><label>Data</label><input name="data_viagem" type="date" value="${hojeBrasilia()}" required onchange="preencherKmInicial(this.form)"></div>
+ <div class="field"><label>Hora de início</label><input name="hora_inicio" type="time" step="60" value="${horaBrasilia()}" required onchange="preencherKmInicial(this.form)"><small>Horário em que começou a usar o carro (Brasília).</small></div>
  <div class="field"><label>Veículo</label><select name="veiculo_id" required onchange="preencherKmInicial(this.form)"><option value="">Selecione</option>${vehicles}</select></div>
  <div class="field"><label>Tipo de uso</label><select name="tipo_uso" onchange="atualizarTipoUso(this.form)">${tipoUsoOptions()}</select><small data-uso-hint>Informe a receita da corrida normalmente.</small></div>
  <div class="field"><label>Origem</label><input name="origem" required maxlength="200"></div>
  <div class="field"><label>Destino</label><input name="destino" required maxlength="200"></div>
- <div class="field"><label>KM inicial</label><input name="km_inicial" type="number" min="0" step="0.01" oninput="calcularKmViagem(this.form)" required><small data-km-hint role="status">Escolha o veículo e a data para buscar o último KM final.</small></div>
+ <div class="field"><label>KM inicial</label><input name="km_inicial" type="number" min="0" step="0.01" oninput="calcularKmViagem(this.form)" required><small data-km-hint role="status">Escolha veículo, data e hora para buscar o KM final anterior.</small></div>
  <div class="field"><label>KM final</label><input name="km_final" type="number" min="0" step="0.01" oninput="calcularKmViagem(this.form)" required></div>
  <div class="field"><label>KM rodados</label><input name="km_rodados" type="number" readonly placeholder="Calculado automaticamente"></div>
  <div class="field"><label>Faturamento (R$)</label><input name="faturamento" type="number" min="0" step="0.01" required></div>
@@ -1170,7 +1182,7 @@ function driverPage(){
  <section class="panel driver-entry-panel" id="driver-form-comprovante" style="display:none"><h2>Enviar comprovante de pagamento</h2>
  <p class="sub">Anexe o comprovante de um pagamento feito ao administrador. O envio fica pendente de conferência e não dá baixa automática em dívidas.</p>
  ${comprovantesReady ? `<form onsubmit="enviarComprovante(event)" class="driver-form"><div class="fields driver-fields">
- <div class="field"><label>Referente à viagem</label><select name="viagem_id"><option value="">Outro pagamento / dívida</option>${allTrips.map(v=>`<option value="${v.id}">${esc(fmtDate(v.data_viagem))} · ${esc(v.origem||'')} → ${esc(v.destino||'')}</option>`).join('')}</select></div>
+ <div class="field"><label>Referente à viagem</label><select name="viagem_id"><option value="">Outro pagamento / dívida</option>${allTrips.map(v=>`<option value="${v.id}">${esc(dataHoraViagem(v))} · ${esc(v.origem||'')} → ${esc(v.destino||'')}</option>`).join('')}</select></div>
  <div class="field"><label>Valor pago (R$)</label><input name="valor" type="number" min="0.01" step="0.01" required></div>
  <div class="field"><label>Data do pagamento</label><input name="data_pagamento" type="date" value="${hojeBrasilia()}" required></div>
  <div class="field"><label>Observação (opcional)</label><input name="observacao" maxlength="300"></div>
@@ -1178,9 +1190,9 @@ function driverPage(){
  </div><div class="btn-row driver-form-actions"><button type="submit">Enviar comprovante</button> <button type="button" class="alt" onclick="toggleDriverForm(\'comprovante\')">Cancelar</button></div></form>` : '<p class="sub">Módulo de comprovantes ainda não ativado no Supabase.</p>'}
  </section><section class="panel"><h2>Comprovantes enviados</h2>
  <div class="scroll"><table><thead><tr><th>Data</th><th>Valor</th><th>Situação</th><th>Arquivo</th></tr></thead><tbody>
- ${(data.comprovantes_motoristas||[]).map(c=>`<tr><td>${esc(c.data_pagamento)}</td><td>${brl(c.valor)}</td><td>${esc(c.status)}${c.viagem_id?' · viagem '+esc(fmtDate((data.viagens||[]).find(v=>v.id===c.viagem_id)?.data_viagem)):''}</td><td><button type="button" class="alt sm" onclick="abrirComprovante('${esc(c.arquivo_path)}')">Ver</button></td></tr>`).join('')||'<tr><td colspan="4">Nenhum comprovante enviado</td></tr>'}</tbody></table></div></section>
+ ${(data.comprovantes_motoristas||[]).map(c=>`<tr><td>${esc(c.data_pagamento)}</td><td>${brl(c.valor)}</td><td>${esc(c.status)}${c.viagem_id?' · viagem '+esc(dataHoraViagem((data.viagens||[]).find(v=>v.id===c.viagem_id)||{})):''}</td><td><button type="button" class="alt sm" onclick="abrirComprovante('${esc(c.arquivo_path)}')">Ver</button></td></tr>`).join('')||'<tr><td colspan="4">Nenhum comprovante enviado</td></tr>'}</tbody></table></div></section>
  ${painelDividasMotorista()}
- <section class="panel"><h2>Minhas viagens</h2><p class="sub">Ordenadas pela data da viagem, da mais recente para a mais antiga, mesmo quando lançadas depois.</p><div class="field" style="max-width:230px"><label for="driver-trip-month">Mês das viagens</label><input id="driver-trip-month" type="month" value="${esc(selectedMonth)}" onchange="selecionarMesMotorista(this.value)"></div><div style="overflow:auto"><table><thead><tr><th>Data</th><th>Trajeto</th><th>KM</th><th>Valores</th><th>Conferência</th><th>Pagamento ao administrador</th></tr></thead><tbody>${rows||'<tr><td colspan="6">Nenhuma viagem neste mês</td></tr>'}</tbody></table></div></section>`;
+ <section class="panel"><h2>Minhas viagens</h2><p class="sub">Ordenadas pela data e hora de início, da mais recente para a mais antiga, mesmo quando lançadas depois.</p><div class="field" style="max-width:230px"><label for="driver-trip-month">Mês das viagens</label><input id="driver-trip-month" type="month" value="${esc(selectedMonth)}" onchange="selecionarMesMotorista(this.value)"></div><div style="overflow:auto"><table><thead><tr><th>Data / hora</th><th>Trajeto</th><th>KM</th><th>Valores</th><th>Conferência</th><th>Pagamento ao administrador</th></tr></thead><tbody>${rows||'<tr><td colspan="6">Nenhuma viagem neste mês</td></tr>'}</tbody></table></div></section>`;
 }
 async function carregarComprovantes(){
  comprovantesReady=false;
@@ -1251,7 +1263,7 @@ function painelViagensPendentes(){
  return `<section class="panel"><h2>Viagens aguardando sua aprovação (${pend.length})</h2>
  <p class="sub">Confira o tipo de uso. Em uso particular ou ida para casa, use Definir valor antes de aprovar se houver cobrança. Registros pendentes não entram nos totais aprovados.</p>
  <div class="scroll"><table><thead><tr><th>Motorista</th><th>Data</th><th>Trajeto</th><th>KM</th><th>Faturamento</th><th>Conferência</th></tr></thead><tbody>
- ${pend.map(v=>`<tr><td>${esc(lookup('motoristas',v.motorista_id))}</td><td>${esc(v.data_viagem)}</td><td>${esc(v.origem||'')} → ${esc(v.destino||'')}<small class="usage-meta">${esc(tipoUsoLabel(v.tipo_uso))}</small></td><td>${num(v.km_rodados||0)}</td><td>${valorViagemHtml(v)}${['ida_casa','uso_particular'].includes(v.tipo_uso)?`<br><button class="alt sm" onclick="editarUsoViagem('${v.id}')">Definir valor</button>`:''}</td><td><button onclick="conferirViagem('${esc(v.id)}','aprovada')">Aprovar</button> <button class="alt sm" onclick="conferirViagem('${esc(v.id)}','rejeitada')">Rejeitar</button></td></tr>`).join('')||'<tr><td colspan="6">Nenhuma viagem pendente</td></tr>'}</tbody></table></div></section>`;
+ ${pend.map(v=>`<tr><td>${esc(lookup('motoristas',v.motorista_id))}</td><td>${esc(dataHoraViagem(v))}</td><td>${esc(v.origem||'')} → ${esc(v.destino||'')}<small class="usage-meta">${esc(tipoUsoLabel(v.tipo_uso))}</small></td><td>${num(v.km_rodados||0)}</td><td>${valorViagemHtml(v)}${['ida_casa','uso_particular'].includes(v.tipo_uso)?`<br><button class="alt sm" onclick="editarUsoViagem('${v.id}')">Definir valor</button>`:''}</td><td><button onclick="conferirViagem('${esc(v.id)}','aprovada')">Aprovar</button> <button class="alt sm" onclick="conferirViagem('${esc(v.id)}','rejeitada')">Rejeitar</button></td></tr>`).join('')||'<tr><td colspan="6">Nenhuma viagem pendente</td></tr>'}</tbody></table></div></section>`;
 }
 async function registrarRecebimentoComprovante(id){
  if(!isAdmin)return;
@@ -1269,7 +1281,7 @@ function painelComprovantes(){
  return `<section class="panel"><h2>Comprovantes dos motoristas</h2>
  <p class="sub">Confira os arquivos antes de confirmar. Confirmação não registra receita nem quita pendências automaticamente.</p>
  <div class="scroll"><table><thead><tr><th>Motorista</th><th>Data</th><th>Valor</th><th>Status</th><th>Arquivo</th><th>Conferência</th><th>Financeiro</th></tr></thead><tbody>
- ${rows.map(c=>`<tr><td>${esc(lookup('motoristas',c.motorista_id))}</td><td>${esc(c.data_pagamento)}</td><td>${brl(c.valor)}</td><td>${esc(c.status)}${c.viagem_id?'<br>Viagem: '+esc(fmtDate((data.viagens||[]).find(v=>v.id===c.viagem_id)?.data_viagem)):''}</td><td><button type="button" class="alt sm" onclick="abrirComprovante('${esc(c.arquivo_path)}')">Ver</button></td><td>${c.status==='pendente'?`<button type="button" onclick="revisarComprovante('${esc(c.id)}','confirmado')">Confirmar</button> <button type="button" class="alt sm" onclick="revisarComprovante('${esc(c.id)}','rejeitado')">Rejeitar</button>`:'—'}</td><td>${(data.financeiro||[]).some(f=>f.comprovante_id===c.id)?'<span class="badge ok">Registrado</span>':c.status==='confirmado'?`<button type="button" onclick="registrarRecebimentoComprovante('${esc(c.id)}')">Registrar recebimento</button>`:'—'}</td></tr>`).join('')||'<tr><td colspan="7">Nenhum comprovante recebido</td></tr>'}</tbody></table></div></section>`;
+ ${rows.map(c=>`<tr><td>${esc(lookup('motoristas',c.motorista_id))}</td><td>${esc(c.data_pagamento)}</td><td>${brl(c.valor)}</td><td>${esc(c.status)}${c.viagem_id?'<br>Viagem: '+esc(dataHoraViagem((data.viagens||[]).find(v=>v.id===c.viagem_id)||{})):''}</td><td><button type="button" class="alt sm" onclick="abrirComprovante('${esc(c.arquivo_path)}')">Ver</button></td><td>${c.status==='pendente'?`<button type="button" onclick="revisarComprovante('${esc(c.id)}','confirmado')">Confirmar</button> <button type="button" class="alt sm" onclick="revisarComprovante('${esc(c.id)}','rejeitado')">Rejeitar</button>`:'—'}</td><td>${(data.financeiro||[]).some(f=>f.comprovante_id===c.id)?'<span class="badge ok">Registrado</span>':c.status==='confirmado'?`<button type="button" onclick="registrarRecebimentoComprovante('${esc(c.id)}')">Registrar recebimento</button>`:'—'}</td></tr>`).join('')||'<tr><td colspan="7">Nenhum comprovante recebido</td></tr>'}</tbody></table></div></section>`;
 }
 async function saveDriverTrip(e){
  e.preventDefault();
@@ -1277,6 +1289,8 @@ async function saveDriverTrip(e){
  if(e.target.dataset.kmLoading==='true')return msg('Aguarde a consulta do KM inicial.',true);
  const f=new FormData(e.target), a=Number(f.get('km_inicial')), b=Number(f.get('km_final'));
  if(!Number.isFinite(a)||!Number.isFinite(b)||a<0||b<a) return msg('Informe KM válido; o final deve ser maior ou igual ao inicial.',true);
+ const hora=horaViagem(f.get('hora_inicio'));
+ if(!hora)return msg('Informe a hora de início da viagem.',true);
  const tipoUso=String(f.get('tipo_uso')||'trabalho');
  const faturamento=tipoUso==='trabalho'?Number(f.get('faturamento')):0;
  if(!Number.isFinite(faturamento)||faturamento<0)return msg('Informe um valor de viagem válido.',true);
@@ -1286,7 +1300,7 @@ async function saveDriverTrip(e){
  try{
   const {error}=await client.from('viagens').insert({
    user_id:driverRecord.user_id,motorista_id:driverRecord.id,veiculo_id:f.get('veiculo_id'),
-   data_viagem:f.get('data_viagem'),origem,destino,km_inicial:a,km_final:b,
+   data_viagem:f.get('data_viagem'),hora_inicio:hora,origem,destino,km_inicial:a,km_final:b,
    km_rodados:Number((b-a).toFixed(2)),faturamento,tipo_uso:tipoUso,
    observacoes:String(f.get('observacoes')||'')
   });
@@ -1603,11 +1617,11 @@ function editRow(t, id){
   if(form){
     for(const [k,,type] of specs[t].cols){
       const input = form.elements.namedItem(k);
-      if(input) input.value = record[k] == null ? "" : String(record[k]).slice(0, type === 'date' ? 10 : undefined);
+      if(input) input.value = record[k] == null ? "" : String(record[k]).slice(0, type === 'date' ? 10 : type === 'time' ? 5 : undefined);
     }
   }
 
-  if(t === 'viagens' && form){atualizarTipoUso(form);calcularKmViagem(form);}
+  if(t === 'viagens' && form){configurarHoraViagem(form,!editingRow);atualizarTipoUso(form);calcularKmViagem(form);}
   const titleEl   = document.getElementById('entry-title');
   const subEl     = document.getElementById('entry-sub');
   const submitBtn = document.getElementById('entry-submit');
@@ -1643,7 +1657,7 @@ function openNewForm(t){
     if(mesInput) mesInput.value = month + '-01';
   }
 
-  if(t === 'viagens' && form){atualizarTipoUso(form);calcularKmViagem(form);}
+  if(t === 'viagens' && form){configurarHoraViagem(form,!editingRow);atualizarTipoUso(form);calcularKmViagem(form);}
   const titleEl   = document.getElementById('entry-title');
   const subEl     = document.getElementById('entry-sub');
   const submitBtn = document.getElementById('entry-submit');
@@ -1673,7 +1687,7 @@ function closeForm(t){
     if(mesInput) mesInput.value = month + '-01';
   }
 
-  if(t === 'viagens' && form){atualizarTipoUso(form);calcularKmViagem(form);}
+  if(t === 'viagens' && form){configurarHoraViagem(form,!editingRow);atualizarTipoUso(form);calcularKmViagem(form);}
   const titleEl   = document.getElementById('entry-title');
   const submitBtn = document.getElementById('entry-submit');
   const cancelBtn = document.getElementById('entry-cancel');
@@ -1687,7 +1701,7 @@ function rowHtml(t, r){
     const v=(data.veiculos||[]).find(v=>v.id===r.veiculo_id);
     const files=comprovantesDaViagem(r.id);
     return `<tr>
-      <td data-label="Data">${esc(fmtDate(r.data_viagem))}</td>
+      <td data-label="Data / hora">${esc(fmtDate(r.data_viagem))}<small class="usage-meta">${esc(horaViagem(r.hora_inicio)||'Hora não informada')}</small></td>
       <td data-label="Motorista / veículo" class="trip-person"><strong>${esc(lookup('motoristas',r.motorista_id))}</strong><small>${esc(v?v.placa+' · '+v.modelo:lookup('veiculos',r.veiculo_id))}</small></td>
       <td data-label="Trajeto"><span class="trip-route">${esc(r.origem||'—')} → ${esc(r.destino||'—')}</span><small class="usage-meta">${esc(tipoUsoLabel(r.tipo_uso))}</small><details class="trip-details"><summary>Detalhes da viagem</summary><dl><dt>KM inicial / final</dt><dd>${r.km_inicial==null?'—':num(r.km_inicial)} / ${r.km_final==null?'—':num(r.km_final)}</dd><dt>Observações</dt><dd>${esc(r.observacoes||'Sem observações')}</dd><dt>Conferência</dt><dd>${esc(r.status_conferencia||'aprovada')}</dd>${Number(r.valor_uso)>0?`<dt>Valor combinado pelo uso</dt><dd>${brl(r.valor_uso)} · cobrança em Pendências</dd>`:''}</dl>${files}</details></td>
       <td data-label="KM rodados">${num(r.km_rodados||0)}</td>
@@ -1769,11 +1783,12 @@ function tablePage(t){
     }else{
       const val = type === 'date'
         ? (k === 'mes' ? `value="${month}-01"` : `value="${hojeBrasilia()}"`)
-        : '';
+        : type === 'time' ? `value="${horaBrasilia()}" step="60"` : '';
       inp = `<input name="${k}" type="${type}" ${type === 'number' ? 'min="0" step="0.01"' : ''} ${val} ${req === true ? 'required' : ''}>`;
     }
+    if(t === 'viagens' && k === 'hora_inicio') inp += '<small>Início do uso do carro, no horário de Brasília. Registros antigos podem ficar sem hora.</small>';
     if(t === 'viagens' && k === 'tipo_uso') inp += '<small data-uso-hint>Classifique o trajeto para separar KM e valores corretamente.</small>';
-    if(t === 'viagens' && k === 'km_inicial') inp += '<small data-km-hint role="status">Escolha o veículo e a data para buscar o último KM final.</small>';
+    if(t === 'viagens' && k === 'km_inicial') inp += '<small data-km-hint role="status">Escolha veículo, data e hora para buscar o KM final anterior.</small>';
     if(t === 'viagens' && k === 'km_rodados') inp = '<input name="km_rodados" type="number" min="0" step="0.01" readonly required placeholder="Calculado automaticamente">';
     return `<div class="field"><label>${label}</label>${inp}</div>`;
   }).join('');
@@ -1797,7 +1812,7 @@ function tablePage(t){
     <div class="scroll ${t==='viagens'?'trips-scroll':''}">
       <table class="${t==='viagens'?'trips-table':''}">
         <thead><tr>
-          ${t==='viagens'?'<th>Data</th><th>Motorista / veículo</th><th>Trajeto</th><th>KM</th><th>Valor</th><th style="text-align:right">Ações</th>':s.cols.map(c => `<th>${c[1]}</th>`).join('')+'<th style="text-align:right">Ação</th>'}
+          ${t==='viagens'?'<th>Data / hora</th><th>Motorista / veículo</th><th>Trajeto</th><th>KM</th><th>Valor</th><th style="text-align:right">Ações</th>':s.cols.map(c => `<th>${c[1]}</th>`).join('')+'<th style="text-align:right">Ação</th>'}
         </tr></thead>
         <tbody id="tbody-${t}">${rowsHtml(t, q)}</tbody>
       </table>
@@ -1815,7 +1830,7 @@ function tablePage(t){
       </div>
       <button type="button" class="alt sm" onclick="closeForm('${t}')">✕ Fechar</button>
     </div>
-    <form id="entry" onchange="if('${t}'==='viagens'){if(['veiculo_id','data_viagem'].includes(event.target.name))preencherKmInicial(this);if(event.target.name==='tipo_uso')atualizarTipoUso(this);}" oninput="if('${t}' === 'viagens') calcularKmViagem(this)" onsubmit="saveRow(event,'${t}')">
+    <form id="entry" onchange="if('${t}'==='viagens'){if(['veiculo_id','data_viagem','hora_inicio'].includes(event.target.name))preencherKmInicial(this);if(event.target.name==='tipo_uso')atualizarTipoUso(this);}" oninput="if('${t}' === 'viagens') calcularKmViagem(this)" onsubmit="saveRow(event,'${t}')">
       <div class="fields">${fields}</div>
       <div class="btn-row" style="margin-top:16px">
         <button type="submit" id="entry-submit">Salvar no Supabase</button>
@@ -1826,7 +1841,7 @@ function tablePage(t){
 }
 
 async function preencherKmInicial(form){
- const inicial=form?.elements.namedItem('km_inicial'),final=form?.elements.namedItem('km_final'),veiculo=form?.elements.namedItem('veiculo_id'),date=form?.elements.namedItem('data_viagem'),hint=form?.querySelector('[data-km-hint]');
+ const inicial=form?.elements.namedItem('km_inicial'),final=form?.elements.namedItem('km_final'),veiculo=form?.elements.namedItem('veiculo_id'),date=form?.elements.namedItem('data_viagem'),hora=form?.elements.namedItem('hora_inicio'),hint=form?.querySelector('[data-km-hint]');
  if(!inicial||!veiculo||!date)return;
  if(isAdmin&&form.id==='entry'&&editingRow?.table==='viagens'){
   if(hint)hint.textContent='Edição de viagem: os KM já registrados foram preservados. Confira antes de salvar.';
@@ -1834,18 +1849,18 @@ async function preencherKmInicial(form){
  }
  const token=String(Number(form.dataset.kmToken||0)+1);form.dataset.kmToken=token;
  form.dataset.kmLoading='false';inicial.readOnly=false;inicial.value='';if(final)final.value='';calcularKmViagem(form);
- const id=veiculo.value,day=date.value;
- if(!id||!/^\d{4}-\d{2}-\d{2}$/.test(day)){if(hint)hint.textContent='Escolha o veículo e a data para buscar o último KM final.';return;}
+ const id=veiculo.value,day=date.value,time=horaViagem(hora?.value);
+ if(!id||!/^\d{4}-\d{2}-\d{2}$/.test(day)||!time){if(hint)hint.textContent='Escolha veículo, data e hora para buscar o KM final anterior.';return;}
  if(!client||!session)return;
  form.dataset.kmLoading='true';inicial.readOnly=true;if(hint)hint.textContent='Consultando o último KM final deste veículo…';
  try{
-  const {data:reading,error}=await client.rpc('sj_ultimo_km_veiculo',{p_veiculo_id:id,p_data:day});
-  if(form.dataset.kmToken!==token||veiculo.value!==id||date.value!==day)return;
+  const {data:reading,error}=await client.rpc('sj_ultimo_km_veiculo_horario',{p_veiculo_id:id,p_data:day,p_hora:time});
+  if(form.dataset.kmToken!==token||veiculo.value!==id||date.value!==day||horaViagem(hora?.value)!==time)return;
   if(error)throw error;
   if(reading?.km_final!==null&&reading?.km_final!==undefined&&Number.isFinite(Number(reading.km_final))){
    inicial.value=String(Number(reading.km_final));
-   if(hint)hint.textContent='Preenchido com o KM final da viagem de '+fmtDate(reading.data_viagem)+(reading.situacao==='pendente'?' (aguardando conferência).':'.')+' Confira o odômetro do veículo.';
-  }else if(hint)hint.textContent='Sem KM final anterior nesta data. Informe o KM inicial do odômetro.';
+   if(hint)hint.textContent='Preenchido com o KM final da viagem de '+dataHoraViagem(reading)+(reading.situacao==='pendente'?' (aguardando conferência).':'.')+' Confira o odômetro do veículo.';
+  }else if(hint)hint.textContent='Sem KM final anterior à data e hora informadas. Informe o KM inicial do odômetro.';
   calcularKmViagem(form);
  }catch(error){
   if(form.dataset.kmToken===token&&hint)hint.textContent='Não foi possível consultar o histórico. Informe o KM inicial conferindo o odômetro ou selecione o veículo novamente.';
@@ -1882,6 +1897,8 @@ async function saveRow(e, t){
     return msg('Meta: use o primeiro dia do mês.', true);
 
   if(t === 'viagens'){
+    if(!editing&&!horaViagem(o.hora_inicio))return msg('Informe a hora de início da viagem.',true);
+    if(o.hora_inicio&&!horaViagem(o.hora_inicio))return msg('Hora inválida. Use HH:MM.',true);
     o.tipo_uso=o.tipo_uso||'trabalho';o.valor_uso=Number(o.valor_uso||0);if(o.tipo_uso!=='trabalho')o.faturamento=0;
     if(!['ida_casa','uso_particular'].includes(o.tipo_uso))o.valor_uso=0;
     calcularKmViagem(e.target);
