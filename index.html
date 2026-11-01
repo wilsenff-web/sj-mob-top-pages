@@ -777,7 +777,7 @@ tbody td{padding:8px 9px;font-size:12px}
 </section>
 </main>
 
-<footer class="footer">SJ MOB TOP · Martins · v2.7 · acesso individual e dados protegidos</footer>
+<footer class="footer">SJ MOB TOP · Martins · v2.8 · acesso individual e dados protegidos</footer>
 
 <div id="toasts" aria-live="polite" aria-atomic="false"></div>
 <div id="modal-root"></div>
@@ -1682,12 +1682,27 @@ async function saveRow(e, t){
 
 async function removeRow(t, id){
   if(!isAdmin) return msg('Acesso restrito.',true);
-  const ok = await confirmDialog('Excluir este registro definitivamente? Esta ação não pode ser desfeita.');
-  if(!ok) return;
-  const {error} = await client.from(t).delete().eq('id', id);
-  if(error) return msg('Erro ao excluir: ' + error.message, true);
-  await refresh();
-  toast('Registro excluído.');
+  const record = (data[t] || []).find(r => r.id === id);
+  if(!record) return msg('Registro não encontrado. Atualize a página.',true);
+  const question = t === 'financeiro'
+    ? 'Excluir este lançamento de '+brl(record.valor)+'? Ele será removido do caixa e dos totais do Financeiro no Dashboard.'+(record.comprovante_id?' A aprovação do comprovante será cancelada; o arquivo será preservado.':'')+' Viagens e manutenção são registros separados e não serão apagados.'
+    : 'Excluir este registro definitivamente? Esta ação não pode ser desfeita.';
+  if(!await confirmDialog(question)) return;
+  try{
+    if(t === 'financeiro'){
+      const {data:deletedId,error} = await client.rpc('sj_excluir_lancamento_financeiro',{p_lancamento_id:id});
+      if(error) throw error;
+      if(deletedId !== id) throw new Error('Não foi possível confirmar a exclusão.');
+    }else{
+      const {data:deleted,error} = await client.from(t).delete().eq('id',id).select('id').maybeSingle();
+      if(error) throw error;
+      if(!deleted) throw new Error('Registro não encontrado ou sem permissão para excluir.');
+    }
+    data[t] = (data[t] || []).filter(r => r.id !== id);
+    render();
+    await refresh();
+    toast(t === 'financeiro'?'Lançamento excluído. Caixa e Dashboard recalculados.':'Registro excluído.');
+  }catch(error){msg('Erro ao excluir: '+error.message,true);}
 }
 
 /* =========================================================
