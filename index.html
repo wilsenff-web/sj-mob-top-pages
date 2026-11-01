@@ -1086,8 +1086,20 @@ async function logout(){
 /* =========================================================
    SYNC
    ========================================================= */
-async function refresh(){
-  if(!session) return;
+let refreshBusy = false;
+// Atualiza o Dashboard administrativo a cada 30 segundos enquanto estiver visível.
+// Sem recarregar a página, sem afetar formulários abertos em outras abas.
+setInterval(() => {
+  if(session && isAdmin && active === 'dashboard' && !document.hidden && !refreshBusy) {
+    refresh(true);
+  }
+}, 30000);
+document.addEventListener('visibilitychange', () => {
+  if(!document.hidden && session && isAdmin && active === 'dashboard' && !refreshBusy) refresh(true);
+});
+async function refresh(silent = false){
+  if(!session || refreshBusy) return;
+  refreshBusy = true;
   try{
     if(!isAdmin){
       const {data:m,error:me}=await client.from('motoristas').select('id,nome,user_id,status').eq('auth_user_id',session.user.id).eq('status','ativo').maybeSingle();
@@ -1109,9 +1121,12 @@ async function refresh(){
     await carregarPendencias();
     lastSync = new Date();
     render();
-    toast('Dados sincronizados com o Supabase.');
+    if(!silent) toast('Dados sincronizados com o Supabase.');
   }catch(e){
-    msg('Erro de leitura: ' + e.message, true);
+    if(!silent) msg('Erro de leitura: ' + e.message, true);
+    else console.warn('Atualização automática indisponível:', e);
+  }finally{
+    refreshBusy = false;
   }
 }
 
