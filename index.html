@@ -729,7 +729,7 @@ tbody td{padding:8px 9px;font-size:12px}
       <button onclick="signIn()">Entrar</button>
       <button class="alt" onclick="resetPassword()">Recuperar senha</button>
     </div>
-    <p style="margin:16px 0 0"><small>Já tem conta? Entre acima. Novos motoristas criam a própria senha abaixo e aguardam a liberação do administrador.</small></p>
+    <p style="margin:16px 0 0"><small>Já tem conta? Entre acima. Novos motoristas criam a própria senha abaixo e aguardam sua liberação pelo administrador, sem confirmação por e-mail.</small></p>
     <details style="margin-top:18px"><summary style="cursor:pointer;font-weight:700;color:var(--accent)">Criar minha conta de motorista</summary>
     <form id="cadastro-motorista" onsubmit="cadastrarMinhaConta(event)" style="margin-top:14px"><div class="fields">
       <div class="field"><label for="cadastro-nome">Nome completo</label><input id="cadastro-nome" name="nome" required minlength="2" maxlength="120" autocomplete="name"></div>
@@ -777,7 +777,7 @@ tbody td{padding:8px 9px;font-size:12px}
 </section>
 </main>
 
-<footer class="footer">SJ MOB TOP · Martins · v2.4 · acesso individual e dados protegidos</footer>
+<footer class="footer">SJ MOB TOP · Martins · v2.5 · acesso individual e dados protegidos</footer>
 
 <div id="toasts" aria-live="polite" aria-atomic="false"></div>
 <div id="modal-root"></div>
@@ -2482,7 +2482,7 @@ async function cadastrarMinhaConta(e){
   const {data:result,error}=await client.auth.signUp({email,password,options:{data:{nome,telefone},emailRedirectTo:'https://wilsenff-web.github.io/sj-mob-top-pages/'}});
   if(error)throw error;
   form.reset();
-  if(result.session){feedback.textContent='Conta criada. Sua solicitação será enviada para liberação.';setTimeout(refresh,0);}
+  if(result.session){feedback.textContent='Conta criada. Aguarde a liberação do administrador. Não precisa confirmar por e-mail.';setTimeout(refresh,0);}
   else{feedback.textContent='Confira seu e-mail e confirme a conta pelo link recebido. Depois entre aqui com sua senha: sua solicitação ficará aguardando liberação. Se já tinha conta, use Entrar ou Recuperar senha.';toast('Confira também a pasta de spam do seu e-mail.');}
  }catch(error){
   feedback.textContent=error.code==='signup_disabled'?'O cadastro ainda está bloqueado no serviço de acesso. O administrador precisa ativar novos cadastros.':error.code==='email_address_not_authorized'?'O envio da confirmação para este e-mail ainda não está configurado. Contate o administrador para configurar o remetente de e-mails.':error.code==='over_email_send_rate_limit'?'O limite de envio de e-mails foi atingido. Aguarde e contate o administrador.':error.message||'Não foi possível criar a conta. Tente novamente.';
@@ -2531,14 +2531,14 @@ function painelAvisoAcessos(){
 }
 function acessosPage(){
  const rows=(data.sj_solicitacoes_motoristas||[]).slice().sort((a,b)=>String(b.created_at).localeCompare(String(a.created_at)));
- return `<section class="panel"><h2>Liberação de motoristas</h2><p class="sub">Compartilhe o link do sistema. Cada motorista escolhe “Criar minha conta”, confirma o e-mail e entra com a própria senha. Aqui você confere a solicitação e escolhe o cadastro correto antes de liberar.</p><p><a href="https://wilsenff-web.github.io/sj-mob-top-pages/" target="_blank" rel="noopener">Abrir link para os motoristas</a></p><p class="sub">Você não vê nem precisa criar a senha do motorista. Confira a identidade e o e-mail antes da liberação.</p></section>
+ return `<section class="panel"><h2>Liberação de motoristas</h2><p class="sub">Compartilhe o link do sistema. Cada motorista cria a própria conta e senha, sem confirmar por e-mail, e fica aguardando sua liberação. Confira a pessoa e escolha o cadastro correto antes de liberar.</p><p><a href="https://wilsenff-web.github.io/sj-mob-top-pages/" target="_blank" rel="noopener">Abrir link para os motoristas</a></p><p class="sub">Você não vê nem precisa criar a senha do motorista. Como não há confirmação por e-mail, confira a identidade e o contato pessoalmente antes de liberar.</p></section>
  <section class="panel"><h2>Aguardando liberação (${rows.filter(r=>r.status==='pendente').length})</h2>
  ${!acessosReady?'<p>Solicitações ainda não carregadas. Clique em Atualizar.</p>':''}
  ${rows.filter(r=>r.status==='pendente').map(r=>{
  const candidates=(data.motoristas||[]).filter(m=>!m.auth_user_id||m.auth_user_id===r.auth_user_id);
  return `<div class="panel"><h3>${esc(r.nome)}</h3><p>${esc(r.email)} · ${esc(r.telefone||'Sem telefone')}</p><p class="sub">Solicitado em ${fmtDate(r.created_at)}</p>
  <div class="field"><label for="acesso-destino-${r.id}">Como liberar este motorista?</label><select id="acesso-destino-${r.id}"><option value="">Selecione para evitar cadastro duplicado</option>${candidates.map(m=>`<option value="${m.id}">Vincular ao cadastro: ${esc(m.nome)}${m.status!=='ativo'?' (será ativado)':''}</option>`).join('')}<option value="novo">Criar novo cadastro de motorista</option></select></div><div class="btn-row" style="margin-top:14px"><button onclick="revisarPedidoAcesso('${r.id}','aprovada',this)">Liberar acesso</button><button class="alt" onclick="revisarPedidoAcesso('${r.id}','recusada',this)">Recusar</button></div></div>`;
- }).join('')||'<p class="sub">Nenhuma solicitação pendente. Novos pedidos aparecerão após o motorista confirmar o e-mail e entrar.</p>'}</section>
+ }).join('')||'<p class="sub">Nenhuma solicitação pendente. Novos pedidos aparecerão quando o motorista criar a conta ou entrar pela primeira vez.</p>'}</section>
  <section class="panel"><h2>Solicitações revisadas</h2><div class="scroll"><table><thead><tr><th>Nome</th><th>E-mail</th><th>Decisão</th><th>Cadastro vinculado</th></tr></thead><tbody>${rows.filter(r=>r.status!=='pendente').map(r=>`<tr><td>${esc(r.nome)}</td><td>${esc(r.email)}</td><td>${esc(r.status)}</td><td>${r.motorista_id?esc(lookup('motoristas',r.motorista_id)):'—'}</td></tr>`).join('')||'<tr><td colspan="4">Nenhuma solicitação revisada</td></tr>'}</tbody></table></div></section>`;
 }
 async function revisarPedidoAcesso(id,decision,button){
