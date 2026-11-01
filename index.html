@@ -777,7 +777,7 @@ tbody td{padding:8px 9px;font-size:12px}
 </section>
 </main>
 
-<footer class="footer">SJ MOB TOP · Martins · v2.10 · acesso individual e dados protegidos</footer>
+<footer class="footer">SJ MOB TOP · Martins · v2.11 · acesso individual e dados protegidos</footer>
 
 <div id="toasts" aria-live="polite" aria-atomic="false"></div>
 <div id="modal-root"></div>
@@ -799,6 +799,26 @@ function hojeBrasilia(date = new Date()){
   return `${value('year')}-${value('month')}-${value('day')}`;
 }
 let month = hojeBrasilia().slice(0, 7);
+let dashboardPeriodResolved = false;
+function selectDashboardMonth(value){
+ if(!/^\d{4}-\d{2}$/.test(value)) return;
+ month=value;
+ dashboardPeriodResolved=true;
+ if($('month')) $('month').value=month;
+}
+function resolveDashboardPeriod(){
+ if(dashboardPeriodResolved) return;
+ const dates=[
+  ...(data.viagens||[]).filter(v=>v.status_conferencia!=='rejeitada').map(v=>v.data_viagem),
+  ...(data.financeiro||[]).map(v=>v.data_lancamento),
+  ...(data.manutencoes||[]).map(v=>v.data_manutencao)
+ ].filter(Boolean).map(d=>String(d).slice(0,7)).filter(d=>/^\d{4}-\d{2}$/.test(d));
+ if(!dates.includes(month)){
+  const latest=dates.filter(d=>d<=month).sort().pop();
+  if(latest) selectDashboardMonth(latest);
+ }
+ dashboardPeriodResolved=true;
+}
 let search = {};
 let lastSync = null;
 
@@ -1126,7 +1146,7 @@ async function saveDriverTrip(e){
    CONEXÃO / AUTH
    ========================================================= */
 $('month').value = month;
-$('month').onchange = e => { month = e.target.value; render(); };
+$('month').onchange = e => { selectDashboardMonth(e.target.value); render(); };
 
 function show(id){
   for(const k of ['setup','auth','recovery','app']) $(k).classList.toggle('hide', k !== id);
@@ -1239,7 +1259,7 @@ async function saveRecoveredPassword(e){
 
 async function logout(){
   await client.auth.signOut();
-  data = {}; search = {}; lastSync = null;
+  data = {}; search = {}; lastSync = null; dashboardPeriodResolved=false;
   setIdentity();
   toast('Você saiu do sistema.');
 }
@@ -1248,6 +1268,7 @@ async function logout(){
    SYNC
    ========================================================= */
 let refreshBusy = false;
+const refreshWaiters=[];
 async function lerTodos(table){
  const rows=[];
  for(let offset=0;;offset+=500){
@@ -1272,7 +1293,12 @@ document.addEventListener('visibilitychange', () => {
   if(!document.hidden && session && isAdmin && active === 'dashboard' && !refreshBusy && !temFormularioAberto()) refresh(true);
 });
 async function refresh(silent = false){
-  if(!session || refreshBusy) return;
+  if(!session) return;
+  if(refreshBusy){
+    if(silent) return;
+    await new Promise(resolve=>refreshWaiters.push(resolve));
+    return refresh(silent);
+  }
   const expectedUser=session.user.id;
   refreshBusy = true;
   try{
@@ -1298,6 +1324,7 @@ async function refresh(silent = false){
     await carregarPendencias();
     await carregarComprovantes();
     await carregarPedidosAcesso();
+    resolveDashboardPeriod();
     lastSync = new Date();
     render();
     if(!silent) toast('Dados sincronizados com o Supabase.');
@@ -1306,6 +1333,7 @@ async function refresh(silent = false){
     else console.warn('Atualização automática indisponível:', e);
   }finally{
     refreshBusy = false;
+    refreshWaiters.splice(0).forEach(resolve=>resolve());
     if(session && session.user.id!==expectedUser)setTimeout(refresh,0);
   }
 }
@@ -1313,7 +1341,7 @@ async function refresh(silent = false){
 /* =========================================================
    NAVEGAÇÃO / RENDER
    ========================================================= */
-function nav(t){ if(!isAdmin && t !== 'viagens') return; active = t; render(); }
+function nav(t){ if(!isAdmin && t !== 'viagens') return; active = t; render(); if(t==='dashboard' && isAdmin) refresh(true); }
 
 function render(){
   if(!session) return;
@@ -1672,6 +1700,13 @@ async function saveRow(e, t){
      : await client.from(t).insert(o);
    if(error)throw error;
    editingRow = null;
+   if(t==='viagens'){
+     selectDashboardMonth(String(o.data_viagem).slice(0,7));
+     revenueSource='viagens';
+     localStorage.setItem('sj_revenue_source','viagens');
+   }else if(t==='financeiro'){
+     selectDashboardMonth(String(o.data_lancamento).slice(0,7));
+   }
    await refresh();
    toast(editing ? 'Registro atualizado com sucesso.' : 'Registro salvo com sucesso.');
   }catch(error){
@@ -1989,7 +2024,7 @@ function dashboard(){
   const cards = [
     {label:'Motoristas', value:(data.motoristas || []).length, icon:ICONS.motoristas},
     {label:'Veículos', value:(data.veiculos || []).length, icon:ICONS.veiculos},
-    {label:'Faturamento', value:brl(cur.rev), icon:ICONS.financeiro, trend:trend(cur.rev, prev.rev)},
+    {label:revenueSource==='viagens'?'Faturamento das viagens':'Receitas financeiras', value:brl(cur.rev), icon:ICONS.financeiro, trend:trend(cur.rev, prev.rev)},
     {label:'Despesas', value:brl(cur.expense), icon:ICONS.manutencoes, trend:trend(cur.expense, prev.expense, true)},
     {label:'Resultado', value:brl(cur.rev - cur.expense), icon:ICONS.metas, trend:trend(cur.rev - cur.expense, prev.rev - prev.expense)},
     {label:'KM rodados', value:num(cur.km), icon:ICONS.viagens, trend:trend(cur.km, prev.km)}
@@ -2026,6 +2061,8 @@ function dashboard(){
   return `
     <div class="dash">
     <div class="dashboard-hero"><div class="dashboard-hero-title"><span class="dashboard-hero-icon">${ICONS.dashboard || "▦"}</span><div><h1>Dashboard</h1><span class="dashboard-hero-month">${esc(month)}</span></div></div><div class="dashboard-hero-caption"><strong>Visão geral da operação</strong><span>Acompanhe os principais indicadores da sua frota.</span></div></div>
+    <div class="alert info" style="margin:12px 0"><span class="pill"></span><span>Período exibido: <b>${esc(month)}</b>. Os valores seguem a data da viagem ou do lançamento. Altere o <b>Mês de referência</b> no menu para consultar outro período.</span></div>
+    ${revenueSource==='financeiro' && cur.trips.length?'<div class="alert warn"><span>O faturamento está mostrando o Financeiro. Há viagens neste mês. <button class="alt sm" onclick="setRevenueSource(\'viagens\')">Mostrar faturamento das viagens</button></span></div>':''}
     <div class="grid kpi-grid">
       ${cards.map(c => `
         <div class="kpi">
