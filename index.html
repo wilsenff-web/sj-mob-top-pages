@@ -1120,6 +1120,16 @@ main.wrap,#app,.app-shell,.app-main,#content{min-width:0;max-width:100%}
  #content .driver-view .driver-form-actions button{flex:1 1 auto;min-height:46px}
 }
 
+/* No ADM móvel, só o conteúdo rola. Cabeçalho e navegação são linhas fora da rolagem. */
+@media(max-width:900px){
+ body.mobile-admin-shell{position:fixed;inset:0;width:100%;height:100%;height:100dvh;min-height:0;max-height:100dvh;display:flex;flex-direction:column;overflow:hidden;overscroll-behavior:none;padding:0!important}
+ body.mobile-admin-shell>.topbar{position:relative;top:auto;flex:0 0 auto;z-index:20}
+ body.mobile-admin-shell>main.wrap{position:relative;z-index:0;flex:1 1 0%;width:100%;max-width:100%;min-height:0;margin:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;padding-bottom:24px;scroll-padding-top:12px;isolation:isolate}
+ body.mobile-admin-shell>#mobile-bottom-nav:not([hidden]){position:relative!important;inset:auto!important;flex:0 0 auto;width:100%;margin:0!important;z-index:80;transform:none!important;transition:none!important;animation:none!important;isolation:isolate}
+ body.mobile-admin-shell>.footer{display:none}
+ body.mobile-admin-shell #mobile-bottom-nav .mobile-bottom-item:active{transform:none}
+}
+
 </style>
 </head>
 <body>
@@ -1224,7 +1234,7 @@ main.wrap,#app,.app-shell,.app-main,#content{min-width:0;max-width:100%}
 
 <dialog id="mobile-menu-dialog" aria-labelledby="mobile-menu-title"><div class="mobile-drawer-heading"><strong id="mobile-menu-title">Menu</strong><button type="button" class="icon-btn" aria-label="Fechar menu" onclick="closeMobileMenu()">✕</button></div></dialog>
 <nav id="mobile-bottom-nav" class="mobile-bottom-nav" aria-label="Atalhos principais" hidden></nav>
-<footer class="footer">SJ MOB TOP · Martins · v2.23 · acesso individual e dados protegidos</footer>
+<footer class="footer">SJ MOB TOP · Martins · v2.24 · acesso individual e dados protegidos</footer>
 
 <div id="toasts" aria-live="polite" aria-atomic="false"></div>
 <div id="modal-root"></div>
@@ -1934,6 +1944,7 @@ function mobileBottomAnchorOffset(bottom,currentOffset,viewportHeight,viewportTo
 function syncMobileBottomAnchor(){
  mobileBottomFrame=0;
  const bar=$('mobile-bottom-nav');if(!bar)return;
+ if(isAdmin){mobileBottomOffset=0;bar.style.setProperty('--mobile-anchor-y','0px');return;}
  if(!mobileLayoutQuery.matches||bar.hidden||!bar.getClientRects().length){mobileBottomOffset=0;bar.style.setProperty('--mobile-anchor-y','0px');return;}
  const viewport=window.visualViewport;
  const offset=mobileBottomAnchorOffset(bar.getBoundingClientRect().bottom,mobileBottomOffset,viewport?viewport.height:window.innerHeight,viewport?viewport.offsetTop:0,viewport?viewport.scale:1);
@@ -1960,6 +1971,7 @@ function syncMobileNavigation(){
  const tabs=allowed?mobileShortcuts():[];
  toggle.hidden=!allowed;bottom.hidden=!allowed;
  document.body.classList.toggle('has-mobile-nav',allowed);
+ document.body.classList.toggle('mobile-admin-shell',allowed&&isAdmin);
  if(!allowed){closeMobileMenu();slot.hidden=true;bottom.innerHTML='';return;}
  const section=sidebar.querySelector('.sidebar-section')||slot.querySelector('.sidebar-section');
  if(mobileLayoutQuery.matches){
@@ -1993,7 +2005,12 @@ $('mobile-menu-dialog').addEventListener('close',()=>{document.body.classList.re
 $('mobile-menu-dialog').addEventListener('click',e=>{if(e.target.closest('.sidebar-footer button')){closeMobileMenu();return;}if(e.target!==e.currentTarget)return;const r=e.currentTarget.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)closeMobileMenu();});
 
 
-function nav(t){ if(!isAdmin && !['viagens','minha_meta','minhas_pendencias'].includes(t)) return; closeMobileMenu(); active = t; render(); window.scrollTo(0,0); if(t==='dashboard' && isAdmin) refresh(true); }
+function resetNavigationScroll(){
+ const area=document.querySelector('main.wrap');
+ if(mobileLayoutQuery.matches&&isAdmin&&area)area.scrollTo(0,0);else window.scrollTo(0,0);
+}
+
+function nav(t){ if(!isAdmin && !['viagens','minha_meta','minhas_pendencias'].includes(t)) return; closeMobileMenu(); active = t; render(); resetNavigationScroll(); if(t==='dashboard' && isAdmin) refresh(true); }
 
 function render(){
   if(!session){syncMobileNavigation();return;}
