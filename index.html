@@ -1234,7 +1234,7 @@ main.wrap,#app,.app-shell,.app-main,#content{min-width:0;max-width:100%}
 
 <dialog id="mobile-menu-dialog" aria-labelledby="mobile-menu-title"><div class="mobile-drawer-heading"><strong id="mobile-menu-title">Menu</strong><button type="button" class="icon-btn" aria-label="Fechar menu" onclick="closeMobileMenu()">✕</button></div></dialog>
 <nav id="mobile-bottom-nav" class="mobile-bottom-nav" aria-label="Atalhos principais" hidden></nav>
-<footer class="footer">SJ MOB TOP · Martins · v2.24 · acesso individual e dados protegidos</footer>
+<footer class="footer">SJ MOB TOP · Martins · v2.25 · acesso individual e dados protegidos</footer>
 
 <div id="toasts" aria-live="polite" aria-atomic="false"></div>
 <div id="modal-root"></div>
@@ -1580,14 +1580,14 @@ function driverPage(){
  const allTrips=viagensPorData(data.viagens||[]);
  const currentMonth=hojeBrasilia().slice(0,7);
  const selectedMonth=driverTripMonth||(allTrips.some(v=>String(v.data_viagem).startsWith(currentMonth))?currentMonth:String(allTrips[0]?.data_viagem||currentMonth).slice(0,7));
- const rows=allTrips.filter(v=>String(v.data_viagem).startsWith(selectedMonth)).map(v=>`<tr><td data-label="Data / hora">${esc(dataHoraViagem(v))}</td><td data-label="Trajeto">${esc(v.origem||'')} → ${esc(v.destino||'')}<small class="usage-meta">${esc(tipoUsoLabel(v.tipo_uso))}</small></td><td data-label="KM rodados">${num(v.km_rodados||0)} km</td><td data-label="Valores">${valorViagemHtml(v)}</td><td data-label="Conferência">${driverStatusBadge(v.status_conferencia||'aprovada')}</td><td data-label="Pagamento ao administrador"><div class="driver-trip-proof">${comprovantesReady?`<button type="button" class="alt sm" onclick="prepararComprovanteViagem('${v.id}')">Enviar comprovante</button>`:''}${comprovantesDaViagem(v.id)}</div></td></tr>`).join('');
+ const rows=allTrips.filter(v=>String(v.data_viagem).startsWith(selectedMonth)&&(!driverTripDay||String(v.data_viagem).slice(0,10)===driverTripDay)).map(v=>`<tr><td data-label="Data / hora">${esc(dataHoraViagem(v))}</td><td data-label="Trajeto">${esc(v.origem||'')} → ${esc(v.destino||'')}<small class="usage-meta">${esc(tipoUsoLabel(v.tipo_uso))}</small></td><td data-label="KM rodados">${num(v.km_rodados||0)} km</td><td data-label="Valores">${valorViagemHtml(v)}</td><td data-label="Conferência">${driverStatusBadge(v.status_conferencia||'aprovada')}</td><td data-label="Pagamento ao administrador"><div class="driver-trip-proof">${comprovantesReady?`<button type="button" class="alt sm" onclick="prepararComprovanteViagem('${v.id}')">Enviar comprovante</button>`:''}${comprovantesDaViagem(v.id)}</div></td></tr>`).join('');
  return `<section class="panel driver-action-panel"><h2>Área do motorista</h2><p class="driver-name">${esc(driverRecord.nome)}</p>
  
  <div class="btn-row driver-actions" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
- <button type="button" onclick="toggleDriverForm('viagem')"><span class="driver-action-icon" aria-hidden="true">${ICONS.viagens}</span>Registrar viagem do dia</button>
+ <button type="button" onclick="novaViagemMotorista()"><span class="driver-action-icon" aria-hidden="true">${ICONS.viagens}</span>Registrar viagem do dia</button>
  ${comprovantesReady?'<button type="button" class="alt" onclick="toggleDriverForm(\'comprovante\')"><span class="driver-action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m8 12 6-6a3 3 0 0 1 4 4l-8 8a5 5 0 0 1-7-7l8-8"/><path d="m6 14 8-8"/></svg></span>Enviar comprovante</button>':''}
  </div></section>
- <section class="panel driver-entry-panel" id="driver-form-viagem" style="display:none"><h2>Registrar viagem do dia</h2>
+ ${painelInicios()}<section class="panel driver-entry-panel" id="driver-form-viagem" style="display:none"><h2>Registrar viagem do dia</h2>
  <form onsubmit="saveDriverTrip(event)" class="driver-form"><div class="fields driver-fields">
  <div class="field"><label>Data</label><input name="data_viagem" type="date" value="${hojeBrasilia()}" required onchange="preencherKmInicial(this.form)"></div>
  <div class="field"><label>Hora de início</label><input name="hora_inicio" type="time" step="60" value="${horaBrasilia()}" required onchange="preencherKmInicial(this.form)"><small>Horário em que começou a usar o carro (Brasília).</small></div>
@@ -1613,7 +1613,7 @@ function driverPage(){
  </section><section class="panel"><h2>Comprovantes enviados</h2>
  <div class="scroll driver-scroll"><table class="driver-table driver-proof-table"><thead><tr><th>Data</th><th>Valor</th><th>Situação</th><th>Arquivo</th></tr></thead><tbody>
  ${(data.comprovantes_motoristas||[]).map(c=>`<tr><td data-label="Data">${esc(c.data_pagamento)}</td><td data-label="Valor">${brl(c.valor)}</td><td data-label="Situação">${driverStatusBadge(c.status)}${c.viagem_id?'<small class="usage-meta">Viagem '+esc(dataHoraViagem((data.viagens||[]).find(v=>v.id===c.viagem_id)||{}))+'</small>':''}</td><td data-label="Arquivo"><button type="button" class="alt sm" onclick="abrirComprovante('${esc(c.arquivo_path)}')">Ver comprovante</button></td></tr>`).join('')||'<tr><td class="driver-empty" colspan="4">Nenhum comprovante enviado</td></tr>'}</tbody></table></div></section>
- <section class="panel"><h2>Minhas viagens</h2><div class="field" style="max-width:230px"><label for="driver-trip-month">Mês das viagens</label><input id="driver-trip-month" type="month" value="${esc(selectedMonth)}" onchange="selecionarMesMotorista(this.value)"></div><div class="driver-scroll"><table class="driver-table driver-trip-table"><thead><tr><th>Data / hora</th><th>Trajeto</th><th>KM</th><th>Valores</th><th>Conferência</th><th>Pagamento ao administrador</th></tr></thead><tbody>${rows||'<tr><td class="driver-empty" colspan="6">Nenhuma viagem neste mês</td></tr>'}</tbody></table></div></section>`;
+ <section class="panel"><h2>Minhas viagens</h2><div class="field" style="max-width:230px"><label for="driver-trip-month">Mês das viagens</label><input id="driver-trip-month" type="month" value="${esc(selectedMonth)}" onchange="selecionarMesMotorista(this.value)"></div>${filtroDiaHtml('driver',driverTripDay)}<div class="driver-scroll"><table class="driver-table driver-trip-table"><thead><tr><th>Data / hora</th><th>Trajeto</th><th>KM</th><th>Valores</th><th>Conferência</th><th>Pagamento ao administrador</th></tr></thead><tbody>${rows||'<tr><td class="driver-empty" colspan="6">Nenhuma viagem no período selecionado</td></tr>'}</tbody></table></div></section>`;
 }
 async function carregarComprovantes(){
  comprovantesReady=false;
@@ -1734,7 +1734,7 @@ async function saveDriverTrip(e){
    CONEXÃO / AUTH
    ========================================================= */
 $('month').value = month;
-$('month').onchange = e => { selectDashboardMonth(e.target.value); render(); };
+$('month').onchange = e => { adminTripDay='';selectDashboardMonth(e.target.value); render(); };
 
 function show(id){
   for(const k of ['setup','auth','recovery','app']) $(k).classList.toggle('hide', k !== id);
@@ -1895,7 +1895,7 @@ async function refresh(silent = false){
       if(session?.user?.id!==expectedUser)return;
       if(!m){driverRecord=null;data={};await carregarMeuPedidoAcesso();if(session?.user?.id!==expectedUser)return;render();return;}
       driverRecord=m;
-      for(const t of ['veiculos','viagens','sj_metas_semanais']){
+      for(const t of ['veiculos','viagens','sj_metas_semanais','sj_inicios_viagens']){
         const rows=await lerTodos(t);
         if(session?.user?.id!==expectedUser)return;
         data[t]=rows;
@@ -1913,6 +1913,7 @@ async function refresh(silent = false){
     await carregarPendencias();
     await carregarComprovantes();
     data.sj_metas_semanais=await lerTodos('sj_metas_semanais');
+    data.sj_inicios_viagens=await lerTodos('sj_inicios_viagens');
     if(session?.user?.id!==expectedUser)return;
     await carregarPedidosAcesso();
     resolveDashboardPeriod();
@@ -2296,6 +2297,7 @@ function tablePage(t){
   }).join('');
 
   return `
+  ${t==='viagens'?painelInicios()+filtroDiaHtml('admin',adminTripDay.startsWith(month)?adminTripDay:''):''}
   ${t === 'financeiro' ? resumoCaixaPage() : ''}
   <!-- ===== REGISTROS (primeiro) ===== -->
   <div class="panel">
@@ -2876,7 +2878,7 @@ async function exportarBackupGooglePlanilhas(){
  if(btn){btn.disabled=true;btn.textContent='Preparando planilha…';}
  try{
   await carregarBibliotecaPlanilhas();
-  const tables=['motoristas','veiculos','viagens','financeiro','pendencias','pagamentos_pendencias','manutencoes','metas','sj_metas_semanais','comprovantes_motoristas','sj_solicitacoes_motoristas'];
+  const tables=['motoristas','veiculos','viagens','financeiro','pendencias','pagamentos_pendencias','manutencoes','metas','sj_metas_semanais','sj_inicios_viagens','comprovantes_motoristas','sj_solicitacoes_motoristas'];
   const book=XLSX.utils.book_new();
   for(const table of tables){
    const rows=[];
@@ -2912,7 +2914,7 @@ async function baixarBackupFrota(){
  const btn=document.getElementById('backup-download');
  if(btn){btn.disabled=true;btn.textContent='Preparando backup…';}
  try{
-   const tables=['motoristas','veiculos','viagens','financeiro','pendencias','pagamentos_pendencias','manutencoes','metas','sj_metas_semanais','comprovantes_motoristas','sj_solicitacoes_motoristas'];
+   const tables=['motoristas','veiculos','viagens','financeiro','pendencias','pagamentos_pendencias','manutencoes','metas','sj_metas_semanais','sj_inicios_viagens','comprovantes_motoristas','sj_solicitacoes_motoristas'];
    const exported={app:'SJ MOB TOP',schema_version:1,created_at:new Date().toISOString(),admin_user_id:session.user.id,scope:'dados de tabelas (sem arquivos anexos)',tables:{}};
    for(const t of tables){
      const rows=[];
@@ -3357,6 +3359,39 @@ async function revisarPedidoAcesso(id,decision,button){
 /* =========================================================
    BOOTSTRAP
    ========================================================= */
+// Inícios separados: nenhum lançamento parcial entra nos totais ou na conferência.
+let driverTripDay='', adminTripDay='';
+function filtroDiaHtml(role,day){return `<div class="field"><label for="${role}-trip-day">Dia da viagem (opcional)</label><input id="${role}-trip-day" type="date" value="${esc(day)}" onchange="selecionarDiaViagem('${role}',this.value)"><button type="button" class="alt sm" onclick="selecionarDiaViagem('${role}','')">Limpar dia</button></div>`;}
+function selecionarDiaViagem(role,value){if(value&&!/^\d{4}-\d{2}-\d{2}$/.test(value))return;if(role==='driver'){driverTripDay=value;if(value)driverTripMonth=value.slice(0,7);}else{adminTripDay=value;if(value){selectDashboardMonth(value.slice(0,7));$('month').value=month;}}render();}
+const mesMotoristaOriginal=selecionarMesMotorista;
+selecionarMesMotorista=function(value){driverTripDay='';mesMotoristaOriginal(value);};
+const visibleRowsOriginal=visibleRows;
+visibleRows=function(t,q){return visibleRowsOriginal(t,q).filter(v=>t!=='viagens'||!adminTripDay||!adminTripDay.startsWith(month)||String(v.data_viagem).slice(0,10)===adminTripDay);};
+function painelInicios(){const starts=viagensPorData(data.sj_inicios_viagens||[]);if(!starts.length)return '';return `<section class="panel"><h2>Viagens em andamento (${starts.length})</h2><div style="display:grid;gap:12px">${starts.map(v=>`<div style="border:1px solid var(--line);border-radius:12px;padding:12px"><strong>${esc(dataHoraViagem(v))} · ${esc(lookup('veiculos',v.veiculo_id))}</strong><p>${isAdmin?esc(lookup('motoristas',v.motorista_id))+' · ':''}${esc(v.origem)} · KM inicial: ${num(v.km_inicial)}</p><button type="button" onclick="concluirInicio('${v.id}')">${isAdmin?'Concluir e aprovar':'Concluir viagem'}</button></div>`).join('')}</div></section>`;}
+function prepararEtapa(form,inicio=null,fechada=false){if(!form)return;form.dataset.kmToken=String(Number(form.dataset.kmToken||0)+1);form.dataset.kmLoading='false';delete form.dataset.inicioId;form.querySelector('[data-etapa]')?.remove();for(const k of ['data_viagem','hora_inicio','motorista_id','veiculo_id','tipo_uso','origem','km_inicial']){const el=form.elements.namedItem(k);if(el){el.disabled=false;el.readOnly=false;}}
+ if(inicio)form.dataset.inicioId=inicio.id;
+ if(!fechada){const box=document.createElement('div');box.className='field';box.dataset.etapa='true';box.innerHTML=`<label>Etapa da viagem</label><select name="etapa_registro" onchange="atualizarEtapa(this.form)"><option value="iniciar">Iniciar agora e concluir depois</option><option value="concluir">Lançar viagem completa</option></select>`;form.querySelector('.fields').prepend(box);box.querySelector('select').value=inicio?'concluir':'iniciar';if(inicio)box.querySelector('select').disabled=true;}
+ if(inicio){for(const [k,v]of Object.entries(inicio)){const el=form.elements.namedItem(k);if(el)el.value=v==null?'':String(v).slice(0,k==='data_viagem'?10:k==='hora_inicio'?5:undefined);}for(const k of ['data_viagem','hora_inicio','motorista_id','veiculo_id','tipo_uso','origem','km_inicial']){const el=form.elements.namedItem(k);if(el){if(el.tagName==='SELECT')el.disabled=true;else el.readOnly=true;}}}
+ atualizarEtapa(form,fechada);
+}
+function atualizarEtapa(form,fechada=false){const start=!fechada&&form.elements.namedItem('etapa_registro')?.value==='iniciar';for(const k of ['km_final','km_rodados','faturamento','valor_uso']){const el=form.elements.namedItem(k);if(el){el.disabled=start;el.required=!start&&['km_final','km_rodados'].includes(k);if(start)el.value='';}}
+ const dest=form.elements.namedItem('destino');if(dest){dest.required=!start;dest.placeholder=start?'Opcional; preencha ao concluir':'';}
+ const btn=form.querySelector('button[type=submit]');if(btn&&!fechada)btn.textContent=start?'Iniciar viagem':isAdmin?'Concluir e aprovar':'Concluir viagem';
+}
+const openNewOriginal=openNewForm;openNewForm=function(t){openNewOriginal(t);if(t==='viagens')prepararEtapa($('entry'));};
+const editOriginal=editRow;editRow=function(t,id){editOriginal(t,id);if(t==='viagens')prepararEtapa($('entry'),null,true);};
+const driverToggleOriginal=toggleDriverForm;toggleDriverForm=function(kind){driverToggleOriginal(kind);if(kind==='viagem'){const form=$('driver-form-viagem')?.querySelector('form');if(form&&!form.querySelector('[data-etapa]'))prepararEtapa(form);}};
+const kmOriginal=preencherKmInicial;preencherKmInicial=async function(form){if(form?.dataset.inicioId)return;return kmOriginal(form);};
+function concluirInicio(id){const r=(data.sj_inicios_viagens||[]).find(x=>x.id===id);if(!r)return;if(isAdmin){nav('viagens');openNewForm('viagens');prepararEtapa($('entry'),r);}else{const panel=$('driver-form-viagem');panel.style.display='';prepararEtapa(panel.querySelector('form'),r);panel.scrollIntoView({behavior:'smooth',block:'start'});}}
+async function salvarEtapas(e){e.preventDefault();const form=e.target,btn=form.querySelector('button[type=submit]');if(!session||(!isAdmin&&!driverRecord))return;if(form.dataset.kmLoading==='true')return msg('Aguarde a consulta do KM inicial.',true);const val=k=>form.elements.namedItem(k)?.value||'';const inicioId=form.dataset.inicioId;const initial=inicioId?(data.sj_inicios_viagens||[]).find(x=>x.id===inicioId):null;if(inicioId&&!initial)return msg('Viagem já concluída. Atualize a tela.',true);const start=!inicioId&&val('etapa_registro')==='iniciar';const a=Number(val('km_inicial')),b=Number(val('km_final')),tipo=initial?.tipo_uso||val('tipo_uso')||'trabalho',fare=tipo==='trabalho'?Number(val('faturamento')):0;const o={user_id:isAdmin?session.user.id:driverRecord.user_id,motorista_id:isAdmin?val('motorista_id'):driverRecord.id,veiculo_id:val('veiculo_id'),data_viagem:val('data_viagem'),hora_inicio:horaViagem(val('hora_inicio')),origem:val('origem').trim(),destino:val('destino').trim(),km_inicial:a,tipo_uso:tipo,observacoes:val('observacoes')};
+ if(!o.hora_inicio||!o.data_viagem||!o.origem||!o.veiculo_id||!o.motorista_id||!val('km_inicial')||!Number.isFinite(a)||a<0)return msg('Preencha data, hora, motorista, veículo, origem e KM inicial.',true);
+ if(!start&&(!val('km_final')||!Number.isFinite(b)||b<a||!o.destino||!Number.isFinite(fare)||fare<0||(tipo==='trabalho'&&!val('faturamento'))))return msg('Para concluir, preencha destino, KM final válido e faturamento (pode ser zero).',true);
+ btn.disabled=true;try{let res;if(start)res=await client.from('sj_inicios_viagens').insert(o);else if(inicioId)res=await client.rpc('sj_concluir_inicio_viagem',{p_inicio_id:inicioId,p_km_final:b,p_destino:o.destino,p_faturamento:fare,p_observacoes:o.observacoes,p_valor_uso:isAdmin?Number(val('valor_uso')||0):0});else res=await client.from('viagens').insert({...o,km_final:b,km_rodados:Number((b-a).toFixed(2)),faturamento:fare,valor_uso:isAdmin?Number(val('valor_uso')||0):0});if(res.error)throw res.error;editingRow=null;if(!isAdmin){driverTripMonth=o.data_viagem.slice(0,7);driverTripDay='';}await refresh();toast(start?'Viagem iniciada. Use Concluir viagem ao terminar.':isAdmin?'Viagem concluída e aprovada.':'Viagem concluída. Aguardando conferência do administrador.');}catch(err){msg(err.code==='23505'?'Já existe uma viagem em andamento nesse veículo. Conclua a anterior antes de iniciar outra.':'Erro ao salvar: '+err.message,true);}finally{btn.disabled=false;}}
+const saveRowOriginal=saveRow;saveRow=function(e,t){if(t==='viagens'&&(!editingRow||e.target.dataset.inicioId))return salvarEtapas(e);return saveRowOriginal(e,t);};
+saveDriverTrip=salvarEtapas;
+const countLabelOriginal=countLabel;countLabel=function(t,q){return t==='viagens'?visibleRows(t,q).length+' registro(s)':countLabelOriginal(t,q);};
+function novaViagemMotorista(){const panel=$('driver-form-viagem'),form=panel?.querySelector('form');if(!form)return;panel.style.display='';form.reset();prepararEtapa(form);configurarHoraViagem(form,true);panel.scrollIntoView({behavior:'smooth',block:'start'});}
+
 (function boot(){
   applyTheme(localStorage.getItem('sj_theme') || 'dark');
   show('setup');
