@@ -1057,6 +1057,69 @@ main.wrap,#app,.app-shell,.app-main,#content{min-width:0;max-width:100%}
 @media(max-width:360px){.topbar .brand-sub{display:none}.topbar-inner{gap:6px;padding-inline:8px}.mobile-bottom-item{font-size:11px}}
 @media(prefers-reduced-motion:reduce){#content .kpi-grid,#content .tw-dashboard .kpi-grid{scroll-behavior:auto}}
 
+/* Mesmos tons e dimensões dos painéis administrativos, limitados ao perfil motorista. */
+@media(max-width:900px){
+ #mobile-bottom-nav:not([hidden]){position:fixed!important;top:auto!important;bottom:0!important;left:0!important;right:0!important;margin:0!important;transform:translate3d(0,var(--mobile-anchor-y,0px),0);backface-visibility:hidden;transition:none!important;animation:none!important;isolation:isolate}
+ #mobile-bottom-nav .mobile-bottom-item:active{transform:none}
+}
+#content .driver-view{--driver-surface:#09090b;--driver-border:#27272a;--driver-text:#f4f4f5;--driver-muted:#a1a1aa;--driver-input:#18181b;width:100%;max-width:1200px;min-width:0;margin-inline:auto;color:var(--driver-text)}
+:root[data-theme="light"] #content .driver-view{--driver-surface:#fff;--driver-border:#d4d4d8;--driver-text:#18181b;--driver-muted:#52525b;--driver-input:#fafafa}
+#content .driver-view .panel{background:var(--driver-surface);color:var(--driver-text);border:1px solid var(--driver-border);border-radius:12px;padding:20px;margin:12px 0;box-shadow:0 4px 16px #0001;min-width:0;overflow-wrap:anywhere}
+#content .driver-view h2{font-size:21px;line-height:1.35;font-weight:800;letter-spacing:-.3px;margin:0 0 16px}
+#content .driver-view h3{font-size:17px;font-weight:700;line-height:1.4}
+#content .driver-view .driver-action-panel{border-top:3px solid var(--accent)}
+#content .driver-view .driver-action-panel h2{margin-bottom:6px}
+#content .driver-view .driver-name{color:var(--driver-muted);font-size:16px;line-height:1.5;font-weight:600;margin:0 0 18px}
+#content .driver-view .driver-actions{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px!important;margin-top:0!important}
+#content .driver-view .driver-actions button{display:flex;align-items:center;justify-content:center;gap:10px;min-height:50px;width:100%;padding:12px 16px;background:linear-gradient(180deg,#facc15,#eab308);border:1px solid #eab308;border-radius:10px;color:#111827;font-size:15px;font-weight:700;line-height:1.4;white-space:normal;box-shadow:0 3px 8px #eab30820}
+#content .driver-view .driver-actions button:hover{background:#fde047;filter:none}
+#content .driver-view .driver-actions button:active{transform:translateY(1px)}
+#content .driver-view .driver-action-icon{display:grid;place-items:center;flex-shrink:0;width:22px;height:22px}
+#content .driver-view .driver-action-icon svg{width:22px;height:22px}
+#content .driver-view button:focus-visible,#content .driver-view input:focus-visible,#content .driver-view select:focus-visible{outline:3px solid #60a5fa;outline-offset:2px}
+#content .driver-view .field label{font-size:13px;line-height:1.5;font-weight:700;color:var(--driver-muted);margin-bottom:6px}
+#content .driver-view input,#content .driver-view select{background:var(--driver-input);color:var(--driver-text);border:1px solid var(--driver-border);border-radius:10px;min-height:46px;padding:11px 12px;font-size:16px;max-width:100%}
+#content .driver-view .driver-fields{gap:14px}
+#content .driver-view .field small{display:block;color:var(--driver-muted);font-size:12px;line-height:1.5;margin-top:5px}
+#content .driver-view .driver-scroll{min-width:0;max-width:100%;overflow:visible;margin-top:16px}
+#content .driver-view .driver-table{width:100%;min-width:0!important;table-layout:fixed;border-collapse:collapse}
+#content .driver-view .driver-table th{position:static;background:var(--driver-input);color:var(--driver-muted);font-size:12px;line-height:1.5;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:12px;border-bottom:1px solid var(--driver-border);white-space:normal}
+#content .driver-view .driver-table td{font-size:14px;font-weight:500;line-height:1.6;color:var(--driver-text);padding:14px 12px;border-bottom:1px solid var(--driver-border);white-space:normal;overflow-wrap:anywhere;vertical-align:top}
+#content .driver-view .driver-table tr:last-child td{border-bottom:0}
+#content .driver-view .driver-table .usage-meta{color:var(--driver-muted);font-size:12px;line-height:1.5}
+#content .driver-view .driver-table button{font-size:13px;line-height:1.4;min-height:40px;padding:9px 12px;max-width:100%;white-space:normal;border-radius:8px}
+#content .driver-view .driver-table:has(.driver-empty) thead{display:none}
+#content .driver-view .driver-table td.driver-empty{padding:26px 16px!important;text-align:center;color:var(--driver-muted);font-size:15px;font-weight:500;background:var(--driver-input);border:1px dashed var(--driver-border)!important;border-radius:10px}
+#content .driver-view .driver-trip-proof{display:flex;flex-wrap:wrap;gap:8px}
+#content .driver-view .driver-status{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:4px 9px;border:1px solid var(--driver-border);color:var(--driver-text);background:var(--driver-input);font-size:12px;font-weight:700;line-height:1.4;white-space:normal}
+#content .driver-view .driver-status:before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0}
+#content .driver-view .driver-status.approved{background:#052e16;color:#86efac;border-color:#166534}
+#content .driver-view .driver-status.pending{background:#422006;color:#fde047;border-color:#854d0e}
+#content .driver-view .driver-status.rejected{background:#450a0a;color:#fca5a5;border-color:#991b1b}
+:root[data-theme="light"] #content .driver-view .driver-status.approved{background:#f0fdf4;color:#166534;border-color:#bbf7d0}
+:root[data-theme="light"] #content .driver-view .driver-status.pending{background:#fefce8;color:#854d0e;border-color:#fef08a}
+:root[data-theme="light"] #content .driver-view .driver-status.rejected{background:#fef2f2;color:#991b1b;border-color:#fecaca}
+@media(max-width:767px){
+ #content .driver-view .panel{padding:16px;margin:12px 0}
+ #content .driver-view h2{font-size:21px;margin-bottom:14px}
+ #content .driver-view .driver-actions{grid-template-columns:minmax(0,1fr)}
+ #content .driver-view .driver-actions button{font-size:16px;min-height:50px}
+ #content .driver-view .driver-table,#content .driver-view .driver-table tbody{display:block;max-width:100%;width:100%;min-width:0}
+ #content .driver-view .driver-table thead{display:none}
+ #content .driver-view .driver-table tr{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:14px;margin-top:12px;border:1px solid var(--driver-border);border-radius:10px;background:var(--driver-input)}
+ #content .driver-view .driver-table td{display:block;min-width:0;width:100%;padding:0;border:0;font-size:15px;line-height:1.5}
+ #content .driver-view .driver-table td[data-label]:before{content:attr(data-label);display:block;color:var(--driver-muted);font-size:11px;line-height:1.5;letter-spacing:.04em;text-transform:uppercase;font-weight:700;margin-bottom:5px}
+ #content .driver-view .driver-trip-table td:nth-child(1),#content .driver-view .driver-trip-table td:nth-child(2),#content .driver-view .driver-trip-table td:nth-child(5),#content .driver-view .driver-trip-table td:nth-child(6){grid-column:1/-1}
+ #content .driver-view .driver-trip-table td:nth-child(1){font-weight:700}
+ #content .driver-view .driver-table td.driver-empty{grid-column:1/-1;padding:22px 14px!important;background:transparent;border:0!important}
+ #content .driver-view .driver-table tr:has(.driver-empty){display:block;border-style:dashed}
+ #content .driver-view .driver-table button{min-height:44px;font-size:14px}
+ #content .driver-view .driver-trip-proof>button{flex:1 1 auto}
+ #content .driver-view .driver-debt-table td:nth-child(2),#content .driver-view .driver-debt-table td:last-child{grid-column:1/-1}
+ #content .driver-view .driver-form-actions{display:flex;flex-wrap:wrap;gap:10px}
+ #content .driver-view .driver-form-actions button{flex:1 1 auto;min-height:46px}
+}
+
 </style>
 </head>
 <body>
@@ -1161,7 +1224,7 @@ main.wrap,#app,.app-shell,.app-main,#content{min-width:0;max-width:100%}
 
 <dialog id="mobile-menu-dialog" aria-labelledby="mobile-menu-title"><div class="mobile-drawer-heading"><strong id="mobile-menu-title">Menu</strong><button type="button" class="icon-btn" aria-label="Fechar menu" onclick="closeMobileMenu()">✕</button></div></dialog>
 <nav id="mobile-bottom-nav" class="mobile-bottom-nav" aria-label="Atalhos principais" hidden></nav>
-<footer class="footer">SJ MOB TOP · Martins · v2.22 · acesso individual e dados protegidos</footer>
+<footer class="footer">SJ MOB TOP · Martins · v2.23 · acesso individual e dados protegidos</footer>
 
 <div id="toasts" aria-live="polite" aria-atomic="false"></div>
 <div id="modal-root"></div>
@@ -1417,10 +1480,10 @@ function painelDividasMotorista(){
  if(!pendenciasReady)return '<section class="panel"><h2>Minhas dívidas e pagamentos</h2><p class="sub">Não foi possível consultar suas pendências. Atualize a página para tentar novamente.</p><button class="alt sm" onclick="refresh()">Atualizar</button></section>';
  const list=(data.pendencias||[]).filter(p=>p.motorista_id===driverRecord.id).slice().sort((a,b)=>String(a.vencimento||'9999').localeCompare(String(b.vencimento||'9999')));
  const saldo=list.reduce((n,p)=>n+Math.max(0,Number(p.valor)-pagoPend(p.id)),0);
- return `<section class="panel"><h2>Minhas dívidas e pagamentos</h2><div class="driver-debt-summary"><div>Saldo a pagar<strong>${reaisPend(saldo)}</strong></div></div><div class="scroll"><table><thead><tr><th>Tipo de dívida</th><th>Descrição</th><th>Vencimento</th><th>Valor</th><th>Pago</th><th>Saldo</th><th>Situação</th><th>Recibos</th></tr></thead><tbody>${list.map(p=>{
+ return `<section class="panel"><h2>Minhas dívidas e pagamentos</h2><div class="driver-debt-summary"><div>Saldo a pagar<strong>${reaisPend(saldo)}</strong></div></div><div class="scroll driver-scroll"><table class="driver-table driver-debt-table"><thead><tr><th>Tipo de dívida</th><th>Descrição</th><th>Vencimento</th><th>Valor</th><th>Pago</th><th>Saldo</th><th>Situação</th><th>Recibos</th></tr></thead><tbody>${list.map(p=>{
  const pagamentos=(data.pagamentos_pendencias||[]).filter(g=>g.pendencia_id===p.id).slice().sort((a,b)=>String(b.data_pagamento).localeCompare(String(a.data_pagamento)));
- return `<tr><td>${esc(p.categoria)}</td><td>${esc(p.descricao||'—')}</td><td>${esc(fmtDate(p.vencimento))}</td><td>${reaisPend(p.valor)}</td><td>${reaisPend(pagoPend(p.id))}</td><td>${reaisPend(Math.max(0,Number(p.valor)-pagoPend(p.id)))}</td><td>${esc(statusPend(p))}</td><td>${pagamentos.map(g=>`<button class="alt sm" onclick="emitirRecibo('${g.id}')">Recibo PDF · ${esc(fmtDate(g.data_pagamento))}</button>`).join(' ')||'Aguardando pagamento'}</td></tr>`;
- }).join('')||'<tr><td colspan="8">Você não tem pendências registradas.</td></tr>'}</tbody></table></div></section>`;
+ return `<tr><td data-label="Tipo de dívida">${esc(p.categoria)}</td><td data-label="Descrição">${esc(p.descricao||'—')}</td><td data-label="Vencimento">${esc(fmtDate(p.vencimento))}</td><td data-label="Valor">${reaisPend(p.valor)}</td><td data-label="Pago">${reaisPend(pagoPend(p.id))}</td><td data-label="Saldo">${reaisPend(Math.max(0,Number(p.valor)-pagoPend(p.id)))}</td><td data-label="Situação">${esc(statusPend(p))}</td><td data-label="Recibos">${pagamentos.map(g=>`<button class="alt sm" onclick="emitirRecibo('${g.id}')">Recibo PDF · ${esc(fmtDate(g.data_pagamento))}</button>`).join(' ')||'Aguardando pagamento'}</td></tr>`;
+ }).join('')||'<tr><td class="driver-empty" colspan="8">Você não tem pendências registradas.</td></tr>'}</tbody></table></div></section>`;
 }
 const TIPOS_USO={trabalho:'Viagem de trabalho',deslocamento:'Deslocamento sem receita',manutencao:'Manutenção',ida_casa:'Ida para casa',uso_particular:'Uso particular do motorista'};
 function tipoUsoLabel(tipo){return TIPOS_USO[tipo||'trabalho']||'Viagem de trabalho';}
@@ -1495,18 +1558,24 @@ async function cobrarMetaSemanal(id){
  const {error}=await client.rpc('sj_cobrar_excedente_semanal',{p_meta_id:id});if(error)return msg(error.message,true);await refresh();toast('Cobrança semanal conferida. Consulte Pendências.');
 }
 
+function driverStatusBadge(status){
+ const labels={pendente:'Pendente',aprovada:'Aprovada',rejeitada:'Rejeitada',confirmado:'Confirmado',rejeitado:'Rejeitado'};
+ const tone=['aprovada','confirmado'].includes(status)?'approved':status==='pendente'?'pending':['rejeitada','rejeitado'].includes(status)?'rejected':'';
+ return `<span class="driver-status ${tone}">${esc(labels[status]||status||'—')}</span>`;
+}
+
 function driverPage(){
  if(!driverRecord) return '<section class="panel"><h2>Vinculação pendente</h2></section>';
  const vehicles=(data.veiculos||[]).map(v=>`<option value="${esc(v.id)}">${esc(v.placa||'')} • ${esc(v.modelo||'')}</option>`).join('');
  const allTrips=viagensPorData(data.viagens||[]);
  const currentMonth=hojeBrasilia().slice(0,7);
  const selectedMonth=driverTripMonth||(allTrips.some(v=>String(v.data_viagem).startsWith(currentMonth))?currentMonth:String(allTrips[0]?.data_viagem||currentMonth).slice(0,7));
- const rows=allTrips.filter(v=>String(v.data_viagem).startsWith(selectedMonth)).map(v=>`<tr><td>${esc(dataHoraViagem(v))}</td><td>${esc(v.origem||'')} → ${esc(v.destino||'')}<small class="usage-meta">${esc(tipoUsoLabel(v.tipo_uso))}</small></td><td>${num(v.km_rodados||0)} km</td><td>${valorViagemHtml(v)}</td><td>${badge(v.status_conferencia||'aprovada')}</td><td><div class="driver-trip-proof">${comprovantesReady?`<button type="button" class="alt sm" onclick="prepararComprovanteViagem('${v.id}')">Enviar comprovante</button>`:''}${comprovantesDaViagem(v.id)}</div></td></tr>`).join('');
- return `<section class="panel driver-action-panel"><h2>Área do motorista — ${esc(driverRecord.nome)}</h2>
+ const rows=allTrips.filter(v=>String(v.data_viagem).startsWith(selectedMonth)).map(v=>`<tr><td data-label="Data / hora">${esc(dataHoraViagem(v))}</td><td data-label="Trajeto">${esc(v.origem||'')} → ${esc(v.destino||'')}<small class="usage-meta">${esc(tipoUsoLabel(v.tipo_uso))}</small></td><td data-label="KM rodados">${num(v.km_rodados||0)} km</td><td data-label="Valores">${valorViagemHtml(v)}</td><td data-label="Conferência">${driverStatusBadge(v.status_conferencia||'aprovada')}</td><td data-label="Pagamento ao administrador"><div class="driver-trip-proof">${comprovantesReady?`<button type="button" class="alt sm" onclick="prepararComprovanteViagem('${v.id}')">Enviar comprovante</button>`:''}${comprovantesDaViagem(v.id)}</div></td></tr>`).join('');
+ return `<section class="panel driver-action-panel"><h2>Área do motorista</h2><p class="driver-name">${esc(driverRecord.nome)}</p>
  
- <div class="btn-row" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
- <button type="button" onclick="toggleDriverForm('viagem')">＋ Registrar viagem do dia</button>
- ${comprovantesReady?'<button type="button" class="alt" onclick="toggleDriverForm(\'comprovante\')">📎 Enviar comprovante</button>':''}
+ <div class="btn-row driver-actions" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
+ <button type="button" onclick="toggleDriverForm('viagem')"><span class="driver-action-icon" aria-hidden="true">${ICONS.viagens}</span>Registrar viagem do dia</button>
+ ${comprovantesReady?'<button type="button" class="alt" onclick="toggleDriverForm(\'comprovante\')"><span class="driver-action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m8 12 6-6a3 3 0 0 1 4 4l-8 8a5 5 0 0 1-7-7l8-8"/><path d="m6 14 8-8"/></svg></span>Enviar comprovante</button>':''}
  </div></section>
  <section class="panel driver-entry-panel" id="driver-form-viagem" style="display:none"><h2>Registrar viagem do dia</h2>
  <form onsubmit="saveDriverTrip(event)" class="driver-form"><div class="fields driver-fields">
@@ -1532,9 +1601,9 @@ function driverPage(){
  <div class="field"><label>Comprovante (imagem ou PDF, até 5 MB)</label><input name="arquivo" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" required></div>
  </div><div class="btn-row driver-form-actions"><button type="submit">Enviar comprovante</button> <button type="button" class="alt" onclick="toggleDriverForm(\'comprovante\')">Cancelar</button></div></form>` : '<p class="sub">Módulo de comprovantes ainda não ativado no Supabase.</p>'}
  </section><section class="panel"><h2>Comprovantes enviados</h2>
- <div class="scroll"><table><thead><tr><th>Data</th><th>Valor</th><th>Situação</th><th>Arquivo</th></tr></thead><tbody>
- ${(data.comprovantes_motoristas||[]).map(c=>`<tr><td>${esc(c.data_pagamento)}</td><td>${brl(c.valor)}</td><td>${esc(c.status)}${c.viagem_id?' · viagem '+esc(dataHoraViagem((data.viagens||[]).find(v=>v.id===c.viagem_id)||{})):''}</td><td><button type="button" class="alt sm" onclick="abrirComprovante('${esc(c.arquivo_path)}')">Ver</button></td></tr>`).join('')||'<tr><td colspan="4">Nenhum comprovante enviado</td></tr>'}</tbody></table></div></section>
- <section class="panel"><h2>Minhas viagens</h2><div class="field" style="max-width:230px"><label for="driver-trip-month">Mês das viagens</label><input id="driver-trip-month" type="month" value="${esc(selectedMonth)}" onchange="selecionarMesMotorista(this.value)"></div><div style="overflow:auto"><table><thead><tr><th>Data / hora</th><th>Trajeto</th><th>KM</th><th>Valores</th><th>Conferência</th><th>Pagamento ao administrador</th></tr></thead><tbody>${rows||'<tr><td colspan="6">Nenhuma viagem neste mês</td></tr>'}</tbody></table></div></section>`;
+ <div class="scroll driver-scroll"><table class="driver-table driver-proof-table"><thead><tr><th>Data</th><th>Valor</th><th>Situação</th><th>Arquivo</th></tr></thead><tbody>
+ ${(data.comprovantes_motoristas||[]).map(c=>`<tr><td data-label="Data">${esc(c.data_pagamento)}</td><td data-label="Valor">${brl(c.valor)}</td><td data-label="Situação">${driverStatusBadge(c.status)}${c.viagem_id?'<small class="usage-meta">Viagem '+esc(dataHoraViagem((data.viagens||[]).find(v=>v.id===c.viagem_id)||{}))+'</small>':''}</td><td data-label="Arquivo"><button type="button" class="alt sm" onclick="abrirComprovante('${esc(c.arquivo_path)}')">Ver comprovante</button></td></tr>`).join('')||'<tr><td class="driver-empty" colspan="4">Nenhum comprovante enviado</td></tr>'}</tbody></table></div></section>
+ <section class="panel"><h2>Minhas viagens</h2><div class="field" style="max-width:230px"><label for="driver-trip-month">Mês das viagens</label><input id="driver-trip-month" type="month" value="${esc(selectedMonth)}" onchange="selecionarMesMotorista(this.value)"></div><div class="driver-scroll"><table class="driver-table driver-trip-table"><thead><tr><th>Data / hora</th><th>Trajeto</th><th>KM</th><th>Valores</th><th>Conferência</th><th>Pagamento ao administrador</th></tr></thead><tbody>${rows||'<tr><td class="driver-empty" colspan="6">Nenhuma viagem neste mês</td></tr>'}</tbody></table></div></section>`;
 }
 async function carregarComprovantes(){
  comprovantesReady=false;
@@ -1855,6 +1924,28 @@ async function refresh(silent = false){
    ========================================================= */
 // Navegação de apresentação. As permissões continuam sendo verificadas por nav() e pelo banco.
 const mobileLayoutQuery=window.matchMedia('(max-width:900px)');
+// Mantém a barra junto à borda visível quando o navegador altera sua área útil.
+let mobileBottomFrame=0;
+let mobileBottomOffset=0;
+function mobileBottomAnchorOffset(bottom,currentOffset,viewportHeight,viewportTop=0,viewportScale=1){
+ if(!Number.isFinite(viewportHeight)||viewportHeight<=0||Math.abs(viewportScale-1)>.01)return 0;
+ return Math.round((viewportTop+viewportHeight)-(bottom-currentOffset));
+}
+function syncMobileBottomAnchor(){
+ mobileBottomFrame=0;
+ const bar=$('mobile-bottom-nav');if(!bar)return;
+ if(!mobileLayoutQuery.matches||bar.hidden||!bar.getClientRects().length){mobileBottomOffset=0;bar.style.setProperty('--mobile-anchor-y','0px');return;}
+ const viewport=window.visualViewport;
+ const offset=mobileBottomAnchorOffset(bar.getBoundingClientRect().bottom,mobileBottomOffset,viewport?viewport.height:window.innerHeight,viewport?viewport.offsetTop:0,viewport?viewport.scale:1);
+ if(offset!==mobileBottomOffset){mobileBottomOffset=offset;bar.style.setProperty('--mobile-anchor-y',offset+'px');}
+}
+function queueMobileBottomAnchor(){if(!mobileBottomFrame)mobileBottomFrame=requestAnimationFrame(syncMobileBottomAnchor);}
+window.addEventListener('scroll',queueMobileBottomAnchor,{passive:true});
+window.addEventListener('resize',queueMobileBottomAnchor,{passive:true});
+window.visualViewport?.addEventListener('resize',queueMobileBottomAnchor,{passive:true});
+window.visualViewport?.addEventListener('scroll',queueMobileBottomAnchor,{passive:true});
+document.addEventListener('visibilitychange',queueMobileBottomAnchor);
+
 function mobileShortcuts(){
  return isAdmin?['dashboard','viagens','financeiro','pendencias']:driverRecord?['viagens','minha_meta','minhas_pendencias']:[];
 }
@@ -1886,6 +1977,7 @@ function syncMobileNavigation(){
  bottom.style.setProperty('--mobile-nav-count',String(tabs.length||4));
  const title=$('mobile-menu-title');if(title)title.textContent=isAdmin?'Menu administrativo':'Minha conta';
  for(const carousel of document.querySelectorAll('#content .kpi-grid')){carousel.setAttribute('tabindex','0');carousel.setAttribute('role','region');carousel.setAttribute('aria-label','Indicadores — deslize para ver mais');}
+ queueMobileBottomAnchor();
 }
 function openMobileMenu(){
  if(!session||(!isAdmin&&!driverRecord)||!mobileLayoutQuery.matches)return;
@@ -1908,7 +2000,7 @@ function render(){
   if(!isAdmin){
     $('nav').innerHTML = driverRecord?['viagens','minha_meta','minhas_pendencias'].map(t=>`<button class="navbtn${active===t?' active':''}" data-nav-tab="${t}" onclick="nav('${t}')">${{viagens:'Minhas viagens',minha_meta:'Minha meta',minhas_pendencias:'Minhas pendências'}[t]}</button>`).join(''):'';
     $('syncInfo').textContent = driverRecord?'Acesso do motorista':'Liberação de acesso';
-    $('content').innerHTML = driverRecord?(active==='minha_meta'?metasSemanaisPage():active==='minhas_pendencias'?painelDividasMotorista():driverPage()):aguardandoAcessoPage();
+    $('content').innerHTML = driverRecord?'<div class="driver-view">'+(active==='minha_meta'?metasSemanaisPage():active==='minhas_pendencias'?painelDividasMotorista():driverPage())+'</div>':aguardandoAcessoPage();
     syncMobileNavigation();return;
   }
 
