@@ -945,6 +945,45 @@ main.wrap,#app,.app-shell,.app-main,#content{min-width:0;max-width:100%}
  #content .tw-dashboard .kpi{padding:18px!important}
 }
 
+
+/* Apresentação uniforme dos menus: controles e registros sem textos repetidos. */
+#content [hidden]{display:none!important}
+#content .kpi-label{font-size:14px;line-height:1.5}
+#content .kpi-value{font-size:24px;line-height:1.3;overflow-wrap:anywhere}
+#content .panel{min-width:0;max-width:100%;padding:16px;margin:10px 0;border-radius:12px}
+#content .panel-head{gap:12px;margin-bottom:12px;flex-wrap:wrap}
+#content .panel-head>*{min-width:0;max-width:100%}
+#content h2{font-size:20px;line-height:1.4}
+#content h3{font-size:17px;line-height:1.4}
+#content .settings-meta{font-size:13px;color:var(--muted);line-height:1.5;margin:8px 0}
+#content #entry-sub{display:none}
+#content .fields{gap:12px}
+#content .field label{font-size:13px;line-height:1.4}
+#content .scroll{max-width:100%;min-width:0}
+#content .weekly-grid{gap:12px;margin:14px 0}
+#content .weekly-grid small{font-size:13px;line-height:1.4}
+#content .btn-row{gap:10px;flex-wrap:wrap}
+#content .btn-row>*{min-width:0;max-width:100%}
+@media(max-width:767px){
+ #content .panel{padding:16px;margin:10px 0}
+ #content .panel-head{flex-direction:column;align-items:stretch}
+ #content .panel-head .btn-row{width:100%;display:flex;flex-wrap:wrap}
+ #content .panel-head .search{width:100%;max-width:none;flex:1 1 100%}
+ #content .panel-head .btn-row button{flex:1 1 auto;white-space:normal}
+ #content .fields{grid-template-columns:minmax(0,1fr)}
+ #content input,#content select{font-size:16px;min-height:44px}
+ #content button{font-size:15px;min-height:44px;white-space:normal;max-width:100%}
+ #content .records-scroll{overflow:visible}
+ #content .records-table:not(.trips-table),#content .records-table:not(.trips-table) tbody{display:block;width:100%;min-width:0}
+ #content .records-table:not(.trips-table) thead{display:none}
+ #content .records-table:not(.trips-table) tr{display:block;border:1px solid var(--border);border-radius:12px;margin-top:12px;padding:6px}
+ #content .records-table:not(.trips-table) td{display:block;width:100%;padding:9px;white-space:normal;overflow-wrap:anywhere;font-size:15px}
+ #content .records-table:not(.trips-table) td[data-label]:before{content:attr(data-label);display:block;color:var(--muted);font-size:12px;font-weight:700;margin-bottom:4px}
+ #content .records-table:not(.trips-table) td.actions{text-align:left}
+ #content .weekly-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ #content .kpi-grid{grid-template-columns:minmax(0,1fr)}
+}
+
 </style>
 </head>
 <body>
@@ -1045,7 +1084,7 @@ main.wrap,#app,.app-shell,.app-main,#content{min-width:0;max-width:100%}
 </section>
 </main>
 
-<footer class="footer">SJ MOB TOP · Martins · v2.20 · acesso individual e dados protegidos</footer>
+<footer class="footer">SJ MOB TOP · Martins · v2.21 · acesso individual e dados protegidos</footer>
 
 <div id="toasts" aria-live="polite" aria-atomic="false"></div>
 <div id="modal-root"></div>
@@ -1301,7 +1340,7 @@ function painelDividasMotorista(){
  if(!pendenciasReady)return '<section class="panel"><h2>Minhas dívidas e pagamentos</h2><p class="sub">Não foi possível consultar suas pendências. Atualize a página para tentar novamente.</p><button class="alt sm" onclick="refresh()">Atualizar</button></section>';
  const list=(data.pendencias||[]).filter(p=>p.motorista_id===driverRecord.id).slice().sort((a,b)=>String(a.vencimento||'9999').localeCompare(String(b.vencimento||'9999')));
  const saldo=list.reduce((n,p)=>n+Math.max(0,Number(p.valor)-pagoPend(p.id)),0);
- return `<section class="panel"><h2>Minhas dívidas e pagamentos</h2><p class="sub">A baixa é feita pelo administrador após conferir o pagamento. Enviar comprovante não quita a dívida automaticamente. Dívidas quitadas permanecem no histórico.</p><div class="driver-debt-summary"><div>Saldo a pagar<strong>${reaisPend(saldo)}</strong></div></div><div class="scroll"><table><thead><tr><th>Tipo de dívida</th><th>Descrição</th><th>Vencimento</th><th>Valor</th><th>Pago</th><th>Saldo</th><th>Situação</th><th>Recibos</th></tr></thead><tbody>${list.map(p=>{
+ return `<section class="panel"><h2>Minhas dívidas e pagamentos</h2><div class="driver-debt-summary"><div>Saldo a pagar<strong>${reaisPend(saldo)}</strong></div></div><div class="scroll"><table><thead><tr><th>Tipo de dívida</th><th>Descrição</th><th>Vencimento</th><th>Valor</th><th>Pago</th><th>Saldo</th><th>Situação</th><th>Recibos</th></tr></thead><tbody>${list.map(p=>{
  const pagamentos=(data.pagamentos_pendencias||[]).filter(g=>g.pendencia_id===p.id).slice().sort((a,b)=>String(b.data_pagamento).localeCompare(String(a.data_pagamento)));
  return `<tr><td>${esc(p.categoria)}</td><td>${esc(p.descricao||'—')}</td><td>${esc(fmtDate(p.vencimento))}</td><td>${reaisPend(p.valor)}</td><td>${reaisPend(pagoPend(p.id))}</td><td>${reaisPend(Math.max(0,Number(p.valor)-pagoPend(p.id)))}</td><td>${esc(statusPend(p))}</td><td>${pagamentos.map(g=>`<button class="alt sm" onclick="emitirRecibo('${g.id}')">Recibo PDF · ${esc(fmtDate(g.data_pagamento))}</button>`).join(' ')||'Aguardando pagamento'}</td></tr>`;
  }).join('')||'<tr><td colspan="8">Você não tem pendências registradas.</td></tr>'}</tbody></table></div></section>`;
@@ -1353,15 +1392,15 @@ function cartaoMetaSemanal(g){
  return `<section class="panel"><h2>${isAdmin?esc(lookup('motoristas',g.motorista_id)):'Minha meta semanal'}</h2><p class="sub">${esc(fmtDate(g.semana_inicio))} a ${esc(fmtDate(somarDiasISO(g.semana_inicio,6)))} · segunda a domingo</p>
  <div class="weekly-grid"><div><small>Limite de trabalho</small><strong>${num(r.limite)} km</strong></div><div><small>Trabalho aprovado</small><strong>${num(r.trabalho)} km</strong></div><div><small>Disponível no limite</small><strong>${num(r.falta)} km</strong></div><div><small>KM excedentes</small><strong>${num(r.excedente)} km</strong></div></div>
  <label>Uso do limite semanal: ${r.percent}%</label><progress class="weekly-progress" max="100" value="${Math.min(100,r.percent)}" aria-label="Uso do limite semanal"></progress>
- <p class="sub">${num(r.pendentes)} km de trabalho aguardando aprovação. Uso particular aprovado: ${num(r.particular)} km, fora da meta. Manutenção, ida para casa e outros usos também não entram.</p>
+ <p class="sub">${num(r.pendentes)} km de trabalho aguardando aprovação. Particular aprovado: ${num(r.particular)} km (fora da meta).</p>
  <p><b>Excedente: ${brl(r.valor)}</b> · ${num(r.excedente)} km × R$ 0,50. ${p?'Cobrança em Pendências: '+brl(p.valor)+(Math.abs(Number(p.valor)-r.valor)>.005?' — precisa recalcular.':'.'):'Estimativa; ainda não cobrada.'}</p>
- ${isAdmin?`<button type="button" class="alt" onclick="cobrarMetaSemanal('${g.id}')">Conferir e gerar / atualizar cobrança</button>`:'<p class="sub">O administrador confere a cobrança. Pagamentos e saldo ficam em Minhas pendências.</p>'}</section>`;
+ ${isAdmin?`<button type="button" class="alt" onclick="cobrarMetaSemanal('${g.id}')">Conferir e gerar / atualizar cobrança</button>`:''}</section>`;
 }
 function metasSemanaisPage(){
  const semana=semanaSelecionada||inicioSemana();
  const rows=(data.sj_metas_semanais||[]).filter(g=>g.semana_inicio===semana&&(isAdmin||g.motorista_id===driverRecord?.id));
- return `<section class="panel"><h2>${isAdmin?'Metas semanais de KM':'Minha meta'}</h2><p class="sub">Somente KM de trabalho aprovados. Excedente R$ 0,50/km. Uso particular R$ 0,60/km, cobrado separadamente após aprovação.</p><div class="field" style="max-width:250px"><label>Escolher semana</label><input type="date" value="${semana}" onchange="selecionarSemana(this.value)"></div></section>
- ${isAdmin?`<section class="panel"><h3>Definir limite semanal do motorista</h3><p class="sub">Informe o limite real. Salvar na mesma semana atualiza a meta, sem duplicar. As metas mensais continuam separadas.</p><form onsubmit="salvarMetaSemanal(event)"><div class="fields"><div class="field"><label>Motorista</label><select name="motorista_id" required onchange="preencherLimiteSemanal(this.form)">${options('driver')}</select></div><div class="field"><label>Semana iniciada em</label><input name="semana_inicio" type="date" value="${semana}" required onchange="this.value=inicioSemana(this.value);preencherLimiteSemanal(this.form)"></div><div class="field"><label>Limite semanal (KM de trabalho)</label><input name="limite_km" type="number" min="0.01" step="0.01" required></div><div class="field"><label>Tarifa do excedente</label><input value="R$ 0,50/km" readonly></div></div><button type="submit">Salvar meta semanal</button></form></section>`:''}
+ return `<section class="panel"><h2>${isAdmin?'Metas semanais de KM':'Minha meta'}</h2><div class="field" style="max-width:250px"><label>Escolher semana</label><input type="date" value="${semana}" onchange="selecionarSemana(this.value)"></div></section>
+ ${isAdmin?`<section class="panel"><h3>Definir limite semanal do motorista</h3><form onsubmit="salvarMetaSemanal(event)"><div class="fields"><div class="field"><label>Motorista</label><select name="motorista_id" required onchange="preencherLimiteSemanal(this.form)">${options('driver')}</select></div><div class="field"><label>Semana iniciada em</label><input name="semana_inicio" type="date" value="${semana}" required onchange="this.value=inicioSemana(this.value);preencherLimiteSemanal(this.form)"></div><div class="field"><label>Limite semanal (KM de trabalho)</label><input name="limite_km" type="number" min="0.01" step="0.01" required></div><div class="field"><label>Tarifa do excedente</label><input value="R$ 0,50/km" readonly></div></div><button type="submit">Salvar meta semanal</button></form></section>`:''}
  ${rows.map(cartaoMetaSemanal).join('')||'<section class="panel"><p>Nenhuma meta cadastrada para esta semana.</p></section>'}`;
 }
 function preencherLimiteSemanal(form){const g=(data.sj_metas_semanais||[]).find(g=>g.motorista_id===form.elements.namedItem('motorista_id').value&&g.semana_inicio===form.elements.namedItem('semana_inicio').value);form.elements.namedItem('limite_km').value=g?.limite_km||'';}
@@ -1387,7 +1426,7 @@ function driverPage(){
  const selectedMonth=driverTripMonth||(allTrips.some(v=>String(v.data_viagem).startsWith(currentMonth))?currentMonth:String(allTrips[0]?.data_viagem||currentMonth).slice(0,7));
  const rows=allTrips.filter(v=>String(v.data_viagem).startsWith(selectedMonth)).map(v=>`<tr><td>${esc(dataHoraViagem(v))}</td><td>${esc(v.origem||'')} → ${esc(v.destino||'')}<small class="usage-meta">${esc(tipoUsoLabel(v.tipo_uso))}</small></td><td>${num(v.km_rodados||0)} km</td><td>${valorViagemHtml(v)}</td><td>${badge(v.status_conferencia||'aprovada')}</td><td><div class="driver-trip-proof">${comprovantesReady?`<button type="button" class="alt sm" onclick="prepararComprovanteViagem('${v.id}')">Enviar comprovante</button>`:''}${comprovantesDaViagem(v.id)}</div></td></tr>`).join('');
  return `<section class="panel driver-action-panel"><h2>Área do motorista — ${esc(driverRecord.nome)}</h2>
- <p class="sub">Escolha uma ação para abrir o formulário. Seus registros ficam organizados logo abaixo.</p>
+ 
  <div class="btn-row" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
  <button type="button" onclick="toggleDriverForm('viagem')">＋ Registrar viagem do dia</button>
  ${comprovantesReady?'<button type="button" class="alt" onclick="toggleDriverForm(\'comprovante\')">📎 Enviar comprovante</button>':''}
@@ -1407,7 +1446,7 @@ function driverPage(){
  <div class="field"><label>Observações</label><input name="observacoes"></div>
  </div><div class="btn-row driver-form-actions"><button type="submit">Registrar viagem do dia</button> <button type="button" class="alt" onclick="toggleDriverForm(\'viagem\')">Cancelar</button></div></form></section>
  <section class="panel driver-entry-panel" id="driver-form-comprovante" style="display:none"><h2>Enviar comprovante de pagamento</h2>
- <p class="sub">Anexe o comprovante de um pagamento feito ao administrador. O envio fica pendente de conferência e não dá baixa automática em dívidas.</p>
+ 
  ${comprovantesReady ? `<form onsubmit="enviarComprovante(event)" class="driver-form"><div class="fields driver-fields">
  <div class="field"><label>Referente à viagem</label><select name="viagem_id"><option value="">Outro pagamento / dívida</option>${allTrips.map(v=>`<option value="${v.id}">${esc(dataHoraViagem(v))} · ${esc(v.origem||'')} → ${esc(v.destino||'')}</option>`).join('')}</select></div>
  <div class="field"><label>Valor pago (R$)</label><input name="valor" type="number" min="0.01" step="0.01" required></div>
@@ -1418,7 +1457,7 @@ function driverPage(){
  </section><section class="panel"><h2>Comprovantes enviados</h2>
  <div class="scroll"><table><thead><tr><th>Data</th><th>Valor</th><th>Situação</th><th>Arquivo</th></tr></thead><tbody>
  ${(data.comprovantes_motoristas||[]).map(c=>`<tr><td>${esc(c.data_pagamento)}</td><td>${brl(c.valor)}</td><td>${esc(c.status)}${c.viagem_id?' · viagem '+esc(dataHoraViagem((data.viagens||[]).find(v=>v.id===c.viagem_id)||{})):''}</td><td><button type="button" class="alt sm" onclick="abrirComprovante('${esc(c.arquivo_path)}')">Ver</button></td></tr>`).join('')||'<tr><td colspan="4">Nenhum comprovante enviado</td></tr>'}</tbody></table></div></section>
- <section class="panel"><h2>Minhas viagens</h2><p class="sub">Ordenadas pela data e hora de início, da mais recente para a mais antiga, mesmo quando lançadas depois.</p><div class="field" style="max-width:230px"><label for="driver-trip-month">Mês das viagens</label><input id="driver-trip-month" type="month" value="${esc(selectedMonth)}" onchange="selecionarMesMotorista(this.value)"></div><div style="overflow:auto"><table><thead><tr><th>Data / hora</th><th>Trajeto</th><th>KM</th><th>Valores</th><th>Conferência</th><th>Pagamento ao administrador</th></tr></thead><tbody>${rows||'<tr><td colspan="6">Nenhuma viagem neste mês</td></tr>'}</tbody></table></div></section>`;
+ <section class="panel"><h2>Minhas viagens</h2><div class="field" style="max-width:230px"><label for="driver-trip-month">Mês das viagens</label><input id="driver-trip-month" type="month" value="${esc(selectedMonth)}" onchange="selecionarMesMotorista(this.value)"></div><div style="overflow:auto"><table><thead><tr><th>Data / hora</th><th>Trajeto</th><th>KM</th><th>Valores</th><th>Conferência</th><th>Pagamento ao administrador</th></tr></thead><tbody>${rows||'<tr><td colspan="6">Nenhuma viagem neste mês</td></tr>'}</tbody></table></div></section>`;
 }
 async function carregarComprovantes(){
  comprovantesReady=false;
@@ -1939,8 +1978,8 @@ function rowHtml(t, r){
   const s = specs[t];
   const divida = t === 'motoristas' && pendenciasReady ? resumoDividasMotoristas().motoristas.find(d=>d.id===r.id) : null;
   return `<tr>
-    ${s.cols.map(([k,,type]) => `<td>${cell(k, type, r[k])}</td>`).join('')}
-    <td class="actions">
+    ${s.cols.map(([k,label,type]) => `<td data-label="${esc(label)}">${cell(k, type, r[k])}</td>`).join('')}
+    <td class="actions" data-label="Ações">
       ${t === 'motoristas' && divida ? `<span class="badge danger" title="Saldo devedor">Dívida: ${reaisPend(divida.saldo)}</span> ` : ''}
       ${t==='motoristas'?`<span class="badge muted">${esc(modalidadeLabel(r.modalidade_cobranca))}</span> <button class="alt sm" onclick="selecionarMotoristaCobranca('${r.id}')">Cobrança</button> `:''}<button class="sm" onclick="editRow('${t}','${r.id}')">Editar</button> <button class="sm danger" onclick="removeRow('${t}','${r.id}')">Excluir</button>
     </td></tr>`;
@@ -1976,25 +2015,25 @@ function resumoCaixaMensal(m){
 }
 function resumoCaixaPage(){
  const c=resumoCaixaMensal(month);
- return `<div class="panel" style="margin-top:16px"><div class="panel-head"><div><h2>Resumo do caixa — ${esc(month)}</h2><p class="sub">Movimentação financeira registrada, incluindo recebimentos de pendências.</p></div></div>
+ return `<div class="panel" style="margin-top:16px"><div class="panel-head"><div><h2>Resumo do caixa — ${esc(month)}</h2></div></div>
  <div class="grid kpi-grid">
  <div class="kpi"><span class="kpi-label">Entradas financeiras</span><div class="kpi-value">${reaisPend(c.entradas)}</div></div>
  <div class="kpi"><span class="kpi-label">Pendências recebidas</span><div class="kpi-value" style="color:#49d7a5">${reaisPend(c.recuperacoes)}</div></div>
  <div class="kpi"><span class="kpi-label">Saídas financeiras</span><div class="kpi-value" style="color:#ff7676">${reaisPend(c.saidas)}</div></div>
  <div class="kpi"><span class="kpi-label">Saldo do caixa no mês</span><div class="kpi-value" style="color:${c.saldo>=0?'#49d7a5':'#ff7676'}">${reaisPend(c.saldo)}</div></div>
- </div><p class="sub" style="margin-top:12px">Saldo mensal dos lançamentos financeiros e das baixas de pendências, não saldo bancário acumulado. Viagens e manutenções não são somadas automaticamente aqui, para evitar duplicidade com lançamentos financeiros. Se algum pagamento de pendência já foi lançado manualmente como receita, revise esse lançamento para não contar duas vezes.</p></div>`;
+ </div></div>`;
 }
 function caixaPendenciasPage(){
  const pag=(data.pagamentos_pendencias||[]).filter(x=>String(x.data_pagamento||'').slice(0,7)===month);
  const total=pag.reduce((n,x)=>n+Number(x.valor||0),0);
  const pendById=new Map((data.pendencias||[]).map(p=>[p.id,p]));
  return `<div class="panel" style="margin-top:16px">
- <div class="panel-head"><div><h2>Caixa — recebimentos de pendências</h2><p class="sub">Pagamentos confirmados, exibidos automaticamente. Não duplicar como novo lançamento financeiro.</p></div><strong style="color:#49d7a5">${reaisPend(total)}</strong></div>
+ <div class="panel-head"><div><h2>Caixa — recebimentos de pendências</h2></div><strong style="color:#49d7a5">${reaisPend(total)}</strong></div>
  <details><summary style="cursor:pointer;padding:10px 0">Ver pagamentos recebidos no mês (${pag.length})</summary>
  <div class="scroll"><table><thead><tr><th>Data</th><th>Motorista</th><th>Origem</th><th>Forma</th><th>Entrada no caixa</th><th>Recibo</th></tr></thead><tbody>
  ${pag.map(x=>{const p=pendById.get(x.pendencia_id);return `<tr><td>${esc(x.data_pagamento||'—')}</td><td>${esc(p?lookup('motoristas',p.motorista_id):'—')}</td><td>${esc(p?.categoria||'Pendência')}</td><td>${esc(x.forma||'—')}</td><td style="color:#49d7a5">${reaisPend(x.valor)}</td><td><button class="alt sm" onclick="emitirRecibo(\'${x.id}\')">Recibo</button></td></tr>`}).join('')||'<tr><td colspan="6">Nenhum pagamento de pendência neste mês.</td></tr>'}
  </tbody></table></div></details>
- <p class="sub" style="margin-top:10px">Entrada de caixa não significa faturamento: devoluções de empréstimos e adiantamentos são recuperações de valores. Este quadro é separado das receitas e despesas operacionais.</p>
+ 
  </div>`;
 }
 function tablePage(t){
@@ -2027,7 +2066,7 @@ function tablePage(t){
     <div class="panel-head">
       <div>
         <h2>${s.title}</h2>
-        <p class="sub" style="margin:4px 0 0">Registros cadastrados · <b>${esc(month)}</b></p>
+        
       </div>
       <div class="btn-row">
         <input class="search" id="search-${t}" placeholder="Buscar…" value="${esc(q)}"
@@ -2036,8 +2075,8 @@ function tablePage(t){
         <button onclick="openNewForm('${t}')">＋ Novo registro</button>
       </div>
     </div>
-    <div class="scroll ${t==='viagens'?'trips-scroll':''}">
-      <table class="${t==='viagens'?'trips-table':''}">
+    <div class="scroll records-scroll ${t==='viagens'?'trips-scroll':''}">
+      <table class="records-table ${t==='viagens'?'trips-table':''}">
         <thead><tr>
           ${t==='viagens'?'<th>Data / hora</th><th>Motorista / veículo</th><th>Trajeto</th><th>KM</th><th>Valor</th><th style="text-align:right">Ações</th>':s.cols.map(c => `<th>${c[1]}</th>`).join('')+'<th style="text-align:right">Ação</th>'}
         </tr></thead>
@@ -2667,19 +2706,17 @@ function security(){
   <div class="panel">
     <h2>Segurança e Backup</h2>
     <p class="sub">Usuário atual: <b>${esc(session.user.email)}</b></p>
-    <p style="font-size:13.5px;line-height:1.6;color:var(--muted)">
-      Somente o administrador acessa a gestão. Motoristas têm login individual e acesso aos próprios lançamentos. As tabelas são protegidas por políticas <b>RLS</b> no Supabase.
-    </p>
+    
     <div class="panel" style="margin-top:18px;padding:16px">
       <h3>Backup manual da frota</h3>
-      <p class="sub">Exporte os registros da frota, financeiro, pendências, manutenção, metas e informações dos comprovantes em JSON.</p>
-      <div class="btn-row" style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap"><button type="button" id="backup-download" onclick="baixarBackupFrota()">↓ Baixar backup dos dados</button><button type="button" class="alt" id="backup-sheets" onclick="exportarBackupGooglePlanilhas()">▦ Exportar para Google Planilhas</button></div><p class="sub" style="margin-top:10px">Este botão baixa um arquivo .xlsx no seu dispositivo. O backup do Drive abaixo também salva uma planilha automaticamente, pronta para Abrir com → Planilhas Google.</p>
-      <p class="sub" style="margin-top:12px">Os downloads locais JSON e Excel contêm somente registros. Para incluir imagens e PDFs dos comprovantes, use o backup do Google Drive abaixo. Este painel não sobrescreve registros.</p>
+      
+      <div class="btn-row" style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap"><button type="button" id="backup-download" onclick="baixarBackupFrota()">↓ Baixar backup dos dados</button><button type="button" class="alt" id="backup-sheets" onclick="exportarBackupGooglePlanilhas()">▦ Exportar para Google Planilhas</button></div>
+      <p class="settings-meta">Downloads locais: registros em JSON ou Excel. Anexos incluídos no backup do Drive.</p>
     </div>
     <div class="panel" style="margin-top:18px;padding:16px">
       <h3>Conexão com Google Drive</h3>
-      <p class="sub">Todo backup salva <b>dois arquivos</b>: uma <b>planilha Excel (.xlsx) compatível com Google Planilhas</b>, com abas separadas, e um <b>JSON completo com os anexos</b>. A planilha lista os anexos e o endereço do backup completo.</p><p class="sub">Execução automática: <b>domingo às 3h (Brasília)</b>, mesmo com o sistema fechado. As duas cópias têm integridade verificada. Mantenha o Google Drive autorizado.</p>
-      <p class="sub">Limite atual: 40 MB por backup, incluindo anexos codificados. Se um arquivo não puder ser lido, o backup não é concluído como se estivesse completo.</p>
+      <p class="settings-meta">Semanal: <b>domingo às 3h (Brasília)</b> · JSON com anexos + Excel · limite de 40 MB.</p>
+      
       <div class="btn-row" style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
         <button type="button" id="google-drive-connect" onclick="conectarGoogleDrive()">Conectar Google Drive</button>
         <button type="button" class="alt" id="google-drive-status" onclick="verificarGoogleDrive()">Verificar conexão</button>
@@ -2690,10 +2727,7 @@ function security(){
     <div class="btn-row" style="margin-top:16px">
       <button onclick="securityTest()">Testar leitura com minha conta</button>
     </div>
-    <div class="alert info" style="margin-top:18px">
-      <span class="pill"></span>
-      <span>Este teste não comprova isolamento entre contas. Faça também o teste com dois usuários distintos conforme as instruções do guia.</span>
-    </div>
+    
   </div>`;
 }
 
@@ -2788,11 +2822,11 @@ function pendenciasPage(){
  const vencido=list.filter(p=>statusPend(p)==='Vencida').reduce((a,p)=>a+Math.max(0,Number(p.valor)-pagoPend(p.id)),0);
  return `<div class="panel">
  <h2>Pendências / Contas a Receber</h2>
- <p class="sub">Valores a receber não entram automaticamente no faturamento. Empréstimos e adiantamentos não são receitas operacionais.</p>
+ 
  <div class="fields"><div class="field"><label>Saldo a receber</label><strong>${reaisPend(receber)}</strong></div><div class="field"><label>Vencido</label><strong style="color:#ff7676">${reaisPend(vencido)}</strong></div><div class="field"><label>Recebido no mês</label><strong style="color:#49d7a5">${reaisPend(recebido)}</strong></div></div>
- <div class="panel-head"><div><h2>Pendências cadastradas</h2><p class="sub">Consulte as cobranças e registre pagamentos.</p></div><div class="btn-row"><button onclick="abrirFormularioPendencia()">＋ Novo registro</button></div></div>
+ <div class="panel-head"><div><h2>Pendências cadastradas</h2></div><div class="btn-row"><button onclick="abrirFormularioPendencia()">＋ Novo registro</button></div></div>
  <div class="panel hide" id="form-panel-pendencias">
- <div class="panel-head"><div><h2>Nova pendência</h2><p class="sub">Preencha os dados da cobrança.</p></div><button type="button" class="alt sm" onclick="fecharFormularioPendencia()">✕ Fechar</button></div>
+ <div class="panel-head"><div><h2>Nova pendência</h2></div><button type="button" class="alt sm" onclick="fecharFormularioPendencia()">✕ Fechar</button></div>
  <form id="form-nova-pendencia" onsubmit="salvarPendencia(event)"><div class="fields">
  <div class="field"><label>Motorista</label><select name="motorista_id" required>${options('driver')}</select></div>
  <div class="field"><label>Veículo (opcional)</label><select name="veiculo_id">${options('vehicle')}</select></div>
@@ -2939,9 +2973,9 @@ function cobrancasPage(){
  const attrs=value=>mode===value?'required':'disabled';
  const charges=(data.pendencias||[]).filter(p=>p.motorista_id===m.id&&p.cobranca_detalhes&&String(p.data_lancamento).startsWith(month));
  const total=charges.reduce((s,p)=>s+Number(p.valor),0),paid=charges.reduce((s,p)=>s+pagoPend(p.id),0);
- return `<section class="panel"><h2>Cobranças por motorista</h2><p class="sub">Defina como cada motorista paga e registre cada cobrança. Só o administrador pode configurar e lançar.</p>
+ return `<section class="panel"><h2>Cobranças por motorista</h2>
  <div class="field" style="margin-top:14px"><label for="cobranca-motorista">Motorista</label><select id="cobranca-motorista" onchange="selecionarMotoristaCobranca(this.value)">${drivers.map(d=>`<option value="${d.id}" ${d.id===m.id?'selected':''}>${esc(d.nome)} · ${modalidadeLabel(d.modalidade_cobranca)}${d.status!=='ativo'?' · inativo':''}</option>`).join('')}</select></div></section>
- <section class="panel"><h2>Forma de cobrança de ${esc(m.nome)}</h2><p class="sub">Estes valores servem de padrão para os próximos lançamentos. Alterações não mudam cobranças anteriores.</p>
+ <section class="panel"><h2>Forma de cobrança de ${esc(m.nome)}</h2>
  <form id="cobranca-config" onsubmit="salvarConfiguracaoCobranca(event)"><div class="fields">
  <div class="field"><label>Modalidade padrão</label><select name="modalidade" onchange="ajustarCamposCobranca(this.form)">${modalidadesOptions(mode)}</select></div>
  </div>
@@ -2949,7 +2983,7 @@ function cobrancasPage(){
  ${inputMode('comissao',field('Comissão (%)','percentual_comissao',m.percentual_comissao,'number',`min="0.01" max="100" step="0.01" ${attrs('comissao')}`))}
  <div class="field"><label>Condições do acordo (opcional)</label><input name="acordo_cobranca" value="${esc(m.acordo_cobranca||'')}" maxlength="500" placeholder="Ex.: comissão somente sobre corridas particulares"></div>
  <div class="btn-row" style="margin-top:14px"><button type="submit">Salvar configuração</button></div></form></section>
- <section class="panel"><h2>Lançar cobrança</h2><p class="sub">Informe os dias, a base da comissão ou o valor combinado. Nenhuma cobrança é gerada sozinha. Se já lançou esta cobrança em Pendências, não lance novamente.</p>
+ <section class="panel"><h2>Lançar cobrança</h2>
  ${m.status!=='ativo'?'<p class="badge danger">Motorista inativo: ative o cadastro antes de lançar cobranças.</p>':''}
  <form id="cobranca-lancamento" oninput="atualizarTotalCobranca()" onsubmit="lancarCobrancaMotorista(event)"><input type="hidden" name="referencia" value="${cobrancaDraftRef}">
  <div class="fields"><div class="field"><label>Modalidade deste lançamento</label><select name="modalidade" required onchange="ajustarCamposCobranca(this.form)">${modalidadesOptions(mode)}</select></div>
@@ -2960,7 +2994,7 @@ function cobrancasPage(){
  ${inputMode('a_combinar',field('Valor combinado (R$)','valor_combinado','','number',`min="0.01" step="0.01" ${attrs('a_combinar')}`))}
  <div class="field"><label>Descrição / período cobrado ${mode==='a_combinar'?'(obrigatório)':''}</label><input name="descricao" maxlength="500" ${mode==='a_combinar'?'required':''} value="${esc(m.acordo_cobranca||'')}" placeholder="Ex.: diárias de 01 a 03/11, comissão da semana ou acordo particular"></div>
  <p><b>Total a cobrar:</b> <output id="cobranca-total" aria-live="polite">Preencha os valores</output></p>
- <p class="sub">O lançamento cria uma conta a receber. O dinheiro entra no caixa somente ao registrar a baixa em Pendências ou no histórico abaixo.</p>
+ 
  <div class="btn-row" style="margin-top:14px"><button type="submit" ${m.status==='ativo'?'':'disabled'}>Lançar em Pendências</button></div></form></section>
  <section class="panel"><h2>Cobranças de ${esc(m.nome)} · ${esc(month)}</h2><div class="grid kpi-grid"><div class="kpi"><span class="kpi-label">Lançado</span><div class="kpi-value">${brl(total)}</div></div><div class="kpi"><span class="kpi-label">Recebido dessas cobranças</span><div class="kpi-value">${brl(paid)}</div></div><div class="kpi"><span class="kpi-label">A receber</span><div class="kpi-value">${brl(Math.max(0,total-paid))}</div></div></div>
  <div class="scroll"><table><thead><tr><th>Data</th><th>Modalidade / descrição</th><th>Valor</th><th>Saldo</th><th>Situação</th><th>Ação</th></tr></thead><tbody>${charges.slice().reverse().map(p=>`<tr><td>${fmtDate(p.data_lancamento)}</td><td><b>${esc(p.categoria)}</b><small class="pend-description">${esc(p.descricao)}</small></td><td>${brl(p.valor)}</td><td>${brl(Math.max(0,Number(p.valor)-pagoPend(p.id)))}</td><td>${badge(statusPend(p))}</td><td>${Number(p.valor)-pagoPend(p.id)>0.005?`<button onclick="abrirBaixa('${p.id}')">Registrar pagamento</button>`:'Quitada'}</td></tr>`).join('')||'<tr><td colspan="6">Nenhuma cobrança lançada por este módulo no mês. Registros antigos continuam em Pendências.</td></tr>'}</tbody></table></div></section>`;
@@ -3038,7 +3072,7 @@ function aguardandoAcessoPage(){
  ${r?`<p>${r.status==='pendente'?'Sua solicitação foi enviada. Aguarde o administrador conferir e liberar o cadastro.':r.status==='recusada'?'Entre em contato com o administrador para conferir seu cadastro.':'Entre em contato com o administrador para verificar sua vinculação ou ativação.'}</p><p><b>Nome informado:</b> ${esc(r.nome)}</p>`:
  `<p>Informe seus dados para o administrador identificar o cadastro correto. Seus dados de acesso continuam pessoais.</p><form onsubmit="solicitarMeuAcesso(event)"><div class="fields"><div class="field"><label>Nome completo</label><input name="nome" minlength="2" maxlength="120" required></div><div class="field"><label>Telefone</label><input name="telefone" type="tel" maxlength="40" required></div></div><div class="btn-row" style="margin-top:14px"><button type="submit">Solicitar liberação</button></div></form>`}
  <div class="btn-row" style="margin-top:18px"><button class="alt" onclick="refresh()">Verificar liberação</button><button class="alt" onclick="logout()">Sair</button></div>
- <p class="sub" style="margin-top:14px">Você ainda não pode consultar veículos, viagens ou dados da administração.</p></section>`;
+ </section>`;
 }
 async function solicitarMeuAcesso(e){
  e.preventDefault();if(!session||isAdmin)return;
@@ -3056,18 +3090,18 @@ async function carregarPedidosAcesso(){
 }
 function painelAvisoAcessos(){
  const count=(data.sj_solicitacoes_motoristas||[]).filter(x=>x.status==='pendente').length;
- return count?`<section class="panel"><h2>${count} solicitação(ões) de acesso</h2><p class="sub">Novos motoristas aguardam sua conferência e liberação.</p><button onclick="nav('acessos')">Conferir solicitações</button></section>`:'';
+ return count?`<section class="panel"><h2>${count} solicitação(ões) de acesso</h2><button onclick="nav('acessos')">Conferir solicitações</button></section>`:'';
 }
 function acessosPage(){
  const rows=(data.sj_solicitacoes_motoristas||[]).slice().sort((a,b)=>String(b.created_at).localeCompare(String(a.created_at)));
- return `<section class="panel"><h2>Liberação de motoristas</h2><p class="sub">Compartilhe o link do sistema. Cada motorista cria a própria conta e senha, sem confirmar por e-mail, e fica aguardando sua liberação. Confira a pessoa e escolha o cadastro correto antes de liberar.</p><p><a href="https://wilsenff-web.github.io/sj-mob-top-pages/" target="_blank" rel="noopener">Abrir link para os motoristas</a></p><p class="sub">Você não vê nem precisa criar a senha do motorista. Como não há confirmação por e-mail, confira a identidade e o contato pessoalmente antes de liberar.</p></section>
+ return `<section class="panel"><h2>Liberação de motoristas</h2><p><a href="https://wilsenff-web.github.io/sj-mob-top-pages/" target="_blank" rel="noopener">Abrir link para os motoristas</a></p></section>
  <section class="panel"><h2>Aguardando liberação (${rows.filter(r=>r.status==='pendente').length})</h2>
  ${!acessosReady?'<p>Solicitações ainda não carregadas. Clique em Atualizar.</p>':''}
  ${rows.filter(r=>r.status==='pendente').map(r=>{
  const candidates=(data.motoristas||[]).filter(m=>!m.auth_user_id||m.auth_user_id===r.auth_user_id);
  return `<div class="panel"><h3>${esc(r.nome)}</h3><p>${esc(r.email)} · ${esc(r.telefone||'Sem telefone')}</p><p class="sub">Solicitado em ${fmtDate(r.created_at)}</p>
  <div class="field"><label for="acesso-destino-${r.id}">Como liberar este motorista?</label><select id="acesso-destino-${r.id}"><option value="">Selecione para evitar cadastro duplicado</option>${candidates.map(m=>`<option value="${m.id}">Vincular ao cadastro: ${esc(m.nome)}${m.status!=='ativo'?' (será ativado)':''}</option>`).join('')}<option value="novo">Criar novo cadastro de motorista</option></select></div><div class="btn-row" style="margin-top:14px"><button onclick="revisarPedidoAcesso('${r.id}','aprovada',this)">Liberar acesso</button><button class="alt" onclick="revisarPedidoAcesso('${r.id}','recusada',this)">Recusar</button></div></div>`;
- }).join('')||'<p class="sub">Nenhuma solicitação pendente. Novos pedidos aparecerão quando o motorista criar a conta ou entrar pela primeira vez.</p>'}</section>
+ }).join('')||'<p class="sub">Nenhuma solicitação pendente.</p>'}</section>
  <section class="panel"><h2>Solicitações revisadas</h2><div class="scroll"><table><thead><tr><th>Nome</th><th>E-mail</th><th>Decisão</th><th>Cadastro vinculado</th></tr></thead><tbody>${rows.filter(r=>r.status!=='pendente').map(r=>`<tr><td>${esc(r.nome)}</td><td>${esc(r.email)}</td><td>${esc(r.status)}</td><td>${r.motorista_id?esc(lookup('motoristas',r.motorista_id)):'—'}</td></tr>`).join('')||'<tr><td colspan="4">Nenhuma solicitação revisada</td></tr>'}</tbody></table></div></section>`;
 }
 async function revisarPedidoAcesso(id,decision,button){
