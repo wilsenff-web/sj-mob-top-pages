@@ -3,6 +3,8 @@
 
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0b0e13">
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script>if(window.tailwind)tailwind.config={corePlugins:{preflight:false},important:'.tw-dashboard'};</script>
 <link rel="preconnect" href="https://fonts.googleapis.com/"><link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap" rel="stylesheet">
 <title>SJ MOB TOP | Gestão de Frota</title>
 <link rel="canonical" href="https://wilsenff-web.github.io/sj-mob-top-pages/">
@@ -767,6 +769,78 @@ tbody td{padding:8px 9px;font-size:12px}
 .usage-meta{display:block;color:var(--muted);font-size:11px;line-height:1.45;margin-top:4px}
 [data-uso-hint]{display:block;line-height:1.45;margin-top:5px}
 .weekly-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:20px 0}.weekly-grid small,.weekly-grid strong{display:block}.weekly-grid small{color:var(--muted)}.weekly-grid strong{font-size:20px;margin-top:6px}.weekly-progress{width:100%;height:18px;accent-color:var(--accent);margin:8px 0}@media(max-width:640px){.weekly-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* Compatibilidade com o CSS legado e fallback se o CDN estiver indisponível. */
+#content .tw-dashboard{width:100%;min-width:0;max-width:100%}
+#content .tw-dashboard .grid,#content .tw-dashboard .veh-grid{
+ display:grid;grid-template-columns:minmax(0,1fr);gap:16px!important;
+}
+#content .tw-dashboard .kpi,#content .tw-dashboard .veh-box{
+ min-width:0;width:100%;padding:20px!important;background:#18181b;
+ border:1px solid #27272a;border-radius:12px;box-shadow:0 6px 20px #0002;
+}
+#content .tw-dashboard .panel,#content .tw-dashboard .veh-card,
+#content .tw-dashboard .veh-selector-wrap,#content .tw-dashboard .goal{
+ min-width:0;background:#09090b;border:1px solid #27272a;border-radius:12px;
+}
+#content .tw-dashboard .panel{padding:20px;margin:16px 0!important}
+#content .tw-dashboard .kpi-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px}
+#content .tw-dashboard .kpi-label,#content .tw-dashboard .veh-box-label{
+ color:#a1a1aa;font-size:12px;line-height:1.5;letter-spacing:.04em;white-space:normal;
+}
+#content .tw-dashboard .kpi-value,#content .tw-dashboard .veh-box-value{
+ color:#f4f4f5;font-size:clamp(22px,2.2vw,30px)!important;line-height:1.25;
+ font-weight:800;font-variant-numeric:tabular-nums;overflow-wrap:anywhere;
+}
+#content .tw-dashboard .kpi-ico{width:40px;height:40px;border-radius:10px;background:#27272a;border:1px solid #3f3f46;color:#facc15}
+#content .tw-dashboard .kpi-ico svg{width:20px;height:20px}
+#content .tw-dashboard>.kpi-grid>.kpi:nth-child(-n+2) .kpi-value{color:#facc15}
+#content .tw-dashboard>.kpi-grid>.kpi:nth-child(3) .kpi-value,
+#content .tw-dashboard>.kpi-grid>.kpi:nth-child(3) .kpi-ico{color:#34d399}
+#content .tw-dashboard>.kpi-grid>.kpi:nth-child(4) .kpi-value,
+#content .tw-dashboard>.kpi-grid>.kpi:nth-child(4) .kpi-ico{color:#f87171}
+#content .tw-dashboard>.kpi-grid>.kpi:nth-child(5) .kpi-value,
+#content .tw-dashboard>.kpi-grid>.kpi:nth-child(6) .kpi-value{color:#60a5fa}
+#content .tw-dashboard .panel-head,#content .tw-dashboard .veh-card-header{gap:16px;flex-wrap:wrap}
+#content .tw-dashboard .panel-head>*{min-width:0;max-width:100%}
+#content .tw-dashboard .search,#content .tw-dashboard select{max-width:100%;min-width:0}
+#content .tw-dashboard .alert{align-items:flex-start;line-height:1.6}
+#content .tw-dashboard .alert>span:last-child{min-width:0}
+#content .tw-dashboard .veh-box-value.pos{color:#34d399}
+#content .tw-dashboard .veh-box-value.neg{color:#f87171}
+#content .tw-dashboard .goal-foot{flex-wrap:wrap;gap:8px}
+@media(min-width:768px){
+ #content .tw-dashboard .grid,#content .tw-dashboard .veh-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(min-width:1024px){
+ #content .tw-dashboard .grid,#content .tw-dashboard .veh-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+}
+@media(max-width:767px){
+ #content .tw-dashboard .panel-head{align-items:stretch;flex-direction:column}
+ #content .tw-dashboard .panel-head select,#content .tw-dashboard .panel-head button{width:100%}
+ #content .tw-dashboard button,#content .tw-dashboard select{min-height:44px}
+ #content .tw-dashboard .dashboard-hero{align-items:flex-start;gap:16px}
+}
+:root[data-theme="light"] #content .tw-dashboard .panel,
+:root[data-theme="light"] #content .tw-dashboard .veh-card,
+:root[data-theme="light"] #content .tw-dashboard .veh-selector-wrap,
+:root[data-theme="light"] #content .tw-dashboard .goal{background:#fff;border-color:#d4d4d8}
+:root[data-theme="light"] #content .tw-dashboard .kpi,
+:root[data-theme="light"] #content .tw-dashboard .veh-box{background:#fafafa;border-color:#d4d4d8}
+:root[data-theme="light"] #content .tw-dashboard .kpi-label,
+:root[data-theme="light"] #content .tw-dashboard .veh-box-label{color:#52525b}
+:root[data-theme="light"] #content .tw-dashboard .kpi-value,
+:root[data-theme="light"] #content .tw-dashboard .veh-box-value{color:#18181b}
+:root[data-theme="light"] #content .tw-dashboard .kpi-ico{background:#f4f4f5;border-color:#d4d4d8;color:#854d0e}
+:root[data-theme="light"] #content .tw-dashboard>.kpi-grid>.kpi:nth-child(-n+2) .kpi-value{color:#854d0e}
+:root[data-theme="light"] #content .tw-dashboard>.kpi-grid>.kpi:nth-child(3) .kpi-value,
+:root[data-theme="light"] #content .tw-dashboard>.kpi-grid>.kpi:nth-child(3) .kpi-ico,
+:root[data-theme="light"] #content .tw-dashboard .veh-box-value.pos{color:#047857}
+:root[data-theme="light"] #content .tw-dashboard>.kpi-grid>.kpi:nth-child(4) .kpi-value,
+:root[data-theme="light"] #content .tw-dashboard>.kpi-grid>.kpi:nth-child(4) .kpi-ico,
+:root[data-theme="light"] #content .tw-dashboard .veh-box-value.neg{color:#b91c1c}
+:root[data-theme="light"] #content .tw-dashboard>.kpi-grid>.kpi:nth-child(5) .kpi-value,
+:root[data-theme="light"] #content .tw-dashboard>.kpi-grid>.kpi:nth-child(6) .kpi-value{color:#1d4ed8}
+
 </style>
 </head>
 <body>
@@ -2176,13 +2250,13 @@ function vehiclePerformance(){
   const pct = r.metaRev > 0 ? Math.round(r.rev/r.metaRev*100) : null;
   const safePct = pct === null ? 0 : Math.max(0, Math.min(100, pct));
   const optionsHtml = sorted.map(x => `<option value="${esc(x.v.id)}" ${x.v.id === r.v.id ? 'selected' : ''}>${esc(x.v.placa)} · ${esc(x.v.modelo)} — ${x.km > 0 ? brl(x.revPerKm)+'/km' : 'sem KM'}</option>`).join('');
-  const kpi = (label,value,icon) => `<div class="kpi"><div class="kpi-top"><span class="kpi-label">${label}</span><span class="kpi-ico">${icon}</span></div><div class="kpi-value">${value}</div></div>`;
-  const box = (label,value,sub='',tone='') => `<div class="veh-box"><span class="veh-box-label">${label}</span><span class="veh-box-value ${tone}">${value}</span>${sub ? `<span class="veh-box-sub">${sub}</span>` : ''}</div>`;
+  const kpi = (label,value,icon) => `<div class="kpi min-w-0 w-full rounded-xl border border-zinc-800 bg-zinc-900 p-5 shadow-sm"><div class="kpi-top"><span class="kpi-label">${label}</span><span class="kpi-ico">${icon}</span></div><div class="kpi-value">${value}</div></div>`;
+  const box = (label,value,sub='',tone='') => `<div class="veh-box min-w-0 w-full rounded-xl border border-zinc-800 bg-zinc-900 p-5"><span class="veh-box-label">${label}</span><span class="veh-box-value ${tone}">${value}</span>${sub ? `<span class="veh-box-sub">${sub}</span>` : ''}</div>`;
   const net = r.rev-r.cost;
   return `<div class="panel" style="margin-top:16px">
     <h2>Resumo geral da frota e desempenho por veículo · ${esc(month)}</h2>
     <p class="sub">Metas, faturamento e R$/km calculados <b>somente pelas viagens do veículo</b>. Lançamentos do Financeiro só aparecem aqui quando vinculados ao carro.</p>
-    <div class="grid" style="margin-bottom:16px">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" style="margin-bottom:16px">
       ${kpi('R$/km da frota',totals.km > 0 ? brl(totals.rev/totals.km) : '—',ICONS.financeiro)}
       ${kpi('Manutenção/km',totals.km > 0 ? brl(totals.maint/totals.km) : '—',ICONS.manutencoes)}
       ${kpi('Resultado/km',totals.km > 0 ? brl((totals.rev-totals.cost)/totals.km) : '—',ICONS.metas)}
@@ -2195,7 +2269,7 @@ function vehiclePerformance(){
         <div><div class="veh-title">${esc(r.v.placa)} <span style="font-size:15px;color:var(--muted);font-weight:600">${esc(r.v.modelo)}</span></div><div class="veh-subtitle">${rankText}</div></div>
         <div class="veh-badge-rpk ${r.km > 0 ? '' : 'muted'}">${r.km > 0 ? brl(r.revPerKm)+'/km' : 'Sem KM'}</div>
       </div>
-      <div class="veh-grid">
+      <div class="veh-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         ${box('Faturamento das corridas',brl(r.rev),'Usado para meta e R$/km')}
         ${box('Distância rodada',num(r.km)+' km')}
         ${box('Faturamento por KM',r.km > 0 ? brl(r.revPerKm)+'/km' : '—','Receita das corridas / KM total registrado')}
@@ -2238,14 +2312,14 @@ function driverPerformance(){
   const g = (data.metas || []).find(x => x.mes?.startsWith(month) && x.motorista_id === d.id);
   const target = Number(g?.meta_faturamento || 0);
   const pct = target > 0 ? Math.round(gross/target*100) : null;
-  const box = (label,value,sub='',tone='') => `<div class="veh-box"><span class="veh-box-label">${label}</span><span class="veh-box-value ${tone}">${value}</span>${sub ? `<span class="veh-box-sub">${sub}</span>` : ''}</div>`;
+  const box = (label,value,sub='',tone='') => `<div class="veh-box min-w-0 w-full rounded-xl border border-zinc-800 bg-zinc-900 p-5"><span class="veh-box-label">${label}</span><span class="veh-box-value ${tone}">${value}</span>${sub ? `<span class="veh-box-sub">${sub}</span>` : ''}</div>`;
   return `<div class="panel" style="margin-top:16px">
     <h2>Desempenho por motorista · ${esc(month)}</h2>
     <p class="sub">Corridas e KM do motorista, separados das receitas e despesas efetivamente lançadas no Financeiro.</p>
     <div class="veh-selector-wrap"><label for="driver-select">Escolher motorista</label><select id="driver-select" onchange="setSelectedDriver(this.value)">${optionsHtml}</select></div>
     <div class="veh-card">
       <div class="veh-card-header"><div><div class="veh-title">${esc(d.nome)}</div><div class="veh-subtitle">Relatório individual do período</div></div></div>
-      <div class="veh-grid">
+      <div class="veh-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         ${box('Faturamento das corridas',brl(gross),'Não é receita integral da empresa')}
         ${box('KM rodados',num(km)+' km')}
         ${box('Faturamento das corridas por KM',km > 0 ? brl(gross/km)+'/km' : '—')}
@@ -2335,13 +2409,13 @@ function dashboard(){
     : '';
 
   return `
-    <div class="dash">
+    <div class="dash tw-dashboard w-full min-w-0">
     <div class="dashboard-hero"><div class="dashboard-hero-title"><span class="dashboard-hero-icon">${ICONS.dashboard || "▦"}</span><div><h1>Dashboard</h1><span class="dashboard-hero-month">${esc(month)}</span></div></div><div class="dashboard-hero-caption"><strong>Visão geral da operação</strong><span>Acompanhe os principais indicadores da sua frota.</span></div></div>
     <div class="alert info" style="margin:12px 0"><span class="pill"></span><span>Período exibido: <b>${esc(month)}</b>. Os valores seguem a data da viagem ou do lançamento. Altere o <b>Mês de referência</b> no menu para consultar outro período.</span></div>
     ${revenueSource==='financeiro' && cur.trips.length?'<div class="alert warn"><span>O faturamento está mostrando o Financeiro. Há viagens neste mês. <button class="alt sm" onclick="setRevenueSource(\'viagens\')">Mostrar faturamento das viagens</button></span></div>':''}
-    <div class="grid kpi-grid">
+    <div class="grid kpi-grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       ${cards.map(c => `
-        <div class="kpi">
+        <div class="kpi min-w-0 w-full rounded-xl border border-zinc-800 bg-zinc-900 p-5 shadow-sm">
           <div class="kpi-top">
             <span class="kpi-label">${c.label}</span>
             <span class="kpi-ico">${c.icon}</span>
@@ -2351,18 +2425,18 @@ function dashboard(){
         </div>`).join('')}
     </div>
 
-    <section class="panel"><h2>Quilometragem por tipo de uso</h2><div class="grid kpi-grid">
-      <div class="kpi"><span class="kpi-label">KM de trabalho</span><div class="kpi-value">${num(cur.kmTrabalho)}</div></div>
-      <div class="kpi"><span class="kpi-label">KM deslocamento / manutenção / casa</span><div class="kpi-value">${num(cur.kmDeslocamento)}</div></div>
-      <div class="kpi"><span class="kpi-label">KM particular</span><div class="kpi-value">${num(cur.kmParticular)}</div></div>
-      <div class="kpi"><span class="kpi-label">Valor combinado pelo uso</span><div class="kpi-value">${brl(cur.valorUso)}</div></div>
+    <section class="panel"><h2>Quilometragem por tipo de uso</h2><div class="grid kpi-grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="kpi min-w-0 w-full rounded-xl border border-zinc-800 bg-zinc-900 p-5 shadow-sm"><span class="kpi-label">KM de trabalho</span><div class="kpi-value">${num(cur.kmTrabalho)}</div></div>
+      <div class="kpi min-w-0 w-full rounded-xl border border-zinc-800 bg-zinc-900 p-5 shadow-sm"><span class="kpi-label">KM deslocamento / manutenção / casa</span><div class="kpi-value">${num(cur.kmDeslocamento)}</div></div>
+      <div class="kpi min-w-0 w-full rounded-xl border border-zinc-800 bg-zinc-900 p-5 shadow-sm"><span class="kpi-label">KM particular</span><div class="kpi-value">${num(cur.kmParticular)}</div></div>
+      <div class="kpi min-w-0 w-full rounded-xl border border-zinc-800 bg-zinc-900 p-5 shadow-sm"><span class="kpi-label">Valor combinado pelo uso</span><div class="kpi-value">${brl(cur.valorUso)}</div></div>
     </div><p class="sub">Somente registros aprovados. Valores combinados pelo uso geram contas a receber; não são receita de corrida nem dinheiro recebido. A baixa do pagamento é feita em Pendências.</p></section>
     ${dividas ? `<div class="panel" style="margin-top:16px">
       <div class="panel-head"><div><h2>Contas a receber</h2><p class="sub">Resumo separado do faturamento operacional.</p></div><button class="alt sm" onclick="nav('pendencias')">Abrir Pendências</button></div>
-      <div class="grid kpi-grid">
-        <div class="kpi"><span class="kpi-label">A receber</span><div class="kpi-value">${reaisPend(dividas.receber)}</div></div>
-        <div class="kpi"><span class="kpi-label">Vencido</span><div class="kpi-value" style="color:#ff7676">${reaisPend(dividas.vencido)}</div></div>
-        <div class="kpi"><span class="kpi-label">Recebido no mês</span><div class="kpi-value" style="color:#49d7a5">${reaisPend(dividas.recebido)}</div></div>
+      <div class="grid kpi-grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="kpi min-w-0 w-full rounded-xl border border-zinc-800 bg-zinc-900 p-5 shadow-sm"><span class="kpi-label">A receber</span><div class="kpi-value">${reaisPend(dividas.receber)}</div></div>
+        <div class="kpi min-w-0 w-full rounded-xl border border-zinc-800 bg-zinc-900 p-5 shadow-sm"><span class="kpi-label">Vencido</span><div class="kpi-value" style="color:#ff7676">${reaisPend(dividas.vencido)}</div></div>
+        <div class="kpi min-w-0 w-full rounded-xl border border-zinc-800 bg-zinc-900 p-5 shadow-sm"><span class="kpi-label">Recebido no mês</span><div class="kpi-value" style="color:#49d7a5">${reaisPend(dividas.recebido)}</div></div>
       </div>
       <div class="panel-head" style="margin-top:12px"><div><h3>Consultar motorista</h3><p class="sub">Selecione para ver a situação sem ocupar espaço no painel.</p></div><select id="busca-devedores" class="search" aria-label="Selecionar motorista" onchange="filtrarDevedores()"><option value="">Selecione um motorista</option>${(data.motoristas||[]).slice().sort((a,b)=>lookup('motoristas',a.id).localeCompare(lookup('motoristas',b.id),'pt-BR')).map(m=>`<option value="${esc(m.id)}">${esc(lookup('motoristas',m.id))}</option>`).join('')}</select></div>
       <div id="consulta-devedor-resultado" class="hide" aria-live="polite"></div>
@@ -2390,7 +2464,7 @@ function dashboard(){
     ${driverPerformance()}
 
     <h2 class="dash-title">Metas por motorista e veículo</h2>
-    <div class="grid">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       ${goals || '<div class="panel muted" style="grid-column:1/-1">Cadastre metas mensais na aba <b>Metas</b>. O faturamento realizado é calculado a partir das viagens do mês.</div>'}
     </div>
 
