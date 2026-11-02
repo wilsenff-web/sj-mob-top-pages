@@ -984,12 +984,86 @@ main.wrap,#app,.app-shell,.app-main,#content{min-width:0;max-width:100%}
  #content .kpi-grid{grid-template-columns:minmax(0,1fr)}
 }
 
+/* Estrutura de navegação móvel; a lateral original permanece no computador. */
+.mobile-menu-toggle,.mobile-bottom-nav,.mobile-drawer-heading,#mobile-month-slot{display:none}
+#mobile-menu-dialog{border:0;padding:0;color:var(--text);background:var(--surface)}
+#mobile-menu-dialog::backdrop{background:rgba(0,0,0,.65);backdrop-filter:blur(3px)}
+.mobile-menu-open{overflow:hidden}
+@media(max-width:900px){
+ body.has-mobile-nav{padding-bottom:calc(80px + env(safe-area-inset-bottom,0px))}
+ body.has-mobile-nav .mobile-menu-toggle:not([hidden]){display:grid;flex:0 0 42px;min-height:44px;width:42px;place-items:center;box-shadow:none}
+ .mobile-menu-toggle svg{width:22px;height:22px}
+ .topbar-inner{flex-wrap:nowrap;gap:8px;padding:10px 12px}
+ .topbar .brand{flex:1;min-width:0;gap:8px}
+ .topbar .brand-name{font-size:17px;white-space:nowrap}
+ .topbar .brand-sub{font-size:11px;line-height:1.4;letter-spacing:0}
+ .topbar .brand-mark{width:34px;height:34px;border-radius:10px;font-size:12px}
+ .topbar .who{display:none}
+ .topbar .btn-row{flex:0 0 auto;flex-wrap:nowrap;gap:6px}
+ .topbar .identity{gap:0}
+ .topbar .avatar{width:30px;height:30px;font-size:12px}
+ .topbar .icon-btn{width:36px;height:40px}
+ .app-shell{gap:0;align-items:stretch}
+ .app-main{width:100%;min-width:0}
+ #mobile-month-slot:not([hidden]){display:block;margin:0 0 12px;padding:12px 14px;border-radius:12px;border:1px solid var(--border);background:var(--surface)}
+ #mobile-month-slot .sidebar-section{display:block}
+ #mobile-month-slot label{font-size:12px;line-height:1.4;margin-bottom:6px}
+ #mobile-month-slot input{width:100%;font-size:16px;min-height:44px}
+ #mobile-menu-dialog{margin:0;inset:0 auto 0 0;width:min(88vw,360px);max-width:100%;height:100dvh;max-height:100dvh;overflow-y:auto;overscroll-behavior:contain;border-right:1px solid var(--border);border-radius:0;box-shadow:10px 0 40px #0005}
+ #mobile-menu-dialog .mobile-drawer-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 16px;border-bottom:1px solid var(--border)}
+ #mobile-menu-dialog .mobile-drawer-heading strong{font-size:18px}
+ #mobile-menu-dialog .sidebar{position:static;top:auto;width:100%;max-width:100%;max-height:none;border:0;border-radius:0;box-shadow:none;padding:14px;background:transparent;overflow:visible;gap:12px}
+ #mobile-menu-dialog .sidebar .nav{display:flex;flex-direction:column;gap:6px;overflow:visible;border:0;padding:0;width:100%}
+ #mobile-menu-dialog .sidebar .navbtn{width:100%;font-size:16px;min-height:48px;padding:12px 14px;white-space:normal;line-height:1.4}
+ #mobile-menu-dialog .sidebar .navbtn[data-mobile-primary="yes"]{display:none}
+ #mobile-menu-dialog .sidebar-footer{display:flex;flex-direction:column;border-top:1px solid var(--border);padding-top:14px}
+ #mobile-menu-dialog .sidebar-footer button{width:100%;font-size:15px;min-height:46px}
+ #mobile-menu-dialog .sidebar-footer .sync{order:0;flex:auto;font-size:13px}
+ .mobile-bottom-nav:not([hidden]){position:fixed;inset:auto 0 0;z-index:80;display:grid;grid-template-columns:repeat(var(--mobile-nav-count,4),minmax(0,1fr));gap:4px;padding:8px max(8px,env(safe-area-inset-right,0px)) calc(8px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px));border-top:1px solid #334155;background:#071121;box-shadow:0 -5px 24px #0005}
+ .mobile-bottom-item{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-width:0;min-height:56px;padding:6px 2px;border:1px solid transparent;border-radius:10px;background:none;color:#cbd5e1;box-shadow:none;font-size:12px;line-height:1.25;white-space:normal;font-weight:700}
+ .mobile-bottom-item:hover{filter:none;background:#172235}
+ .mobile-bottom-item.active{background:#facc15;color:#111827;border-color:#facc15}
+ .mobile-bottom-icon{display:grid;place-items:center;width:23px;height:23px}
+ .mobile-bottom-icon svg{display:block;width:22px;height:22px}
+ #content .kpi-grid,#content .tw-dashboard .kpi-grid{display:flex!important;flex-wrap:nowrap!important;gap:12px!important;width:100%;min-width:0;max-width:100%;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x proximity;scroll-padding-inline:2px;scroll-behavior:smooth;padding:2px 2px 10px;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:var(--border-2) transparent}
+ #content .kpi-grid>.kpi,#content .tw-dashboard .kpi-grid>.kpi{flex:0 0 clamp(172px,53vw,212px);width:clamp(172px,53vw,212px);min-width:0;min-height:126px;padding:14px!important;scroll-snap-align:start}
+ #content .kpi-grid .kpi-top{gap:6px;margin-bottom:12px;align-items:flex-start}
+ #content .kpi-grid .kpi-label,#content .tw-dashboard .kpi-grid .kpi-label{font-size:14px;line-height:1.4;letter-spacing:0;color:#dbeafe;font-weight:700}
+ #content .kpi-grid .kpi-value,#content .tw-dashboard .kpi-grid .kpi-value{font-size:24px!important;line-height:1.25;letter-spacing:-.5px;overflow-wrap:anywhere}
+ #content .kpi-grid .kpi-ico,#content .tw-dashboard .kpi-grid .kpi-ico{width:28px;height:28px;border-radius:8px;flex-shrink:0}
+ #content .kpi-grid .kpi-ico svg,#content .tw-dashboard .kpi-grid .kpi-ico svg{width:16px;height:16px}
+ #content .kpi-grid .trend{font-size:12px;padding:3px 6px}
+ #content .overview-grid>.kpi:nth-child(3){order:0}
+ #content .overview-grid>.kpi:nth-child(6){order:1}
+ #content .overview-grid>.kpi:nth-child(5){order:2}
+ #content .overview-grid>.kpi:nth-child(4){order:3}
+ #content .overview-grid>.kpi:nth-child(1){order:4}
+ #content .overview-grid>.kpi:nth-child(2){order:5}
+ #content select{appearance:auto;font-size:16px;min-height:46px}
+ #content .tw-dashboard .dashboard-hero{padding:12px 14px;gap:10px;margin-bottom:10px;flex-direction:row;align-items:center;flex-wrap:wrap}
+ #content .tw-dashboard .dashboard-hero h1{font-size:25px}
+ #content .tw-dashboard .dashboard-hero-title{width:auto;gap:10px}
+ #content .tw-dashboard .dashboard-source{width:100%}
+ #content .panel{padding:14px;margin:10px 0}
+ #content .panel h2{font-size:19px;line-height:1.4}
+ #content .sub{font-size:14px;line-height:1.5}
+ #content button:focus-visible,.mobile-bottom-item:focus-visible,.mobile-menu-toggle:focus-visible{outline:3px solid #60a5fa;outline-offset:2px}
+ :root[data-theme="light"] .mobile-bottom-nav{background:#fff;border-color:#cbd5e1;box-shadow:0 -5px 24px #0001}
+ :root[data-theme="light"] .mobile-bottom-item{color:#334155}
+ :root[data-theme="light"] .mobile-bottom-item.active{color:#111827}
+ :root[data-theme="light"] .mobile-bottom-item:hover{background:#e2e8f0}
+ :root[data-theme="light"] #content .kpi-grid .kpi-label{color:#334155}
+}
+@media(max-width:360px){.topbar .brand-sub{display:none}.topbar-inner{gap:6px;padding-inline:8px}.mobile-bottom-item{font-size:11px}}
+@media(prefers-reduced-motion:reduce){#content .kpi-grid,#content .tw-dashboard .kpi-grid{scroll-behavior:auto}}
+
 </style>
 </head>
 <body>
 
 <header class="topbar">
   <div class="topbar-inner">
+    <button type="button" class="icon-btn mobile-menu-toggle" id="mobile-menu-toggle" aria-label="Abrir menu" aria-controls="mobile-menu-dialog" aria-expanded="false" onclick="openMobileMenu()" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
     <div class="brand">
       <div class="brand-mark">SJ</div>
       <div>
@@ -1065,7 +1139,7 @@ main.wrap,#app,.app-shell,.app-main,#content{min-width:0;max-width:100%}
   <!-- ============ 3. APP ============ -->
 <section id="app" class="hide">
   <div class="app-shell">
-    <aside class="sidebar" aria-label="Menu lateral">
+    <aside class="sidebar" id="app-sidebar" aria-label="Menu lateral">
       <div class="sidebar-section">
         <label for="month">Mês de referência</label>
         <input id="month" type="month">
@@ -1078,13 +1152,16 @@ main.wrap,#app,.app-shell,.app-main,#content{min-width:0;max-width:100%}
       </div>
     </aside>
     <div class="app-main">
+      <div id="mobile-month-slot" hidden></div>
       <section id="content"></section>
     </div>
   </div>
 </section>
 </main>
 
-<footer class="footer">SJ MOB TOP · Martins · v2.21 · acesso individual e dados protegidos</footer>
+<dialog id="mobile-menu-dialog" aria-labelledby="mobile-menu-title"><div class="mobile-drawer-heading"><strong id="mobile-menu-title">Menu</strong><button type="button" class="icon-btn" aria-label="Fechar menu" onclick="closeMobileMenu()">✕</button></div></dialog>
+<nav id="mobile-bottom-nav" class="mobile-bottom-nav" aria-label="Atalhos principais" hidden></nav>
+<footer class="footer">SJ MOB TOP · Martins · v2.22 · acesso individual e dados protegidos</footer>
 
 <div id="toasts" aria-live="polite" aria-atomic="false"></div>
 <div id="modal-root"></div>
@@ -1582,6 +1659,7 @@ $('month').onchange = e => { selectDashboardMonth(e.target.value); render(); };
 
 function show(id){
   for(const k of ['setup','auth','recovery','app']) $(k).classList.toggle('hide', k !== id);
+  if(id!=='app')syncMobileNavigation();
 }
 
 function setIdentity(){
@@ -1775,21 +1853,69 @@ async function refresh(silent = false){
 /* =========================================================
    NAVEGAÇÃO / RENDER
    ========================================================= */
-function nav(t){ if(!isAdmin && !['viagens','minha_meta','minhas_pendencias'].includes(t)) return; active = t; render(); if(t==='dashboard' && isAdmin) refresh(true); }
+// Navegação de apresentação. As permissões continuam sendo verificadas por nav() e pelo banco.
+const mobileLayoutQuery=window.matchMedia('(max-width:900px)');
+function mobileShortcuts(){
+ return isAdmin?['dashboard','viagens','financeiro','pendencias']:driverRecord?['viagens','minha_meta','minhas_pendencias']:[];
+}
+function mobileShortcutLabel(t){return {dashboard:'Dashboard',viagens:'Viagens',financeiro:'Financeiro',pendencias:'Pendências',minha_meta:'Minha meta',minhas_pendencias:'Pendências'}[t];}
+function mobileShortcutIcon(t){
+ return ICONS[t]||ICONS[t==='minha_meta'?'metas':t==='minhas_pendencias'?'pendencias':t]||'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 7v5m0 4h.01"/></svg>';
+}
+function syncMobileNavigation(){
+ const sidebar=$('app-sidebar'),dialog=$('mobile-menu-dialog'),slot=$('mobile-month-slot'),bottom=$('mobile-bottom-nav'),toggle=$('mobile-menu-toggle');
+ if(!sidebar||!dialog||!slot||!bottom||!toggle)return;
+ const allowed=!!session&&(isAdmin||!!driverRecord)&&!$('app').classList.contains('hide');
+ const tabs=allowed?mobileShortcuts():[];
+ toggle.hidden=!allowed;bottom.hidden=!allowed;
+ document.body.classList.toggle('has-mobile-nav',allowed);
+ if(!allowed){closeMobileMenu();slot.hidden=true;bottom.innerHTML='';return;}
+ const section=sidebar.querySelector('.sidebar-section')||slot.querySelector('.sidebar-section');
+ if(mobileLayoutQuery.matches){
+  if(section&&section.parentElement!==slot)slot.appendChild(section);
+  slot.hidden=!isAdmin;
+  if(sidebar.parentElement!==dialog)dialog.appendChild(sidebar);
+ }else{
+  closeMobileMenu();
+  if(sidebar.parentElement!==$('app').querySelector('.app-shell'))$('app').querySelector('.app-shell').prepend(sidebar);
+  if(section&&section.parentElement!==sidebar)sidebar.prepend(section);
+  slot.hidden=true;
+ }
+ for(const button of sidebar.querySelectorAll('[data-nav-tab]'))button.dataset.mobilePrimary=tabs.includes(button.dataset.navTab)?'yes':'no';
+ bottom.innerHTML=tabs.map(t=>`<button type="button" class="mobile-bottom-item${active===t?' active':''}" ${active===t?'aria-current="page"':''} onclick="nav('${t}')"><span class="mobile-bottom-icon" aria-hidden="true">${mobileShortcutIcon(t)}</span><span>${mobileShortcutLabel(t)}</span></button>`).join('');
+ bottom.style.setProperty('--mobile-nav-count',String(tabs.length||4));
+ const title=$('mobile-menu-title');if(title)title.textContent=isAdmin?'Menu administrativo':'Minha conta';
+ for(const carousel of document.querySelectorAll('#content .kpi-grid')){carousel.setAttribute('tabindex','0');carousel.setAttribute('role','region');carousel.setAttribute('aria-label','Indicadores — deslize para ver mais');}
+}
+function openMobileMenu(){
+ if(!session||(!isAdmin&&!driverRecord)||!mobileLayoutQuery.matches)return;
+ const dialog=$('mobile-menu-dialog');if(!dialog||dialog.open)return;
+ dialog.showModal();document.body.classList.add('mobile-menu-open');$('mobile-menu-toggle')?.setAttribute('aria-expanded','true');
+}
+function closeMobileMenu(){
+ const dialog=$('mobile-menu-dialog');if(dialog?.open)dialog.close();
+ document.body.classList.remove('mobile-menu-open');$('mobile-menu-toggle')?.setAttribute('aria-expanded','false');
+}
+mobileLayoutQuery.addEventListener('change',syncMobileNavigation);
+$('mobile-menu-dialog').addEventListener('close',()=>{document.body.classList.remove('mobile-menu-open');$('mobile-menu-toggle')?.setAttribute('aria-expanded','false');});
+$('mobile-menu-dialog').addEventListener('click',e=>{if(e.target.closest('.sidebar-footer button')){closeMobileMenu();return;}if(e.target!==e.currentTarget)return;const r=e.currentTarget.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)closeMobileMenu();});
+
+
+function nav(t){ if(!isAdmin && !['viagens','minha_meta','minhas_pendencias'].includes(t)) return; closeMobileMenu(); active = t; render(); window.scrollTo(0,0); if(t==='dashboard' && isAdmin) refresh(true); }
 
 function render(){
-  if(!session) return;
+  if(!session){syncMobileNavigation();return;}
   if(!isAdmin){
-    $('nav').innerHTML = driverRecord?['viagens','minha_meta','minhas_pendencias'].map(t=>`<button class="navbtn${active===t?' active':''}" onclick="nav('${t}')">${{viagens:'Minhas viagens',minha_meta:'Minha meta',minhas_pendencias:'Minhas pendências'}[t]}</button>`).join(''):'';
+    $('nav').innerHTML = driverRecord?['viagens','minha_meta','minhas_pendencias'].map(t=>`<button class="navbtn${active===t?' active':''}" data-nav-tab="${t}" onclick="nav('${t}')">${{viagens:'Minhas viagens',minha_meta:'Minha meta',minhas_pendencias:'Minhas pendências'}[t]}</button>`).join(''):'';
     $('syncInfo').textContent = driverRecord?'Acesso do motorista':'Liberação de acesso';
     $('content').innerHTML = driverRecord?(active==='minha_meta'?metasSemanaisPage():active==='minhas_pendencias'?painelDividasMotorista():driverPage()):aguardandoAcessoPage();
-    return;
+    syncMobileNavigation();return;
   }
 
   const tabs = ['dashboard','acessos','motoristas','veiculos','viagens','cobrancas','financeiro','pendencias','manutencoes','metas_semanais','metas','seguranca'];
   $('nav').innerHTML = tabs.map(t => {
     const label = t === 'dashboard' ? 'Dashboard' : t==='acessos'?'Acessos'+((data.sj_solicitacoes_motoristas||[]).some(x=>x.status==='pendente')?' ('+(data.sj_solicitacoes_motoristas||[]).filter(x=>x.status==='pendente').length+')':'') : t === 'seguranca' ? 'Segurança' : t === 'pendencias' ? 'Pendências' : t==='cobrancas'?'Cobranças':t==='metas_semanais'?'Metas semanais':specs[t].title;
-    return `<button class="navbtn${active === t ? ' active' : ''}" onclick="nav('${t}')">
+    return `<button class="navbtn${active === t ? ' active' : ''}" data-nav-tab="${t}" onclick="nav('${t}')">
       <span class="ico">${(ICONS[t] || (t === 'pendencias' ? '◉' : ''))}</span><span>${label}</span></button>`;
   }).join('');
 
@@ -1805,6 +1931,7 @@ function render(){
     active === 'cobrancas' ? cobrancasPage() :
     active === 'pendencias' ? pendenciasPage() :
     tablePage(active);
+  syncMobileNavigation();
 }
 
 /* =========================================================
