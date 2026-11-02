@@ -60,7 +60,7 @@ async function collectBackup(){
   }
   result[table]=rows;
  }
- return {app:"SJ MOB TOP",schema_version:2,created_at:new Date().toISOString(),scope:"Tabelas PostgreSQL e arquivos anexados do bucket sj-comprovantes",tables:result};
+ return {app:"SJ MOB TOP",schema_version:2,created_at:new Date().toISOString(),scope:"Tabelas PostgreSQL e comprovantes e fotos de perfil privadas",tables:result};
 }
 
 const MAX_BACKUP_BYTES=40*1024*1024;
@@ -73,8 +73,8 @@ function base64Bytes(bytes:Uint8Array){
  for(let offset=0;offset<bytes.length;offset+=24576)parts.push(btoa(String.fromCharCode(...bytes.subarray(offset,offset+24576))));
  return parts.join("");
 }
-async function collectAttachments(baseBytes:number,requiredPaths:string[]){
- const bucket="sj-comprovantes",paths:string[]=[];
+async function collectBucketAttachments(baseBytes:number,requiredPaths:string[],bucket:string){
+ const paths:string[]=[];
  const queue=[""],visited=new Set<string>();
  while(queue.length){
   const folder=queue.shift()!;
@@ -106,6 +106,17 @@ async function collectAttachments(baseBytes:number,requiredPaths:string[]){
   totalBytes+=bytes.byteLength;
  }
  return {encoding:"base64",total_files:files.length,total_bytes:totalBytes,buckets:[{id:bucket,files}]};
+}
+
+async function collectAttachments(baseBytes:number,requiredPaths:string[]){
+ const buckets:any[]=[];let total_files=0,total_bytes=0,estimated=baseBytes;
+ for(const bucket of ["sj-comprovantes","sj-perfis"]){
+  const result=await collectBucketAttachments(estimated,bucket==="sj-comprovantes"?requiredPaths:[],bucket);
+  buckets.push(...result.buckets);total_files+=result.total_files;total_bytes+=result.total_bytes;
+  estimated+=new TextEncoder().encode(JSON.stringify(result)).byteLength;
+  if(estimated>MAX_BACKUP_BYTES)throw Error("Backup com anexos maior que 40 MB. Nenhum backup parcial foi enviado.");
+ }
+ return {encoding:"base64",total_files,total_bytes,buckets};
 }
 
 async function upload(accessToken:string,filename:string,content:string|Uint8Array,mimeType="application/json"){

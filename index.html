@@ -1130,6 +1130,20 @@ main.wrap,#app,.app-shell,.app-main,#content{min-width:0;max-width:100%}
  body.mobile-admin-shell #mobile-bottom-nav .mobile-bottom-item:active{transform:none}
 }
 
+.driver-profile-header .driver-profile-button{position:relative;display:grid;place-items:center;flex:none;width:60px;height:60px;min-width:60px;padding:0;border:2px solid #eebd22;border-radius:50%;background:var(--surface,#14213c);color:var(--text,#fff);box-shadow:0 2px 10px #0002;overflow:visible}
+.driver-profile-button img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:50%}
+.driver-profile-initials{font-size:19px;font-weight:700}
+.driver-profile-camera{position:absolute;right:-3px;bottom:-2px;display:grid;place-items:center;width:23px;height:23px;border-radius:50%;background:#ffd118;font-size:13px;border:2px solid var(--surface,#14213c)}
+.driver-profile-button:focus-visible{outline:3px solid #60a5fa;outline-offset:4px}
+#driver-profile-dialog{width:min(420px,calc(100vw - 24px));max-height:90dvh;overflow:auto;padding:22px;border:1px solid var(--border,#36465e);border-radius:20px;background:var(--surface,#0f1c34);color:var(--text,#f8fafc)}
+#driver-profile-dialog::backdrop{background:#000a}
+.profile-heading{display:flex;gap:12px;align-items:center;justify-content:space-between}.profile-heading h2{font-size:21px;margin:0}
+.profile-preview{margin:22px auto;width:200px;height:200px;border:3px solid #eebd22;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:#24334b;color:#fff;font-size:42px;font-weight:700}
+.profile-preview img{width:100%;height:100%;object-fit:cover;display:block}
+#driver-profile-dialog label{display:block;font-size:15px;margin-top:16px}#driver-profile-dialog input{width:100%;margin-top:8px}#profile-feedback{font-size:14px;line-height:1.5}.profile-actions{display:flex;gap:10px;flex-wrap:wrap}.profile-actions button{flex:1;min-height:46px}
+@media(max-width:900px){.driver-profile-header .driver-profile-button{width:56px;height:56px;min-width:56px}.driver-profile-header .who{display:none}.driver-profile-header .topbar-inner{gap:7px}.driver-profile-header .brand-sub{font-size:10px}.driver-profile-header .brand-name{font-size:16px}.driver-profile-header .brand-mark{display:none}}
+@media(max-width:360px){.driver-profile-header .brand-name{font-size:14px}.driver-profile-header .brand-sub{display:none}.driver-profile-header .topbar-inner{padding-left:8px;padding-right:8px;gap:6px}}
+
 </style>
 </head>
 <body>
@@ -1234,7 +1248,7 @@ main.wrap,#app,.app-shell,.app-main,#content{min-width:0;max-width:100%}
 
 <dialog id="mobile-menu-dialog" aria-labelledby="mobile-menu-title"><div class="mobile-drawer-heading"><strong id="mobile-menu-title">Menu</strong><button type="button" class="icon-btn" aria-label="Fechar menu" onclick="closeMobileMenu()">✕</button></div></dialog>
 <nav id="mobile-bottom-nav" class="mobile-bottom-nav" aria-label="Atalhos principais" hidden></nav>
-<footer class="footer">SJ MOB TOP · Martins · v2.25 · acesso individual e dados protegidos</footer>
+<footer class="footer">SJ MOB TOP · Martins · v2.26 · acesso individual e dados protegidos</footer>
 
 <div id="toasts" aria-live="polite" aria-atomic="false"></div>
 <div id="modal-root"></div>
@@ -3391,6 +3405,21 @@ const saveRowOriginal=saveRow;saveRow=function(e,t){if(t==='viagens'&&(!editingR
 saveDriverTrip=salvarEtapas;
 const countLabelOriginal=countLabel;countLabel=function(t,q){return t==='viagens'?visibleRows(t,q).length+' registro(s)':countLabelOriginal(t,q);};
 function novaViagemMotorista(){const panel=$('driver-form-viagem'),form=panel?.querySelector('form');if(!form)return;panel.style.display='';form.reset();prepararEtapa(form);configurarHoraViagem(form,true);panel.scrollIntoView({behavior:'smooth',block:'start'});}
+
+let profileCache={uid:null,url:'',expires:0,loading:false};
+let profileImage=null,profileObjectUrl='',profileSaving=false;
+function iniciaisMotorista(){return String(driverRecord?.nome||session?.user?.email||'M').trim().split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]).join('').toUpperCase();}
+function desenharAvatar(){if(!session||isAdmin||!driverRecord)return;const el=$('identity');el.innerHTML=`<button type="button" class="driver-profile-button" onclick="abrirPerfilMotorista()" aria-label="Adicionar ou trocar minha foto de perfil" title="Minha foto de perfil"><span class="driver-profile-initials">${esc(iniciaisMotorista())}</span>${profileCache.uid===session.user.id&&profileCache.url?`<img src="${esc(profileCache.url)}" alt="Minha foto de perfil" onerror="this.hidden=true">`:''}<span class="driver-profile-camera" aria-hidden="true">📷</span></button>`;}
+async function carregarFotoMotorista(force=false){if(!client||!session||isAdmin||!driverRecord)return;const uid=session.user.id;if(profileCache.uid!==uid)profileCache={uid,url:'',expires:0,loading:false};if(profileCache.loading||(!force&&Date.now()<profileCache.expires))return;const cache=profileCache;cache.loading=true;try{const {data:link,error}=await client.storage.from('sj-perfis').createSignedUrl(uid+'/avatar.jpg',3600);if(session?.user?.id!==uid||profileCache!==cache)return;cache.url=error?'':link.signedUrl;cache.expires=Date.now()+(error?60000:3300000);desenharAvatar();}catch(_){cache.expires=Date.now()+60000;}finally{cache.loading=false;}}
+const identityBeforePhoto=setIdentity;
+setIdentity=function(){identityBeforePhoto();document.body.classList.toggle('driver-profile-header',!!session&&!isAdmin&&!!driverRecord);if(!session){profileSaving=false;profileCache={uid:null,url:'',expires:0,loading:false};fecharPerfilMotorista();return;}if(!isAdmin&&driverRecord){desenharAvatar();carregarFotoMotorista();}};
+const renderBeforePhoto=render;render=function(){renderBeforePhoto();setIdentity();};
+function abrirPerfilMotorista(){if(isAdmin||!driverRecord||!session)return;let dlg=$('driver-profile-dialog');if(!dlg){dlg=document.createElement('dialog');dlg.id='driver-profile-dialog';dlg.setAttribute('aria-labelledby','profile-title');dlg.innerHTML=`<form method="dialog"><div class="profile-heading"><h2 id="profile-title">Minha foto de perfil</h2><button class="alt" type="button" onclick="fecharPerfilMotorista()" aria-label="Fechar foto de perfil">✕</button></div><div id="profile-preview" class="profile-preview"><span>${esc(iniciaisMotorista())}</span></div><label class="profile-file-label" for="profile-file">Escolher foto da câmera ou galeria</label><input id="profile-file" type="file" accept="image/jpeg,image/png,image/webp" onchange="selecionarFotoPerfil(this)"><label for="profile-zoom">Ajustar zoom</label><input id="profile-zoom" type="range" min="1" max="3" step="0.01" value="1" disabled oninput="zoomFotoPerfil()"><p id="profile-feedback" role="status">Centralize seu rosto na foto. O recorte será redondo.</p><div class="profile-actions"><button id="profile-save" type="button" disabled onclick="salvarFotoPerfil()">Salvar foto</button><button class="alt" type="button" onclick="fecharPerfilMotorista()">Cancelar</button></div></form>`;document.body.append(dlg);dlg.addEventListener('cancel',e=>{e.preventDefault();fecharPerfilMotorista();});}dlg.showModal();}
+function fecharPerfilMotorista(){if(profileSaving)return;const dlg=$('driver-profile-dialog');if(dlg){dlg.close();dlg.remove();}profileImage=null;if(profileObjectUrl)URL.revokeObjectURL(profileObjectUrl);profileObjectUrl='';}
+async function selecionarFotoPerfil(input){const file=input.files?.[0];if(!file)return;const feedback=$('profile-feedback');$('profile-save').disabled=true;profileImage=null;if(!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size>10*1024*1024){feedback.textContent='Escolha JPG, PNG ou WEBP de até 10 MB.';return;}if(profileObjectUrl)URL.revokeObjectURL(profileObjectUrl);const url=URL.createObjectURL(file);profileObjectUrl=url;const img=new Image();try{await new Promise((ok,no)=>{img.onload=ok;img.onerror=no;img.src=url;});if(profileObjectUrl!==url||!$('profile-preview'))return;if(img.naturalWidth>12000||img.naturalHeight>12000)throw Error('Imagem muito grande');profileImage=img;$('profile-preview').replaceChildren(img);img.alt='Prévia do recorte da sua foto';$('profile-zoom').value='1';$('profile-zoom').disabled=false;zoomFotoPerfil();$('profile-save').disabled=false;feedback.textContent='Confira o recorte e toque em Salvar foto.';}catch(_){feedback.textContent='Não foi possível abrir essa imagem. Escolha outra foto.';}}
+function zoomFotoPerfil(){if(profileImage)profileImage.style.transform='scale('+Number($('profile-zoom').value)+')';}
+function recortePerfil(width,height,zoom){const side=Math.min(width,height)/zoom;return {x:(width-side)/2,y:(height-side)/2,side};}
+async function salvarFotoPerfil(){if(profileSaving||!profileImage||!session||isAdmin||!driverRecord)return;const uid=session.user.id,img=profileImage,feedback=$('profile-feedback'),btn=$('profile-save');profileSaving=true;btn.disabled=true;$('profile-file').disabled=true;feedback.textContent='Salvando sua foto…';try{const canvas=document.createElement('canvas');canvas.width=canvas.height=512;const ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,512,512);const r=recortePerfil(img.naturalWidth,img.naturalHeight,Number($('profile-zoom').value));ctx.drawImage(img,r.x,r.y,r.side,r.side,0,0,512,512);const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',.85));if(!blob||blob.size>307200)throw Error('Não foi possível preparar a foto. Escolha uma imagem menor.');const {error}=await client.storage.from('sj-perfis').upload(uid+'/avatar.jpg',blob,{contentType:'image/jpeg',upsert:true,cacheControl:'0'});if(error)throw error;if(session?.user?.id!==uid)return;await carregarFotoMotorista(true);profileSaving=false;fecharPerfilMotorista();toast('Foto de perfil salva.');}catch(err){if(feedback)feedback.textContent='Não foi possível salvar: '+err.message;}finally{profileSaving=false;if(btn)btn.disabled=false;if($('profile-file'))$('profile-file').disabled=false;}}
 
 (function boot(){
   applyTheme(localStorage.getItem('sj_theme') || 'dark');
