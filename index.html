@@ -1248,7 +1248,7 @@ main.wrap,#app,.app-shell,.app-main,#content{min-width:0;max-width:100%}
 
 <dialog id="mobile-menu-dialog" aria-labelledby="mobile-menu-title"><div class="mobile-drawer-heading"><strong id="mobile-menu-title">Menu</strong><button type="button" class="icon-btn" aria-label="Fechar menu" onclick="closeMobileMenu()">✕</button></div></dialog>
 <nav id="mobile-bottom-nav" class="mobile-bottom-nav" aria-label="Atalhos principais" hidden></nav>
-<footer class="footer">SJ MOB TOP · Martins · v2.26 · acesso individual e dados protegidos</footer>
+<footer class="footer">SJ MOB TOP · Martins · v2.27 · acesso individual e dados protegidos</footer>
 
 <div id="toasts" aria-live="polite" aria-atomic="false"></div>
 <div id="modal-root"></div>
@@ -3105,7 +3105,7 @@ function linhasPendencias(list){
  const color=st==='Quitada'?'#49d7a5':st==='Parcial'?'#f8c63c':'#ff7676';
  const pagamentos=(data.pagamentos_pendencias||[]).filter(x=>x.pendencia_id===p.id);
  const hist=pagamentos.map(x=>`<div class="pend-payment"><span>${esc(String(x.data_pagamento||'').split('-').reverse().join('/'))} · ${reaisPend(x.valor)} · ${esc(x.forma||'—')}</span><button type="button" class="alt sm" onclick="emitirRecibo('${x.id}')">PDF</button></div>`).join('');
- return `<tr><td><strong>${esc(lookup('motoristas',p.motorista_id))}</strong></td><td>${esc(p.categoria)}<small class="pend-description">${esc(p.descricao||'')}</small></td><td>${esc(p.vencimento||'—')}</td><td>${reaisPend(p.valor)}</td><td>${reaisPend(pagoPend(p.id))}</td><td><strong>${reaisPend(saldo)}</strong></td><td><span class="badge ${st==='Quitada'?'ok':st==='Vencida'?'danger':st==='Parcial'?'warn':'muted'}">${st}</span></td><td><div class="pend-actions">${saldo>0?`<button class="sm" onclick="abrirBaixa('${p.id}')">Dar baixa</button>`:''}${pagamentos.length?`<details class="pend-history"><summary>Pagamentos (${pagamentos.length})</summary><div class="pend-payment-list">${hist}</div></details>`:'<small class="pend-description">Sem pagamentos</small>'}<button type="button" class="sm danger" onclick="excluirPendencia('${p.id}')">Excluir</button></div></td></tr>`;
+ return `<tr><td><strong>${esc(lookup('motoristas',p.motorista_id))}</strong></td><td>${esc(p.categoria)}<small class="pend-description">${esc(p.descricao||'')}</small></td><td>${esc(p.vencimento||'—')}</td><td>${reaisPend(p.valor)}</td><td>${reaisPend(pagoPend(p.id))}</td><td><strong>${reaisPend(saldo)}</strong></td><td><span class="badge ${st==='Quitada'?'ok':st==='Vencida'?'danger':st==='Parcial'?'warn':'muted'}">${st}</span></td><td><div class="pend-actions">${saldo>0?`<button class="sm" onclick="abrirBaixa('${p.id}')">Dar baixa</button>`:''}${pagamentos.length?`<details class="pend-history"><summary>Pagamentos (${pagamentos.length})</summary><div class="pend-payment-list">${hist}</div></details>`:'<small class="pend-description">Sem pagamentos</small>'}${isAdmin?`<button type="button" class="alt sm" onclick="editarValorPendencia('${p.id}')">Editar valor</button>`:''}<button type="button" class="sm danger" onclick="excluirPendencia('${p.id}')">Excluir</button></div></td></tr>`;
  }).join('')||'<tr><td colspan="8">Nenhuma pendência encontrada.</td></tr>';
 }
 async function excluirPendencia(id){
@@ -3420,6 +3420,25 @@ async function selecionarFotoPerfil(input){const file=input.files?.[0];if(!file)
 function zoomFotoPerfil(){if(profileImage)profileImage.style.transform='scale('+Number($('profile-zoom').value)+')';}
 function recortePerfil(width,height,zoom){const side=Math.min(width,height)/zoom;return {x:(width-side)/2,y:(height-side)/2,side};}
 async function salvarFotoPerfil(){if(profileSaving||!profileImage||!session||isAdmin||!driverRecord)return;const uid=session.user.id,img=profileImage,feedback=$('profile-feedback'),btn=$('profile-save');profileSaving=true;btn.disabled=true;$('profile-file').disabled=true;feedback.textContent='Salvando sua foto…';try{const canvas=document.createElement('canvas');canvas.width=canvas.height=512;const ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,512,512);const r=recortePerfil(img.naturalWidth,img.naturalHeight,Number($('profile-zoom').value));ctx.drawImage(img,r.x,r.y,r.side,r.side,0,0,512,512);const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',.85));if(!blob||blob.size>307200)throw Error('Não foi possível preparar a foto. Escolha uma imagem menor.');const {error}=await client.storage.from('sj-perfis').upload(uid+'/avatar.jpg',blob,{contentType:'image/jpeg',upsert:true,cacheControl:'0'});if(error)throw error;if(session?.user?.id!==uid)return;await carregarFotoMotorista(true);profileSaving=false;fecharPerfilMotorista();toast('Foto de perfil salva.');}catch(err){if(feedback)feedback.textContent='Não foi possível salvar: '+err.message;}finally{profileSaving=false;if(btn)btn.disabled=false;if($('profile-file'))$('profile-file').disabled=false;}}
+
+function pendenciaAutomatica(p){return !!(p.viagem_uso_id||p.meta_semanal_id||p.referencia_cobranca);}
+function editarValorPendencia(id){
+ if(!isAdmin||!session)return;
+ const p=(data.pendencias||[]).find(x=>x.id===id);if(!p)return msg('Pendência não encontrada. Atualize a tela.',true);
+ if(pendenciaAutomatica(p))return msg('Esta cobrança foi gerada automaticamente. Corrija a viagem, a meta ou a cobrança de origem para manter os valores consistentes.',true);
+ $('pend-edit-dialog')?.remove();const dlg=document.createElement('dialog');dlg.id='pend-edit-dialog';dlg.setAttribute('aria-labelledby','pend-edit-title');dlg.style.cssText='width:min(440px,calc(100vw - 24px));max-height:90dvh;overflow:auto;border:1px solid var(--border);border-radius:16px;padding:22px;background:var(--surface);color:var(--text)';
+ dlg.innerHTML=`<h2 id="pend-edit-title">Corrigir valor da pendência</h2><p>${esc(lookup('motoristas',p.motorista_id))} · ${esc(p.categoria)}</p><p>${esc(p.descricao||'')}</p><form onsubmit="salvarValorPendencia(event,'${esc(id)}',${Number(p.valor)})"><div class="field"><label for="pend-edit-value">Valor total correto (R$)</label><input id="pend-edit-value" name="valor" type="number" min="0.01" step="0.01" value="${Number(p.valor).toFixed(2)}" required></div><p>Já pago: <strong>${reaisPend(pagoPend(id))}</strong>. Os pagamentos existentes serão preservados.</p><p id="pend-edit-feedback" role="status"></p><div class="btn-row"><button type="submit">Salvar correção</button><button type="button" class="alt" onclick="document.getElementById('pend-edit-dialog').close()">Cancelar</button></div></form>`;document.body.append(dlg);dlg.showModal();
+}
+async function salvarValorPendencia(e,id,anterior){
+ e.preventDefault();if(!isAdmin||!session)return;const form=e.target,btn=form.querySelector('button[type=submit]'),feedback=$('pend-edit-feedback');
+ const valor=Number(form.elements.namedItem('valor').value),p=(data.pendencias||[]).find(x=>x.id===id);
+ if(!p||pendenciaAutomatica(p))return msg('Atualize a pendência antes de corrigir.',true);
+ if(!Number.isFinite(valor)||valor<=0){feedback.textContent='Informe um valor maior que zero.';return;}
+ btn.disabled=true;try{
+ const {data:saved,error}=await client.rpc('sj_corrigir_valor_pendencia',{p_id:id,p_valor:valor,p_valor_anterior:anterior});if(error)throw error;if(saved!==id)throw Error('Não foi possível confirmar a correção. Atualize a página.');
+ $('pend-edit-dialog')?.close();await refresh();toast('Valor corrigido. Saldo e dashboard atualizados; pagamentos preservados.');
+ }catch(err){feedback.textContent='Não foi possível corrigir: '+err.message;}finally{btn.disabled=false;}
+}
 
 (function boot(){
   applyTheme(localStorage.getItem('sj_theme') || 'dark');
