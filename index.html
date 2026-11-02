@@ -923,6 +923,28 @@ main.wrap,#app,.app-shell,.app-main,#content{min-width:0;max-width:100%}
  #content .review-trips button,#content .review-proofs button{max-width:100%;min-height:44px;white-space:normal;font-size:15px;margin:4px 0;padding:10px 14px}
 }
 
+
+/* Dashboard sem faixas de orientação: informações e controles em primeiro plano. */
+#content .tw-dashboard .dashboard-hero{min-height:0;padding:16px 20px;gap:16px;margin-bottom:12px}
+#content .tw-dashboard .dashboard-hero h1{font-size:30px;line-height:1.2}
+#content .tw-dashboard .dashboard-source{width:280px;max-width:100%;min-width:0}
+#content .tw-dashboard .dashboard-source label{color:#332500;font-size:14px;line-height:1.4;letter-spacing:0;margin-bottom:6px!important}
+#content .tw-dashboard .dashboard-source select{width:100%;max-width:100%!important;min-height:44px;font-size:15px}
+#content .tw-dashboard .panel{margin:12px 0!important;padding:16px}
+#content .tw-dashboard .kpi{padding:16px!important}
+#content .tw-dashboard .kpi-top{margin-bottom:10px}
+#content .tw-dashboard .grid,#content .tw-dashboard .veh-grid{gap:12px!important}
+#content .tw-dashboard .panel-head{margin-bottom:12px}
+#content .tw-dashboard h2{margin-bottom:12px}
+#content .tw-dashboard .veh-selector-wrap{margin:12px 0;padding:12px}
+@media(min-width:1024px){#content .tw-dashboard>.overview-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:767px){
+ #content .tw-dashboard .dashboard-hero{padding:16px;gap:12px}
+ #content .tw-dashboard .dashboard-source{width:100%}
+ #content .tw-dashboard .dashboard-source select{font-size:16px}
+ #content .tw-dashboard .kpi{padding:18px!important}
+}
+
 </style>
 </head>
 <body>
@@ -1023,7 +1045,7 @@ main.wrap,#app,.app-shell,.app-main,#content{min-width:0;max-width:100%}
 </section>
 </main>
 
-<footer class="footer">SJ MOB TOP · Martins · v2.19 · acesso individual e dados protegidos</footer>
+<footer class="footer">SJ MOB TOP · Martins · v2.20 · acesso individual e dados protegidos</footer>
 
 <div id="toasts" aria-live="polite" aria-atomic="false"></div>
 <div id="modal-root"></div>
@@ -1465,7 +1487,6 @@ async function conferirViagem(id,status){
 function painelViagensPendentes(){
  const pend=viagensPorData(data.viagens||[]).filter(v=>v.status_conferencia==='pendente');
  return `<section class="panel review-trips"><h2>Viagens aguardando sua aprovação (${pend.length})</h2>
- <p class="sub">Confira o tipo de uso. Em uso particular ou ida para casa, use Definir valor antes de aprovar se houver cobrança. Registros pendentes não entram nos totais aprovados.</p>
  <div class="scroll"><table><thead><tr><th>Motorista</th><th>Data</th><th>Trajeto</th><th>KM</th><th>Faturamento</th><th>Conferência</th></tr></thead><tbody>
  ${pend.map(v=>`<tr><td>${esc(lookup('motoristas',v.motorista_id))}</td><td>${esc(dataHoraViagem(v))}</td><td>${esc(v.origem||'')} → ${esc(v.destino||'')}<small class="usage-meta">${esc(tipoUsoLabel(v.tipo_uso))}</small></td><td>${num(v.km_rodados||0)}</td><td>${valorViagemHtml(v)}${v.tipo_uso==='ida_casa'?`<br><button class="alt sm" onclick="editarUsoViagem('${v.id}')">Definir valor</button>`:''}</td><td><button onclick="conferirViagem('${esc(v.id)}','aprovada')">Aprovar</button> <button class="alt sm" onclick="conferirViagem('${esc(v.id)}','rejeitada')">Rejeitar</button></td></tr>`).join('')||'<tr><td colspan="6">Nenhuma viagem pendente</td></tr>'}</tbody></table></div></section>`;
 }
@@ -1483,7 +1504,6 @@ function painelComprovantes(){
  if(!comprovantesReady)return '<div class="panel"><h2>Comprovantes dos motoristas</h2><p class="sub">Módulo ainda não ativado no Supabase.</p></div>';
  const rows=data.comprovantes_motoristas||[];
  return `<section class="panel review-proofs"><h2>Comprovantes dos motoristas</h2>
- <p class="sub">Confira os arquivos antes de confirmar. Confirmação não registra receita nem quita pendências automaticamente.</p>
  <div class="scroll"><table><thead><tr><th>Motorista</th><th>Data</th><th>Valor</th><th>Status</th><th>Arquivo</th><th>Conferência</th><th>Financeiro</th></tr></thead><tbody>
  ${rows.map(c=>`<tr><td>${esc(lookup('motoristas',c.motorista_id))}</td><td>${esc(c.data_pagamento)}</td><td>${brl(c.valor)}</td><td>${esc(c.status)}${c.viagem_id?'<br>Viagem: '+esc(dataHoraViagem((data.viagens||[]).find(v=>v.id===c.viagem_id)||{})):''}</td><td><button type="button" class="alt sm" onclick="abrirComprovante('${esc(c.arquivo_path)}')">Ver</button></td><td>${c.status==='pendente'?`<button type="button" onclick="revisarComprovante('${esc(c.id)}','confirmado')">Confirmar</button> <button type="button" class="alt sm" onclick="revisarComprovante('${esc(c.id)}','rejeitado')">Rejeitar</button>`:'—'}</td><td>${(data.financeiro||[]).some(f=>f.comprovante_id===c.id)?'<span class="badge ok">Registrado</span>':c.status==='confirmado'?`<button type="button" onclick="registrarRecebimentoComprovante('${esc(c.id)}')">Registrar recebimento</button>`:'—'}</td></tr>`).join('')||'<tr><td colspan="7">Nenhum comprovante recebido</td></tr>'}</tbody></table></div></section>`;
 }
@@ -2337,7 +2357,7 @@ function vehiclePerformance(){
   const net = r.rev-r.cost;
   return `<div class="panel" style="margin-top:16px">
     <h2>Resumo geral da frota e desempenho por veículo · ${esc(month)}</h2>
-    <p class="sub">Metas, faturamento e R$/km calculados <b>somente pelas viagens do veículo</b>. Lançamentos do Financeiro só aparecem aqui quando vinculados ao carro.</p>
+    
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" style="margin-bottom:16px">
       ${kpi('R$/km da frota',totals.km > 0 ? brl(totals.rev/totals.km) : '—',ICONS.financeiro)}
       ${kpi('Manutenção/km',totals.km > 0 ? brl(totals.maint/totals.km) : '—',ICONS.manutencoes)}
@@ -2368,7 +2388,6 @@ function vehiclePerformance(){
         ${delta !== null ? `<div class="goal-foot" style="margin-top:12px"><span>R$/km em relação a ${esc(prevMonth(month))}</span><span class="trend ${delta >= 0 ? 'up' : 'down'}">${delta >= 0 ? '▲' : '▼'} ${Math.abs(delta)}%</span></div>` : ''}
       </div>
     </div>
-    <div class="alert info" style="margin-top:16px;margin-bottom:0"><span class="pill"></span><span><b>Como ler:</b> a meta considera apenas viagens. Receitas financeiras vinculadas aparecem separadas para evitar duplicidade. Despesas financeiras sem carro não entram neste relatório individual, mas continuam no Dashboard geral. O resultado é uma estimativa operacional: não inclui custos não cadastrados ou sem vínculo com o carro. Não registre a mesma manutenção duas vezes.</span></div>
   </div>`;
 }
 
@@ -2397,7 +2416,7 @@ function driverPerformance(){
   const box = (label,value,sub='',tone='') => `<div class="veh-box min-w-0 w-full rounded-xl border border-zinc-800 bg-zinc-900 p-5"><span class="veh-box-label">${label}</span><span class="veh-box-value ${tone}">${value}</span>${sub ? `<span class="veh-box-sub">${sub}</span>` : ''}</div>`;
   return `<div class="panel" style="margin-top:16px">
     <h2>Desempenho por motorista · ${esc(month)}</h2>
-    <p class="sub">Corridas e KM do motorista, separados das receitas e despesas efetivamente lançadas no Financeiro.</p>
+    
     <div class="veh-selector-wrap"><label for="driver-select">Escolher motorista</label><select id="driver-select" onchange="setSelectedDriver(this.value)">${optionsHtml}</select></div>
     <div class="veh-card">
       <div class="veh-card-header"><div><div class="veh-title">${esc(d.nome)}</div><div class="veh-subtitle">Relatório individual do período</div></div></div>
@@ -2412,7 +2431,6 @@ function driverPerformance(){
       </div>
       <div class="veh-meta-area"><div class="veh-meta-header"><span>${target > 0 ? 'Meta de corridas: '+brl(target) : 'Sem meta de corridas cadastrada'}</span><b>${pct === null ? 'Sem meta' : pct+'%'}</b></div><div class="bar-track"><span class="bar-fill" style="width:${pct === null ? 0 : Math.max(0,Math.min(100,pct))}%"></span></div></div>
     </div>
-    <div class="alert info" style="margin-top:16px;margin-bottom:0"><span class="pill"></span><span><b>Importante:</b> este saldo não é o lucro líquido definitivo do motorista. A versão atual ainda não calcula automaticamente diárias e comissões contratuais, e custos de manutenção ou do veículo não são rateados por motorista. Para aparecer aqui, cada receita ou despesa da empresa deve ser vinculada ao motorista no Financeiro. Não duplique lançamentos.</span></div>
   </div>`;
 }
 
@@ -2482,20 +2500,15 @@ function dashboard(){
     </div>`;
   }).join('');
 
-  const alerts = buildAlerts();
-  const alertsHtml = alerts.length
-    ? `<div class="panel"><h2>Avisos operacionais</h2>
-        <p class="sub">Verificações automáticas com base nos dados cadastrados.</p>
-        ${alerts.map(a => `<div class="alert ${a.t}"><span class="pill"></span><span>${esc(a.text)}</span></div>`).join('')}
-      </div>`
-    : '';
-
   return `
     <div class="dash tw-dashboard w-full min-w-0">
-    <div class="dashboard-hero"><div class="dashboard-hero-title"><span class="dashboard-hero-icon">${ICONS.dashboard || "▦"}</span><div><h1>Dashboard</h1><span class="dashboard-hero-month">${esc(month)}</span></div></div><div class="dashboard-hero-caption"><strong>Visão geral da operação</strong><span>Acompanhe os principais indicadores da sua frota.</span></div></div>
-    <div class="alert info" style="margin:12px 0"><span class="pill"></span><span>Período exibido: <b>${esc(month)}</b>. Os valores seguem a data da viagem ou do lançamento. Altere o <b>Mês de referência</b> no menu para consultar outro período.</span></div>
-    ${revenueSource==='financeiro' && cur.trips.length?'<div class="alert warn"><span>O faturamento está mostrando o Financeiro. Há viagens neste mês. <button class="alt sm" onclick="setRevenueSource(\'viagens\')">Mostrar faturamento das viagens</button></span></div>':''}
-    <div class="grid kpi-grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="dashboard-hero"><div class="dashboard-hero-title"><span class="dashboard-hero-icon">${ICONS.dashboard || "▦"}</span><div><h1>Dashboard</h1><span class="dashboard-hero-month">${esc(month)}</span></div></div><div class="dashboard-source">      <label for="revenue-source" style="display:block;margin-bottom:8px"><b>Fonte do faturamento</b></label>
+      <select id="revenue-source" onchange="setRevenueSource(this.value)" style="max-width:340px">
+        <option value="viagens" ${revenueSource === 'viagens' ? 'selected' : ''}>Viagens (padrão)</option>
+        <option value="financeiro" ${revenueSource === 'financeiro' ? 'selected' : ''}>Receitas do Financeiro</option>
+      </select>
+</div></div>
+    <div class="grid kpi-grid overview-grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       ${cards.map(c => `
         <div class="kpi min-w-0 w-full rounded-xl border border-zinc-800 bg-zinc-900 p-5 shadow-sm">
           <div class="kpi-top">
@@ -2512,34 +2525,26 @@ function dashboard(){
       <div class="kpi min-w-0 w-full rounded-xl border border-zinc-800 bg-zinc-900 p-5 shadow-sm"><span class="kpi-label">KM deslocamento / manutenção / casa</span><div class="kpi-value">${num(cur.kmDeslocamento)}</div></div>
       <div class="kpi min-w-0 w-full rounded-xl border border-zinc-800 bg-zinc-900 p-5 shadow-sm"><span class="kpi-label">KM particular</span><div class="kpi-value">${num(cur.kmParticular)}</div></div>
       <div class="kpi min-w-0 w-full rounded-xl border border-zinc-800 bg-zinc-900 p-5 shadow-sm"><span class="kpi-label">Valor combinado pelo uso</span><div class="kpi-value">${brl(cur.valorUso)}</div></div>
-    </div><p class="sub">Somente registros aprovados. Valores combinados pelo uso geram contas a receber; não são receita de corrida nem dinheiro recebido. A baixa do pagamento é feita em Pendências.</p></section>
+    </div></section>
     ${dividas ? `<div class="panel" style="margin-top:16px">
-      <div class="panel-head"><div><h2>Contas a receber</h2><p class="sub">Resumo separado do faturamento operacional.</p></div><button class="alt sm" onclick="nav('pendencias')">Abrir Pendências</button></div>
+      <div class="panel-head"><div><h2>Contas a receber</h2></div><button class="alt sm" onclick="nav('pendencias')">Abrir Pendências</button></div>
       <div class="grid kpi-grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div class="kpi min-w-0 w-full rounded-xl border border-zinc-800 bg-zinc-900 p-5 shadow-sm"><span class="kpi-label">A receber</span><div class="kpi-value">${reaisPend(dividas.receber)}</div></div>
         <div class="kpi min-w-0 w-full rounded-xl border border-zinc-800 bg-zinc-900 p-5 shadow-sm"><span class="kpi-label">Vencido</span><div class="kpi-value" style="color:#ff7676">${reaisPend(dividas.vencido)}</div></div>
         <div class="kpi min-w-0 w-full rounded-xl border border-zinc-800 bg-zinc-900 p-5 shadow-sm"><span class="kpi-label">Recebido no mês</span><div class="kpi-value" style="color:#49d7a5">${reaisPend(dividas.recebido)}</div></div>
       </div>
-      <div class="panel-head" style="margin-top:12px"><div><h3>Consultar motorista</h3><p class="sub">Selecione para ver a situação sem ocupar espaço no painel.</p></div><select id="busca-devedores" class="search" aria-label="Selecionar motorista" onchange="filtrarDevedores()"><option value="">Selecione um motorista</option>${(data.motoristas||[]).slice().sort((a,b)=>lookup('motoristas',a.id).localeCompare(lookup('motoristas',b.id),'pt-BR')).map(m=>`<option value="${esc(m.id)}">${esc(lookup('motoristas',m.id))}</option>`).join('')}</select></div>
+      <div class="panel-head" style="margin-top:12px"><div><h3>Consultar motorista</h3></div><select id="busca-devedores" class="search" aria-label="Selecionar motorista" onchange="filtrarDevedores()"><option value="">Selecione um motorista</option>${(data.motoristas||[]).slice().sort((a,b)=>lookup('motoristas',a.id).localeCompare(lookup('motoristas',b.id),'pt-BR')).map(m=>`<option value="${esc(m.id)}">${esc(lookup('motoristas',m.id))}</option>`).join('')}</select></div>
       <div id="consulta-devedor-resultado" class="hide" aria-live="polite"></div>
     </div>` : '<div class="panel" style="margin-top:16px"><h2>Contas a receber</h2><p class="sub">Módulo de Pendências indisponível. Confira a conexão com o Supabase.</p></div>'}
 
     <div class="panel" style="margin-top:16px">
       <h2>Evolução dos últimos 6 meses</h2>
-      <p class="sub">Receitas calculadas a partir de uma única fonte; despesas financeiras e manutenção.</p>
+      
       ${chart6()}
     </div>
 
-    <div class="panel" style="margin-top:16px">
-      <label for="revenue-source" style="display:block;margin-bottom:8px"><b>Fonte do faturamento no Dashboard</b></label>
-      <select id="revenue-source" onchange="setRevenueSource(this.value)" style="max-width:340px">
-        <option value="viagens" ${revenueSource === 'viagens' ? 'selected' : ''}>Viagens (padrão)</option>
-        <option value="financeiro" ${revenueSource === 'financeiro' ? 'selected' : ''}>Receitas do Financeiro</option>
-      </select>
-      <p class="sub" style="margin-top:8px">Escolha onde você registra o faturamento real. As duas fontes não são somadas. Esta preferência fica salva neste navegador.</p>
-    </div>
 
-    ${alertsHtml}
+
 
     ${vehiclePerformance()}
 
@@ -2550,12 +2555,6 @@ function dashboard(){
       ${goals || '<div class="panel muted" style="grid-column:1/-1">Cadastre metas mensais na aba <b>Metas</b>. O faturamento realizado é calculado a partir das viagens do mês.</div>'}
     </div>
 
-    <div class="panel" style="margin-top:16px">
-      <div class="alert info" style="margin:0">
-        <span class="pill"></span>
-        <span><b>Conferência:</b> o faturamento usa apenas a fonte selecionada acima, evitando somar Viagens e Financeiro em duplicidade. Despesas financeiras e custos de Manutenção ainda são somados: não lance a mesma manutenção como despesa financeira.</span>
-      </div>
-    </div>
     </div>`;
 }
 
