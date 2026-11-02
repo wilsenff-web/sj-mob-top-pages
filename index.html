@@ -766,6 +766,7 @@ tbody td{padding:8px 9px;font-size:12px}
 .password-toggle svg{pointer-events:none}
 .usage-meta{display:block;color:var(--muted);font-size:11px;line-height:1.45;margin-top:4px}
 [data-uso-hint]{display:block;line-height:1.45;margin-top:5px}
+.weekly-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:20px 0}.weekly-grid small,.weekly-grid strong{display:block}.weekly-grid small{color:var(--muted)}.weekly-grid strong{font-size:20px;margin-top:6px}.weekly-progress{width:100%;height:18px;accent-color:var(--accent);margin:8px 0}@media(max-width:640px){.weekly-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
 </head>
 <body>
@@ -866,7 +867,7 @@ tbody td{padding:8px 9px;font-size:12px}
 </section>
 </main>
 
-<footer class="footer">SJ MOB TOP · Martins · v2.17 · acesso individual e dados protegidos</footer>
+<footer class="footer">SJ MOB TOP · Martins · v2.18 · acesso individual e dados protegidos</footer>
 
 <div id="toasts" aria-live="polite" aria-atomic="false"></div>
 <div id="modal-root"></div>
@@ -1134,10 +1135,13 @@ function atualizarTipoUso(form){
  const tipo=form.elements.namedItem('tipo_uso')?.value||'trabalho';
  const receita=form.elements.namedItem('faturamento'),valor=form.elements.namedItem('valor_uso'),hint=form.querySelector('[data-uso-hint]');
  if(receita){receita.readOnly=tipo!=='trabalho';if(tipo!=='trabalho')receita.value='0';}
- if(valor){valor.closest('.field').style.display=['ida_casa','uso_particular'].includes(tipo)?'':'none';if(!['ida_casa','uso_particular'].includes(tipo))valor.value='0';}
- if(hint)hint.textContent=tipo==='trabalho'?'Informe a receita da corrida normalmente.':(['ida_casa','uso_particular'].includes(tipo)?'O administrador define o valor combinado. Após aprovação, a cobrança aparece nas pendências; o envio não significa pagamento.':'Este trajeto registra KM, sem receita de corrida. Custos da oficina devem ser lançados em Manutenção.');
+ const anterior=isAdmin&&editingRow?.table==='viagens'?(data.viagens||[]).find(v=>v.id===editingRow.id):null;
+ const automatico=tipo==='uso_particular'&&(!anterior||anterior.status_conferencia!=='aprovada'||anterior.tarifa_km_particular!=null||anterior.tipo_uso!=='uso_particular');
+ if(valor){valor.readOnly=automatico;if(automatico)valor.value=(Number(form.elements.namedItem('km_rodados')?.value||0)*0.60).toFixed(2);valor.closest('.field').style.display=['ida_casa','uso_particular'].includes(tipo)?'':'none';if(!['ida_casa','uso_particular'].includes(tipo))valor.value='0';}
+ if(hint)hint.textContent=tipo==='uso_particular'?'Uso particular: R$ 0,60 por KM. A cobrança é gerada após aprovação, sem somar na meta semanal. Valores históricos aprovados são preservados.':tipo==='trabalho'?'Informe a receita da corrida normalmente.':(['ida_casa','uso_particular'].includes(tipo)?'O administrador define o valor combinado. Após aprovação, a cobrança aparece nas pendências; o envio não significa pagamento.':'Este trajeto registra KM, sem receita de corrida. Custos da oficina devem ser lançados em Manutenção.');
 }
 function valorViagemHtml(v){
+ if(v.tipo_uso==='uso_particular'&&v.status_conferencia==='pendente')return brl(Number(v.km_rodados||0)*0.60)+'<small class="usage-meta">Prévia · R$ 0,60/km · aguarda aprovação</small>';
  if((v.tipo_uso||'trabalho')==='trabalho')return brl(v.faturamento||0);
  return Number(v.valor_uso)>0?brl(v.valor_uso)+'<small class="usage-meta">Valor combinado pelo uso</small>':'<span class="muted">Sem receita de corrida</span>';
 }
@@ -1152,6 +1156,51 @@ function toggleDriverForm(kind){
    if(opening){if(id==='viagem'){const form=el.querySelector('form');atualizarTipoUso(form);if(!form.elements.namedItem('veiculo_id').value)configurarHoraViagem(form,true);}el.scrollIntoView({behavior:'smooth',block:'nearest'});}
  }
 }
+// Semana civil em Brasília; somente viagens de trabalho aprovadas consomem a franquia.
+let semanaSelecionada=null;
+function somarDiasISO(day,n){const d=new Date(day+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10);}
+function inicioSemana(day=hojeBrasilia()){const d=new Date(day+'T12:00:00Z');return somarDiasISO(day,-((d.getUTCDay()+6)%7));}
+function selecionarSemana(day){if(!/^\d{4}-\d{2}-\d{2}$/.test(day))return;semanaSelecionada=inicioSemana(day);render();}
+function resumoMetaSemanal(g){
+ const fim=somarDiasISO(g.semana_inicio,6);
+ const rows=(data.viagens||[]).filter(v=>v.motorista_id===g.motorista_id&&v.data_viagem>=g.semana_inicio&&v.data_viagem<=fim);
+ const trabalho=rows.filter(v=>(v.tipo_uso||'trabalho')==='trabalho'&&(v.status_conferencia||'aprovada')==='aprovada').reduce((s,v)=>s+Number(v.km_rodados||0),0);
+ const particular=rows.filter(v=>v.tipo_uso==='uso_particular'&&(v.status_conferencia||'aprovada')==='aprovada').reduce((s,v)=>s+Number(v.km_rodados||0),0);
+ const pendentes=rows.filter(v=>(v.tipo_uso||'trabalho')==='trabalho'&&v.status_conferencia==='pendente').reduce((s,v)=>s+Number(v.km_rodados||0),0);
+ const limite=Number(g.limite_km),excedente=Math.max(0,trabalho-limite);
+ return {trabalho,particular,pendentes,limite,excedente,falta:Math.max(0,limite-trabalho),percent:limite>0?Math.round(trabalho/limite*100):0,valor:Math.round(excedente*Number(g.tarifa_excedente)*100)/100};
+}
+function cartaoMetaSemanal(g){
+ const r=resumoMetaSemanal(g),p=(data.pendencias||[]).find(p=>p.meta_semanal_id===g.id);
+ return `<section class="panel"><h2>${isAdmin?esc(lookup('motoristas',g.motorista_id)):'Minha meta semanal'}</h2><p class="sub">${esc(fmtDate(g.semana_inicio))} a ${esc(fmtDate(somarDiasISO(g.semana_inicio,6)))} · segunda a domingo</p>
+ <div class="weekly-grid"><div><small>Limite de trabalho</small><strong>${num(r.limite)} km</strong></div><div><small>Trabalho aprovado</small><strong>${num(r.trabalho)} km</strong></div><div><small>Disponível no limite</small><strong>${num(r.falta)} km</strong></div><div><small>KM excedentes</small><strong>${num(r.excedente)} km</strong></div></div>
+ <label>Uso do limite semanal: ${r.percent}%</label><progress class="weekly-progress" max="100" value="${Math.min(100,r.percent)}" aria-label="Uso do limite semanal"></progress>
+ <p class="sub">${num(r.pendentes)} km de trabalho aguardando aprovação. Uso particular aprovado: ${num(r.particular)} km, fora da meta. Manutenção, ida para casa e outros usos também não entram.</p>
+ <p><b>Excedente: ${brl(r.valor)}</b> · ${num(r.excedente)} km × R$ 0,50. ${p?'Cobrança em Pendências: '+brl(p.valor)+(Math.abs(Number(p.valor)-r.valor)>.005?' — precisa recalcular.':'.'):'Estimativa; ainda não cobrada.'}</p>
+ ${isAdmin?`<button type="button" class="alt" onclick="cobrarMetaSemanal('${g.id}')">Conferir e gerar / atualizar cobrança</button>`:'<p class="sub">O administrador confere a cobrança. Pagamentos e saldo ficam em Minhas pendências.</p>'}</section>`;
+}
+function metasSemanaisPage(){
+ const semana=semanaSelecionada||inicioSemana();
+ const rows=(data.sj_metas_semanais||[]).filter(g=>g.semana_inicio===semana&&(isAdmin||g.motorista_id===driverRecord?.id));
+ return `<section class="panel"><h2>${isAdmin?'Metas semanais de KM':'Minha meta'}</h2><p class="sub">Somente KM de trabalho aprovados. Excedente R$ 0,50/km. Uso particular R$ 0,60/km, cobrado separadamente após aprovação.</p><div class="field" style="max-width:250px"><label>Escolher semana</label><input type="date" value="${semana}" onchange="selecionarSemana(this.value)"></div></section>
+ ${isAdmin?`<section class="panel"><h3>Definir limite semanal do motorista</h3><p class="sub">Informe o limite real. Salvar na mesma semana atualiza a meta, sem duplicar. As metas mensais continuam separadas.</p><form onsubmit="salvarMetaSemanal(event)"><div class="fields"><div class="field"><label>Motorista</label><select name="motorista_id" required onchange="preencherLimiteSemanal(this.form)">${options('driver')}</select></div><div class="field"><label>Semana iniciada em</label><input name="semana_inicio" type="date" value="${semana}" required onchange="this.value=inicioSemana(this.value);preencherLimiteSemanal(this.form)"></div><div class="field"><label>Limite semanal (KM de trabalho)</label><input name="limite_km" type="number" min="0.01" step="0.01" required></div><div class="field"><label>Tarifa do excedente</label><input value="R$ 0,50/km" readonly></div></div><button type="submit">Salvar meta semanal</button></form></section>`:''}
+ ${rows.map(cartaoMetaSemanal).join('')||'<section class="panel"><p>Nenhuma meta cadastrada para esta semana.</p></section>'}`;
+}
+function preencherLimiteSemanal(form){const g=(data.sj_metas_semanais||[]).find(g=>g.motorista_id===form.elements.namedItem('motorista_id').value&&g.semana_inicio===form.elements.namedItem('semana_inicio').value);form.elements.namedItem('limite_km').value=g?.limite_km||'';}
+async function salvarMetaSemanal(e){
+ e.preventDefault();if(!isAdmin)return;const b=e.target.querySelector('button[type="submit"]');b.disabled=true;
+ try{const f=new FormData(e.target),semana=inicioSemana(f.get('semana_inicio')),limite=Number(f.get('limite_km'));
+ if(!Number.isFinite(limite)||limite<=0)throw Error('Informe um limite de KM maior que zero');
+ const {error}=await client.from('sj_metas_semanais').upsert({user_id:session.user.id,motorista_id:f.get('motorista_id'),semana_inicio:semana,limite_km:limite,tarifa_excedente:0.50},{onConflict:'user_id,motorista_id,semana_inicio'});if(error)throw error;
+ semanaSelecionada=semana;await refresh();toast('Meta semanal salva. Confira a cobrança caso já tenha sido gerada.');
+ }catch(err){msg('Meta semanal: '+err.message,true);}finally{b.disabled=false;}
+}
+async function cobrarMetaSemanal(id){
+ if(!isAdmin)return;const g=(data.sj_metas_semanais||[]).find(g=>g.id===id);if(!g)return;
+ const r=resumoMetaSemanal(g);if(!await confirmDialog('Conferir excedente de '+lookup('motoristas',g.motorista_id)+' na semana '+fmtDate(g.semana_inicio)+'? '+num(r.trabalho)+' km de trabalho aprovado; limite '+num(r.limite)+' km; excedente '+num(r.excedente)+' km. Cobrança: '+brl(r.valor)+'. Atualiza a mesma pendência, sem duplicar. Não registra pagamento.'))return;
+ const {error}=await client.rpc('sj_cobrar_excedente_semanal',{p_meta_id:id});if(error)return msg(error.message,true);await refresh();toast('Cobrança semanal conferida. Consulte Pendências.');
+}
+
 function driverPage(){
  if(!driverRecord) return '<section class="panel"><h2>Vinculação pendente</h2></section>';
  const vehicles=(data.veiculos||[]).map(v=>`<option value="${esc(v.id)}">${esc(v.placa||'')} • ${esc(v.modelo||'')}</option>`).join('');
@@ -1191,7 +1240,6 @@ function driverPage(){
  </section><section class="panel"><h2>Comprovantes enviados</h2>
  <div class="scroll"><table><thead><tr><th>Data</th><th>Valor</th><th>Situação</th><th>Arquivo</th></tr></thead><tbody>
  ${(data.comprovantes_motoristas||[]).map(c=>`<tr><td>${esc(c.data_pagamento)}</td><td>${brl(c.valor)}</td><td>${esc(c.status)}${c.viagem_id?' · viagem '+esc(dataHoraViagem((data.viagens||[]).find(v=>v.id===c.viagem_id)||{})):''}</td><td><button type="button" class="alt sm" onclick="abrirComprovante('${esc(c.arquivo_path)}')">Ver</button></td></tr>`).join('')||'<tr><td colspan="4">Nenhum comprovante enviado</td></tr>'}</tbody></table></div></section>
- ${painelDividasMotorista()}
  <section class="panel"><h2>Minhas viagens</h2><p class="sub">Ordenadas pela data e hora de início, da mais recente para a mais antiga, mesmo quando lançadas depois.</p><div class="field" style="max-width:230px"><label for="driver-trip-month">Mês das viagens</label><input id="driver-trip-month" type="month" value="${esc(selectedMonth)}" onchange="selecionarMesMotorista(this.value)"></div><div style="overflow:auto"><table><thead><tr><th>Data / hora</th><th>Trajeto</th><th>KM</th><th>Valores</th><th>Conferência</th><th>Pagamento ao administrador</th></tr></thead><tbody>${rows||'<tr><td colspan="6">Nenhuma viagem neste mês</td></tr>'}</tbody></table></div></section>`;
 }
 async function carregarComprovantes(){
@@ -1252,7 +1300,7 @@ async function conferirViagem(id,status){
  const v=(data.viagens||[]).find(x=>x.id===id);
  if(!v||v.status_conferencia!=='pendente')return msg('Esta viagem não está pendente.',true);
  const tipo=v.tipo_uso||'trabalho';
- const aviso=status==='rejeitada'?'Rejeitar este registro? Ele ficará no histórico, fora dos totais aprovados.':tipo==='trabalho'?'Aprovar esta viagem e incluir seus valores no Dashboard?':Number(v.valor_uso)>0?'Aprovar '+tipoUsoLabel(tipo)+' e gerar uma pendência de '+brl(v.valor_uso)+'? O valor ficará a receber até a baixa do pagamento.':'Aprovar '+tipoUsoLabel(tipo)+' sem cobrança? Somente os KM serão incluídos. Se houver valor combinado, cancele e use Definir valor antes de aprovar.';
+ const aviso=status==='rejeitada'?'Rejeitar este registro? Ele ficará no histórico, fora dos totais aprovados.':tipo==='trabalho'?'Aprovar esta viagem e incluir seus KM de trabalho na meta semanal?':tipo==='uso_particular'?'Aprovar uso particular de '+num(v.km_rodados)+' km e gerar cobrança de '+brl(Number(v.km_rodados)*0.60)+' (R$ 0,60/km), fora da meta semanal?':Number(v.valor_uso)>0?'Aprovar '+tipoUsoLabel(tipo)+' e gerar uma pendência de '+brl(v.valor_uso)+'? O valor ficará a receber até a baixa do pagamento.':'Aprovar '+tipoUsoLabel(tipo)+' sem cobrança? Somente os KM serão incluídos. Se houver valor combinado, cancele e use Definir valor antes de aprovar.';
  if(!confirm(aviso))return;
  const {error}=await client.from('viagens').update({status_conferencia:status}).eq('id',id).eq('status_conferencia','pendente');
  if(error)return msg('Erro na conferência: '+error.message,true);
@@ -1263,7 +1311,7 @@ function painelViagensPendentes(){
  return `<section class="panel"><h2>Viagens aguardando sua aprovação (${pend.length})</h2>
  <p class="sub">Confira o tipo de uso. Em uso particular ou ida para casa, use Definir valor antes de aprovar se houver cobrança. Registros pendentes não entram nos totais aprovados.</p>
  <div class="scroll"><table><thead><tr><th>Motorista</th><th>Data</th><th>Trajeto</th><th>KM</th><th>Faturamento</th><th>Conferência</th></tr></thead><tbody>
- ${pend.map(v=>`<tr><td>${esc(lookup('motoristas',v.motorista_id))}</td><td>${esc(dataHoraViagem(v))}</td><td>${esc(v.origem||'')} → ${esc(v.destino||'')}<small class="usage-meta">${esc(tipoUsoLabel(v.tipo_uso))}</small></td><td>${num(v.km_rodados||0)}</td><td>${valorViagemHtml(v)}${['ida_casa','uso_particular'].includes(v.tipo_uso)?`<br><button class="alt sm" onclick="editarUsoViagem('${v.id}')">Definir valor</button>`:''}</td><td><button onclick="conferirViagem('${esc(v.id)}','aprovada')">Aprovar</button> <button class="alt sm" onclick="conferirViagem('${esc(v.id)}','rejeitada')">Rejeitar</button></td></tr>`).join('')||'<tr><td colspan="6">Nenhuma viagem pendente</td></tr>'}</tbody></table></div></section>`;
+ ${pend.map(v=>`<tr><td>${esc(lookup('motoristas',v.motorista_id))}</td><td>${esc(dataHoraViagem(v))}</td><td>${esc(v.origem||'')} → ${esc(v.destino||'')}<small class="usage-meta">${esc(tipoUsoLabel(v.tipo_uso))}</small></td><td>${num(v.km_rodados||0)}</td><td>${valorViagemHtml(v)}${v.tipo_uso==='ida_casa'?`<br><button class="alt sm" onclick="editarUsoViagem('${v.id}')">Definir valor</button>`:''}</td><td><button onclick="conferirViagem('${esc(v.id)}','aprovada')">Aprovar</button> <button class="alt sm" onclick="conferirViagem('${esc(v.id)}','rejeitada')">Rejeitar</button></td></tr>`).join('')||'<tr><td colspan="6">Nenhuma viagem pendente</td></tr>'}</tbody></table></div></section>`;
 }
 async function registrarRecebimentoComprovante(id){
  if(!isAdmin)return;
@@ -1475,7 +1523,7 @@ async function refresh(silent = false){
       if(session?.user?.id!==expectedUser)return;
       if(!m){driverRecord=null;data={};await carregarMeuPedidoAcesso();if(session?.user?.id!==expectedUser)return;render();return;}
       driverRecord=m;
-      for(const t of ['veiculos','viagens']){
+      for(const t of ['veiculos','viagens','sj_metas_semanais']){
         const rows=await lerTodos(t);
         if(session?.user?.id!==expectedUser)return;
         data[t]=rows;
@@ -1492,6 +1540,8 @@ async function refresh(silent = false){
     }
     await carregarPendencias();
     await carregarComprovantes();
+    data.sj_metas_semanais=await lerTodos('sj_metas_semanais');
+    if(session?.user?.id!==expectedUser)return;
     await carregarPedidosAcesso();
     resolveDashboardPeriod();
     lastSync = new Date();
@@ -1510,20 +1560,20 @@ async function refresh(silent = false){
 /* =========================================================
    NAVEGAÇÃO / RENDER
    ========================================================= */
-function nav(t){ if(!isAdmin && t !== 'viagens') return; active = t; render(); if(t==='dashboard' && isAdmin) refresh(true); }
+function nav(t){ if(!isAdmin && !['viagens','minha_meta','minhas_pendencias'].includes(t)) return; active = t; render(); if(t==='dashboard' && isAdmin) refresh(true); }
 
 function render(){
   if(!session) return;
   if(!isAdmin){
-    $('nav').innerHTML = driverRecord?'<button class="navbtn active">Viagens</button>':'';
+    $('nav').innerHTML = driverRecord?['viagens','minha_meta','minhas_pendencias'].map(t=>`<button class="navbtn${active===t?' active':''}" onclick="nav('${t}')">${{viagens:'Minhas viagens',minha_meta:'Minha meta',minhas_pendencias:'Minhas pendências'}[t]}</button>`).join(''):'';
     $('syncInfo').textContent = driverRecord?'Acesso do motorista':'Liberação de acesso';
-    $('content').innerHTML = driverRecord?driverPage():aguardandoAcessoPage();
+    $('content').innerHTML = driverRecord?(active==='minha_meta'?metasSemanaisPage():active==='minhas_pendencias'?painelDividasMotorista():driverPage()):aguardandoAcessoPage();
     return;
   }
 
-  const tabs = ['dashboard','acessos','motoristas','veiculos','viagens','cobrancas','financeiro','pendencias','manutencoes','metas','seguranca'];
+  const tabs = ['dashboard','acessos','motoristas','veiculos','viagens','cobrancas','financeiro','pendencias','manutencoes','metas_semanais','metas','seguranca'];
   $('nav').innerHTML = tabs.map(t => {
-    const label = t === 'dashboard' ? 'Dashboard' : t==='acessos'?'Acessos'+((data.sj_solicitacoes_motoristas||[]).some(x=>x.status==='pendente')?' ('+(data.sj_solicitacoes_motoristas||[]).filter(x=>x.status==='pendente').length+')':'') : t === 'seguranca' ? 'Segurança' : t === 'pendencias' ? 'Pendências' : t==='cobrancas'?'Cobranças':specs[t].title;
+    const label = t === 'dashboard' ? 'Dashboard' : t==='acessos'?'Acessos'+((data.sj_solicitacoes_motoristas||[]).some(x=>x.status==='pendente')?' ('+(data.sj_solicitacoes_motoristas||[]).filter(x=>x.status==='pendente').length+')':'') : t === 'seguranca' ? 'Segurança' : t === 'pendencias' ? 'Pendências' : t==='cobrancas'?'Cobranças':t==='metas_semanais'?'Metas semanais':specs[t].title;
     return `<button class="navbtn${active === t ? ' active' : ''}" onclick="nav('${t}')">
       <span class="ico">${(ICONS[t] || (t === 'pendencias' ? '◉' : ''))}</span><span>${label}</span></button>`;
   }).join('');
@@ -1536,6 +1586,7 @@ function render(){
     active === 'dashboard' ? painelAvisoAcessos() + dashboard() + painelViagensPendentes() + painelComprovantes() :
     active === 'acessos' ? acessosPage() :
     active === 'seguranca' ? security() :
+    active === 'metas_semanais' ? metasSemanaisPage() :
     active === 'cobrancas' ? cobrancasPage() :
     active === 'pendencias' ? pendenciasPage() :
     tablePage(active);
@@ -1875,6 +1926,7 @@ function calcularKmViagem(form){
   if(!inicial || !final || !rodados) return;
   const a = Number(inicial.value), b = Number(final.value);
   rodados.value = inicial.value !== '' && final.value !== '' && Number.isFinite(a) && Number.isFinite(b) && b >= a ? String(Number((b-a).toFixed(2))) : '';
+  atualizarTipoUso(form);
 }
 
 async function saveRow(e, t){
@@ -1906,6 +1958,8 @@ async function saveRow(e, t){
     if(!Number.isFinite(a) || !Number.isFinite(b) || b < a || o.km_inicial === undefined || o.km_final === undefined)
       return msg('Informe KM inicial e final válidos; o final não pode ser menor.', true);
     o.km_rodados = Number((b-a).toFixed(2));
+    const anterior=editing?(data.viagens||[]).find(v=>v.id===editing.id):null;
+    if(o.tipo_uso==='uso_particular'&&(!anterior||anterior.status_conferencia!=='aprovada'||anterior.tarifa_km_particular!=null||anterior.tipo_uso!=='uso_particular'))o.valor_uso=Number((o.km_rodados*0.60).toFixed(2));
     // Grava os três campos no Supabase após a migração das colunas.
   }
   const btn = e.target.querySelector('button[type="submit"]');
@@ -2392,7 +2446,7 @@ async function exportarBackupGooglePlanilhas(){
  if(btn){btn.disabled=true;btn.textContent='Preparando planilha…';}
  try{
   await carregarBibliotecaPlanilhas();
-  const tables=['motoristas','veiculos','viagens','financeiro','pendencias','pagamentos_pendencias','manutencoes','metas','comprovantes_motoristas','sj_solicitacoes_motoristas'];
+  const tables=['motoristas','veiculos','viagens','financeiro','pendencias','pagamentos_pendencias','manutencoes','metas','sj_metas_semanais','comprovantes_motoristas','sj_solicitacoes_motoristas'];
   const book=XLSX.utils.book_new();
   for(const table of tables){
    const rows=[];
@@ -2428,7 +2482,7 @@ async function baixarBackupFrota(){
  const btn=document.getElementById('backup-download');
  if(btn){btn.disabled=true;btn.textContent='Preparando backup…';}
  try{
-   const tables=['motoristas','veiculos','viagens','financeiro','pendencias','pagamentos_pendencias','manutencoes','metas','comprovantes_motoristas','sj_solicitacoes_motoristas'];
+   const tables=['motoristas','veiculos','viagens','financeiro','pendencias','pagamentos_pendencias','manutencoes','metas','sj_metas_semanais','comprovantes_motoristas','sj_solicitacoes_motoristas'];
    const exported={app:'SJ MOB TOP',schema_version:1,created_at:new Date().toISOString(),admin_user_id:session.user.id,scope:'dados de tabelas (sem arquivos anexos)',tables:{}};
    for(const t of tables){
      const rows=[];
