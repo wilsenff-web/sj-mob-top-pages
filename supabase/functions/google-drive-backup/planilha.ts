@@ -30,7 +30,7 @@ export function createSpreadsheet(backup:any,jsonFile:{id:string;name:string}){
  const matrices:{rows:any[][];keys:string[];filter:boolean}[]=[{rows:summary,keys:['campo','valor_resumo'],filter:false}];
  for(const [key] of TABLES){
   const source=key==='viagens'?[...(backup.tables.viagens||[]),...(backup.tables.sj_inicios_viagens||[]).map((r:any)=>({...r,status_conferencia:'em_andamento'}))]:key==='metas'?[...(backup.tables.metas||[]).map((r:any)=>({...r,tipo_meta:'Mensal'})),...(backup.tables.sj_metas_semanais||[]).map((r:any)=>({...r,tipo_meta:'Semanal'}))]:(backup.tables[key]||[]);
-  const records=source.map((r:any)=>({...r,...(r.motorista_id?{motorista_nome:driverNames.get(r.motorista_id)||''}:{}),...(r.veiculo_id?{veiculo_nome:vehicles.get(r.veiculo_id)||''}:{})}));
+  const records=source.map((r:any)=>({...r,...(key==='viagens'?(()=>{const l=(backup.tables.sj_vinculos_pagamento_viagem||[]).find((l:any)=>l.viagem_id===r.id);return {pendencia_pagamento_id:l?.pendencia_id||'',sem_cobranca:l?.sem_cobranca??''};})():{}),...(key==='pagamentos_pendencias'?(()=>{const rec=(backup.tables.sj_recebimentos_viagens||[]).find((x:any)=>x.pagamento_id===r.id);return {viagem_recebimento_id:rec?.viagem_id||'',comprovante_recebimento_id:rec?.comprovante_id||''};})():{}),...(r.motorista_id?{motorista_nome:driverNames.get(r.motorista_id)||''}:{}),...(r.veiculo_id?{veiculo_nome:vehicles.get(r.veiculo_id)||''}:{})}));
   const keys=Array.from(new Set<string>(records.flatMap((r:any)=>Object.keys(r))));
   matrices.push({keys,filter:true,rows:keys.length?[[...keys.map(k=>LABELS[k]||k)],...records.map((r:any)=>keys.map(k=>r[k]??null))]:[['Sem registros']],});
  }

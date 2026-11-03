@@ -23,7 +23,7 @@ const db=createClient(url,serviceKey,{auth:{persistSession:false,autoRefreshToke
 const origin="https://wilsenff-web.github.io";
 const cors={"Access-Control-Allow-Origin":origin,"Access-Control-Allow-Methods":"POST,OPTIONS","Access-Control-Allow-Headers":"authorization,apikey,x-client-info,content-type,x-supabase-api-version","Vary":"Origin"};
 const json=(value:unknown,status=200)=>new Response(JSON.stringify(value),{status,headers:{"content-type":"application/json","cache-control":"no-store",...cors}});
-const tables=["motoristas","veiculos","viagens","financeiro","pendencias","pagamentos_pendencias","manutencoes","metas","sj_metas_semanais","sj_inicios_viagens","comprovantes_motoristas","sj_solicitacoes_motoristas"];
+const tables=["motoristas","veiculos","viagens","financeiro","pendencias","pagamentos_pendencias","manutencoes","metas","sj_metas_semanais","sj_inicios_viagens","sj_vinculos_pagamento_viagem","sj_recebimentos_viagens","comprovantes_motoristas","sj_solicitacoes_motoristas"];
 async function adminRequest(req:Request){
  const jwt=req.headers.get("authorization")?.match(/^Bearer (.+)$/i)?.[1];
  if(!jwt)return false;
@@ -53,7 +53,7 @@ async function collectBackup(){
   const rows:unknown[]=[];
   for(let offset=0;;offset+=500){
    if(offset>100000)throw Error("Limite de registros excedido: "+table);
-   const {data,error}=await db.from(table).select("*").range(offset,offset+499).order("id",{ascending:true});
+   const {data,error}=await db.from(table).select("*").range(offset,offset+499).order(table==="sj_vinculos_pagamento_viagem"?"viagem_id":table==="sj_recebimentos_viagens"?"referencia":"id",{ascending:true});
    if(error)throw Error("Erro ao ler tabela "+table+": "+error.message);
    rows.push(...(data||[]));
    if(!data||data.length<500)break;
