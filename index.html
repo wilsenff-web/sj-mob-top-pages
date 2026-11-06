@@ -2074,12 +2074,13 @@ function render(){
     : '';
 
   $('content').innerHTML =
-    active === 'dashboard' ? painelAvisoAcessos() + dashboard() + painelViagensPendentes() + painelComprovantes() :
+    active === 'dashboard' ? painelAvisoAcessos() + dashboard() :
     active === 'acessos' ? acessosPage() :
     active === 'seguranca' ? security() :
     active === 'metas_semanais' ? metasSemanaisPage() :
     active === 'cobrancas' ? cobrancasPage() :
     active === 'pendencias' ? pendenciasPage() :
+    active === 'viagens' ? painelViagensPendentes() + painelComprovantes() + tablePage(active) :
     tablePage(active);
   syncMobileNavigation();
 }
@@ -2249,7 +2250,7 @@ function rowHtml(t, r){
       <td data-label="Trajeto"><span class="trip-route">${esc(r.origem||'—')} → ${esc(r.destino||'—')}</span><small class="usage-meta">${esc(tipoUsoLabel(r.tipo_uso))}</small><details class="trip-details"><summary>Detalhes da viagem</summary><dl><dt>KM inicial / final</dt><dd>${r.km_inicial==null?'—':num(r.km_inicial)} / ${r.km_final==null?'—':num(r.km_final)}</dd><dt>Observações</dt><dd>${esc(r.observacoes||'Sem observações')}</dd><dt>Conferência</dt><dd>${esc(r.status_conferencia||'aprovada')}</dd>${Number(r.valor_uso)>0?`<dt>Valor combinado pelo uso</dt><dd>${brl(r.valor_uso)} · cobrança em Pendências</dd>`:''}</dl>${files}</details></td>
       <td data-label="KM rodados">${num(r.km_rodados||0)}</td>
       <td data-label="Valor">${valorViagemHtml(r)}${pagamentoViagemHtml(r)}</td>
-      <td data-label="Ações"><div class="trip-row-actions"><button type="button" class="alt sm" onclick="abrirAnexoAdm('${r.id}')">Anexar comprovante</button><button class="sm" onclick="editRow('viagens','${r.id}')">Editar</button><button class="sm danger" onclick="removeRow('viagens','${r.id}')">Excluir</button></div></td>
+      <td data-label="Ações"><div class="trip-row-actions"><div style="display:flex;flex-direction:column;align-items:stretch;gap:6px"><button type="button" class="alt sm" onclick="abrirAnexoAdm('${r.id}')">Anexar comprovante</button>${comprovantesDaViagem(r.id)||'<small style="font-size:11px;color:#8c9fbc;text-align:center">Nenhum comprovante enviado</small>'}</div><button class="sm" onclick="editRow('viagens','${r.id}')">Editar</button><button class="sm danger" onclick="removeRow('viagens','${r.id}')">Excluir</button></div></td>
     </tr>`;
   }
   const s = specs[t];
