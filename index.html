@@ -6,13 +6,13 @@
 <script src="https://cdn.tailwindcss.com/3.4.17"></script>
 <script>if(window.tailwind)tailwind.config={corePlugins:{preflight:false},important:'.tw-dashboard'};</script>
 <link rel="preconnect" href="https://fonts.googleapis.com/"><link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap" rel="stylesheet">
-<title>SJ MOB TOP | Gestão de Frota</title>
+<title>Gestão de Frota | Gestão de Frota</title>
 <link rel="canonical" href="https://wilsenff-web.github.io/sj-mob-top-pages/">
-<meta name="description" content="SJ MOB TOP: controle de frota, viagens, quilometragem e pagamentos. Acesso individual dos motoristas com liberação do administrador.">
+<meta name="description" content="Gestão de Frota: controle de frota, viagens, quilometragem e pagamentos. Acesso individual dos motoristas com liberação do administrador.">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="pt_BR">
-<meta property="og:site_name" content="SJ MOB TOP">
-<meta property="og:title" content="SJ MOB TOP | Área do motorista">
+<meta property="og:site_name" content="Gestão de Frota">
+<meta property="og:title" content="Gestão de Frota | Área do motorista">
 <meta property="og:description" content="Acesse sua área para registrar viagens, consultar pendências e enviar comprovantes.">
 <meta property="og:url" content="https://wilsenff-web.github.io/sj-mob-top-pages/">
 <meta property="og:image" content="https://wilsenff-web.github.io/sj-mob-top-pages/assets/sj-mob-top-compartilhar.png">
@@ -20,9 +20,9 @@
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Logotipo SJ MOB TOP. Gestão de frota. Área do motorista. Acesse o sistema.">
+<meta property="og:image:alt" content="Logotipo Gestão de Frota. Gestão de frota. Área do motorista. Acesse o sistema.">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="SJ MOB TOP | Área do motorista">
+<meta name="twitter:title" content="Gestão de Frota | Área do motorista">
 <meta name="twitter:description" content="Viagens, quilometragem e pagamentos em um só lugar.">
 <meta name="twitter:image" content="https://wilsenff-web.github.io/sj-mob-top-pages/assets/sj-mob-top-compartilhar.png">
 
@@ -1144,7 +1144,12 @@ main.wrap,#app,.app-shell,.app-main,#content{min-width:0;max-width:100%}
 @media(max-width:900px){.driver-profile-header .driver-profile-button{width:56px;height:56px;min-width:56px}.driver-profile-header .who{display:none}.driver-profile-header .topbar-inner{gap:7px}.driver-profile-header .brand-sub{font-size:10px}.driver-profile-header .brand-name{font-size:16px}.driver-profile-header .brand-mark{display:none}}
 @media(max-width:360px){.driver-profile-header .brand-name{font-size:14px}.driver-profile-header .brand-sub{display:none}.driver-profile-header .topbar-inner{padding-left:8px;padding-right:8px;gap:6px}}
 
-#receipt-dialog{width:min(540px,calc(100vw - 24px));max-height:90dvh;overflow:auto;border:1px solid var(--border);border-radius:18px;padding:22px;background:var(--surface);color:var(--text)}#receipt-dialog::backdrop{background:#000a}.receipt-amount{display:block;font-size:28px;color:var(--ok);margin:14px 0}.receipt-details p{font-size:14px;line-height:1.5;overflow-wrap:anywhere}#receipt-dialog button{min-height:44px}#receipt-feedback{font-size:13px;color:var(--muted);line-height:1.5}.trip-payment-state{display:flex;flex-direction:column;gap:7px;align-items:flex-start;margin-top:10px;white-space:normal;max-width:280px}.trip-payment-state .badge{white-space:normal;line-height:1.4}.trip-payment-dialog{width:min(620px,calc(100vw - 24px));max-height:90dvh;overflow:auto;padding:22px;border-radius:18px;border:1px solid var(--border);background:var(--surface);color:var(--text)}.trip-payment-dialog::backdrop{background:#000a}.trip-payment-dialog .field{margin-bottom:12px}.trip-payment-dialog p{line-height:1.5}.trip-payment-dialog button{min-height:44px}</style>
+#receipt-dialog{width:min(540px,calc(100vw - 24px));max-height:90dvh;overflow:auto;border:1px solid var(--border);border-radius:18px;padding:22px;background:var(--surface);color:var(--text)}#receipt-dialog::backdrop{background:#000a}.receipt-amount{display:block;font-size:28px;color:var(--ok);margin:14px 0}.receipt-details p{font-size:14px;line-height:1.5;overflow-wrap:anywhere}#receipt-dialog button{min-height:44px}#receipt-feedback{font-size:13px;color:var(--muted);line-height:1.5}.trip-payment-state{display:flex;flex-direction:column;gap:7px;align-items:flex-start;margin-top:10px;white-space:normal;max-width:280px}.trip-payment-state .badge{white-space:normal;line-height:1.4}.trip-payment-dialog{width:min(620px,calc(100vw - 24px));max-height:90dvh;overflow:auto;padding:22px;border-radius:18px;border:1px solid var(--border);background:var(--surface);color:var(--text)}.trip-payment-dialog::backdrop{background:#000a}.trip-payment-dialog .field{margin-bottom:12px}.trip-payment-dialog p{line-height:1.5}.trip-payment-dialog button{min-height:44px}
+/* Gestão de Frota — alertas mais legíveis no celular e computador */
+.badge,.driver-status-badge,.status,.status-pill,[class*="status-badge"],[class*="payment-status"]{font-size:clamp(13px,1.05vw,16px)!important;font-weight:800!important;letter-spacing:.035em;text-transform:uppercase;line-height:1.4!important}
+.badge.danger,.badge.pending,.badge.rejected{font-weight:900!important}
+@media(max-width:900px){#mobile-bottom-nav:not([hidden]){position:fixed!important;bottom:0!important;transform:none!important;padding-bottom:env(safe-area-inset-bottom,0px)!important}body{padding-bottom:env(safe-area-inset-bottom,0px)}}
+</style>
 </head>
 <body>
 
@@ -1154,7 +1159,7 @@ main.wrap,#app,.app-shell,.app-main,#content{min-width:0;max-width:100%}
     <div class="brand">
       <div class="brand-mark">SJ</div>
       <div>
-        <div class="brand-name">SJ MOB TOP</div>
+        <div class="brand-name">Gestão de Frota</div>
         <div class="brand-sub">Gestão de frota · Supabase online</div>
       </div>
     </div>
@@ -1187,7 +1192,7 @@ main.wrap,#app,.app-shell,.app-main,#content{min-width:0;max-width:100%}
 
   <!-- ============ 2. LOGIN ============ -->
   <section id="auth" class="panel narrow hide">
-    <h2>Entrar no SJ MOB TOP</h2>
+    <h2>Entrar no Gestão de Frota</h2>
     <p class="sub">Use seu e-mail e senha para acessar sua área.</p>
     <div class="fields">
       <div class="field"><label for="email">E-mail</label><input id="email" type="email" autocomplete="username" placeholder="voce@empresa.com"></div>
@@ -1248,7 +1253,7 @@ main.wrap,#app,.app-shell,.app-main,#content{min-width:0;max-width:100%}
 
 <dialog id="mobile-menu-dialog" aria-labelledby="mobile-menu-title"><div class="mobile-drawer-heading"><strong id="mobile-menu-title">Menu</strong><button type="button" class="icon-btn" aria-label="Fechar menu" onclick="closeMobileMenu()">✕</button></div></dialog>
 <nav id="mobile-bottom-nav" class="mobile-bottom-nav" aria-label="Atalhos principais" hidden></nav>
-<footer class="footer">SJ MOB TOP · Martins · v2.30 · acesso individual e dados protegidos</footer>
+<footer class="footer">Gestão de Frota · Martins · v2.30 · acesso individual e dados protegidos</footer>
 
 <div id="toasts" aria-live="polite" aria-atomic="false"></div>
 <div id="modal-root"></div>
@@ -2036,7 +2041,7 @@ function render(){
     syncMobileNavigation();return;
   }
 
-  const tabs = ['dashboard','acessos','motoristas','veiculos','viagens','cobrancas','financeiro','pendencias','manutencoes','metas_semanais','metas','seguranca'];
+  const tabs = ['dashboard','acessos','motoristas','veiculos','viagens','financeiro','pendencias','manutencoes','metas_semanais','metas','seguranca'];
   $('nav').innerHTML = tabs.map(t => {
     const label = t === 'dashboard' ? 'Dashboard' : t==='acessos'?'Acessos'+((data.sj_solicitacoes_motoristas||[]).some(x=>x.status==='pendente')?' ('+(data.sj_solicitacoes_motoristas||[]).filter(x=>x.status==='pendente').length+')':'') : t === 'seguranca' ? 'Segurança' : t === 'pendencias' ? 'Pendências' : t==='cobrancas'?'Cobranças':t==='metas_semanais'?'Metas semanais':specs[t].title;
     return `<button class="navbtn${active === t ? ' active' : ''}" data-nav-tab="${t}" onclick="nav('${t}')">
@@ -2926,12 +2931,12 @@ async function exportarBackupGooglePlanilhas(){
 }
 async function baixarBackupFrota(){
  if(!session || !isAdmin || session.user.id!==ADMIN_UID)return msg('Acesso restrito ao administrador.',true);
- if(!confirm('Baixar uma cópia dos dados do SJ MOB TOP neste dispositivo? O arquivo contém dados pessoais e financeiros. Guarde-o em local privado.'))return;
+ if(!confirm('Baixar uma cópia dos dados do Gestão de Frota neste dispositivo? O arquivo contém dados pessoais e financeiros. Guarde-o em local privado.'))return;
  const btn=document.getElementById('backup-download');
  if(btn){btn.disabled=true;btn.textContent='Preparando backup…';}
  try{
    const tables=['motoristas','veiculos','viagens','financeiro','pendencias','pagamentos_pendencias','manutencoes','metas','sj_metas_semanais','sj_inicios_viagens','sj_vinculos_pagamento_viagem','sj_recebimentos_viagens','comprovantes_motoristas','sj_solicitacoes_motoristas'];
-   const exported={app:'SJ MOB TOP',schema_version:1,created_at:new Date().toISOString(),admin_user_id:session.user.id,scope:'dados de tabelas (sem arquivos anexos)',tables:{}};
+   const exported={app:'Gestão de Frota',schema_version:1,created_at:new Date().toISOString(),admin_user_id:session.user.id,scope:'dados de tabelas (sem arquivos anexos)',tables:{}};
    for(const t of tables){
      const rows=[];
      let start=0;
@@ -2990,7 +2995,7 @@ function security(){
 async function chamarGoogleDrive(action){
  if(!client || !session || !isAdmin || session.user.id!==ADMIN_UID)throw Error('Acesso restrito ao administrador.');
  const {data:auth,error:authError}=await client.auth.getSession();
- if(authError || !auth.session?.access_token)throw Error('Sua sessão expirou. Entre novamente no SJ MOB TOP.');
+ if(authError || !auth.session?.access_token)throw Error('Sua sessão expirou. Entre novamente no Gestão de Frota.');
  const {data,error}=await client.functions.invoke('google-drive-oauth',{
    body:{action},
    headers:{Authorization:'Bearer '+auth.session.access_token}
@@ -3150,7 +3155,7 @@ function emitirRecibo(pagamentoId){
  const pago=Number(pg.valor||0);
  const w=window.open('','_blank');
  if(!w){toast('Permita pop-ups para visualizar o recibo.');return;}
- const html='<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Recibo SJ MOB TOP</title><style>*{box-sizing:border-box}body{font:16px Arial,sans-serif;color:#172033;background:#f3f5f8;margin:0;padding:16px}.sheet{background:#fff;max-width:720px;margin:0 auto;padding:clamp(18px,5vw,38px);border-radius:12px;box-shadow:0 5px 24px #0001}h1{font-size:clamp(21px,5vw,28px);border-bottom:3px solid #e9af16;padding-bottom:15px;margin-top:0}p{line-height:1.6;overflow-wrap:anywhere}.valor{font-size:clamp(22px,6vw,30px);font-weight:bold}.info{border:1px solid #ddd;border-radius:10px;padding:clamp(12px,4vw,20px);margin:20px 0}.muted{color:#666;font-size:13px}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}.btn{padding:13px 16px;background:#e9af16;border:0;border-radius:7px;cursor:pointer;font-weight:bold;min-height:44px;flex:1}.secondary{background:#e7eaf0}@media(max-width:480px){body{padding:8px}.sheet{border-radius:8px}.actions{flex-direction:column}.btn{width:100%}}@media print{@page{size:A4;margin:12mm}body{background:white;padding:0}.sheet{box-shadow:none;max-width:none;padding:0}.actions{display:none}}</style></head><body><main class="sheet"><h1>SJ MOB TOP — Recibo de pagamento</h1><p>Confirmamos o recebimento do pagamento abaixo:</p><div class="info"><p><strong>Recebido de:</strong> '+esc(nome)+'</p><p><strong>Referente a:</strong> '+esc(p.categoria)+'</p><p><strong>Descrição:</strong> '+esc(p.descricao||'—')+'</p><p><strong>Data do pagamento:</strong> '+esc(fmtData(pg.data_pagamento))+'</p><p><strong>Forma de pagamento:</strong> '+esc(pg.forma||'—')+'</p><p class="valor">Valor recebido: '+esc(reaisPend(pago))+'</p><p><strong>Saldo restante:</strong> '+esc(reaisPend(saldo))+'</p><p><strong>Situação atual:</strong> '+(saldo<0.005?'Quitada':'Pagamento parcial')+'</p></div><p class="muted">Comprovante de pagamento registrado no SJ MOB TOP. Em pagamentos parciais, comprova apenas o valor acima. Referência: '+esc(String(pg.id).slice(0,8).toUpperCase())+'</p><div class="actions"><button class="btn" onclick="window.print()">Baixar recibo PDF</button><button class="btn secondary" onclick="window.close()">Fechar</button></div></main></body></html>';
+ const html='<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Recibo Gestão de Frota</title><style>*{box-sizing:border-box}body{font:16px Arial,sans-serif;color:#172033;background:#f3f5f8;margin:0;padding:16px}.sheet{background:#fff;max-width:720px;margin:0 auto;padding:clamp(18px,5vw,38px);border-radius:12px;box-shadow:0 5px 24px #0001}h1{font-size:clamp(21px,5vw,28px);border-bottom:3px solid #e9af16;padding-bottom:15px;margin-top:0}p{line-height:1.6;overflow-wrap:anywhere}.valor{font-size:clamp(22px,6vw,30px);font-weight:bold}.info{border:1px solid #ddd;border-radius:10px;padding:clamp(12px,4vw,20px);margin:20px 0}.muted{color:#666;font-size:13px}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}.btn{padding:13px 16px;background:#e9af16;border:0;border-radius:7px;cursor:pointer;font-weight:bold;min-height:44px;flex:1}.secondary{background:#e7eaf0}@media(max-width:480px){body{padding:8px}.sheet{border-radius:8px}.actions{flex-direction:column}.btn{width:100%}}@media print{@page{size:A4;margin:12mm}body{background:white;padding:0}.sheet{box-shadow:none;max-width:none;padding:0}.actions{display:none}}</style></head><body><main class="sheet"><h1>Gestão de Frota — Recibo de pagamento</h1><p>Confirmamos o recebimento do pagamento abaixo:</p><div class="info"><p><strong>Recebido de:</strong> '+esc(nome)+'</p><p><strong>Referente a:</strong> '+esc(p.categoria)+'</p><p><strong>Descrição:</strong> '+esc(p.descricao||'—')+'</p><p><strong>Data do pagamento:</strong> '+esc(fmtData(pg.data_pagamento))+'</p><p><strong>Forma de pagamento:</strong> '+esc(pg.forma||'—')+'</p><p class="valor">Valor recebido: '+esc(reaisPend(pago))+'</p><p><strong>Saldo restante:</strong> '+esc(reaisPend(saldo))+'</p><p><strong>Situação atual:</strong> '+(saldo<0.005?'Quitada':'Pagamento parcial')+'</p></div><p class="muted">Comprovante de pagamento registrado no Gestão de Frota. Em pagamentos parciais, comprova apenas o valor acima. Referência: '+esc(String(pg.id).slice(0,8).toUpperCase())+'</p><div class="actions"><button class="btn" onclick="window.print()">Baixar recibo PDF</button><button class="btn secondary" onclick="window.close()">Fechar</button></div></main></body></html>';
  w.document.open();w.document.write(html);w.document.close();w.focus();
 }
 function abrirBaixa(id){
@@ -3453,7 +3458,7 @@ function dadosRecibo(tipo,id){
  if(!isAdmin&&p.motorista_id!==driverRecord?.id)return null;
  return {id,tipo:'pendencia',valor:Number(pg.valor),data:pg.data_pagamento,pagador:lookup('motoristas',p.motorista_id),categoria:p.categoria,descricao:p.descricao||'',forma:pg.forma||'Não informada',observacoes:pg.observacoes||'',veiculo:p.veiculo_id?lookup('veiculos',p.veiculo_id):'',saldo:Math.max(0,Number(p.valor)-pagoPend(p.id))};
 }
-function linhasRecibo(r){return ['SJ MOB TOP - Recibo de pagamento','Emitente: SJ MOB TOP - Martins','Recebido de: '+r.pagador,'Valor recebido: '+reaisPend(r.valor),'Data do pagamento: '+fmtDate(r.data),'Forma: '+r.forma,'Referente a: '+r.categoria,...(r.descricao?['Descrição: '+r.descricao]:[]),...(r.veiculo?['Veículo: '+r.veiculo]:[]),...(r.observacoes?['Observações: '+r.observacoes]:[]),...(r.saldo!==null?['Saldo atual da pendência: '+reaisPend(r.saldo),r.saldo<.005?'Situação atual: Quitada':'Situação atual: Pagamento parcial']:[]),'Referência do registro: '+r.id,'Comprova somente o valor deste pagamento registrado.'];}
+function linhasRecibo(r){return ['Gestão de Frota - Recibo de pagamento','Emitente: Gestão de Frota - Martins','Recebido de: '+r.pagador,'Valor recebido: '+reaisPend(r.valor),'Data do pagamento: '+fmtDate(r.data),'Forma: '+r.forma,'Referente a: '+r.categoria,...(r.descricao?['Descrição: '+r.descricao]:[]),...(r.veiculo?['Veículo: '+r.veiculo]:[]),...(r.observacoes?['Observações: '+r.observacoes]:[]),...(r.saldo!==null?['Saldo atual da pendência: '+reaisPend(r.saldo),r.saldo<.005?'Situação atual: Quitada':'Situação atual: Pagamento parcial']:[]),'Referência do registro: '+r.id,'Comprova somente o valor deste pagamento registrado.'];}
 function abrirReciboPagamento(tipo,id){const r=dadosRecibo(tipo,id);if(!r)return msg('Recebimento não encontrado. Atualize a tela.',true);reciboAtual={tipo:r.tipo,id:r.id};$('receipt-dialog')?.remove();const dlg=document.createElement('dialog');dlg.id='receipt-dialog';dlg.dataset.userId=session.user.id;dlg.setAttribute('aria-labelledby','receipt-title');dlg.innerHTML=`<h2 id="receipt-title">Recibo de pagamento</h2><strong class="receipt-amount">${esc(reaisPend(r.valor))}</strong><div class="receipt-details">${linhasRecibo(r).slice(1).map(line=>`<p>${esc(line)}</p>`).join('')}</div><div class="btn-row"><button type="button" onclick="baixarReciboPdf()">Baixar PDF</button><button type="button" class="alt" onclick="compartilharReciboPdf()">Compartilhar</button><button type="button" class="alt" onclick="document.getElementById('receipt-dialog').close()">Fechar</button></div><p id="receipt-feedback" role="status">O compartilhamento será aberto para você escolher o destinatário.</p>`;document.body.append(dlg);dlg.showModal();}
 emitirRecibo=function(id){abrirReciboPagamento('pendencia',id);};
 function bytesReciboPdf(r){
@@ -3468,7 +3473,7 @@ function bytesReciboPdf(r){
 function arquivoReciboAtual(){const r=reciboAtual&&dadosRecibo(reciboAtual.tipo,reciboAtual.id);if(!r)throw Error('Atualize a tela para consultar este recebimento.');return new File([bytesReciboPdf(r)],'SJ-MOB-TOP-recibo-'+r.id+'.pdf',{type:'application/pdf'});}
 function downloadArquivoRecibo(file){const url=URL.createObjectURL(file),a=document.createElement('a');a.href=url;a.download=file.name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);}
 function baixarReciboPdf(){try{downloadArquivoRecibo(arquivoReciboAtual());$('receipt-feedback').textContent='PDF gerado. Você pode anexá-lo em uma mensagem ao motorista.';}catch(e){$('receipt-feedback').textContent=e.message;}}
-async function compartilharReciboPdf(){try{const file=arquivoReciboAtual();if(navigator.share&&navigator.canShare?.({files:[file]})){await navigator.share({files:[file],title:'Recibo SJ MOB TOP'});$('receipt-feedback').textContent='Compartilhamento concluído.';}else{downloadArquivoRecibo(file);$('receipt-feedback').textContent='PDF baixado. Anexe o arquivo no WhatsApp ou e-mail do motorista.';}}catch(e){if(e.name!=='AbortError')$('receipt-feedback').textContent='Não foi possível compartilhar. Use Baixar PDF e anexe o arquivo na sua mensagem.';}}
+async function compartilharReciboPdf(){try{const file=arquivoReciboAtual();if(navigator.share&&navigator.canShare?.({files:[file]})){await navigator.share({files:[file],title:'Recibo Gestão de Frota'});$('receipt-feedback').textContent='Compartilhamento concluído.';}else{downloadArquivoRecibo(file);$('receipt-feedback').textContent='PDF baixado. Anexe o arquivo no WhatsApp ou e-mail do motorista.';}}catch(e){if(e.name!=='AbortError')$('receipt-feedback').textContent='Não foi possível compartilhar. Use Baixar PDF e anexe o arquivo na sua mensagem.';}}
 async function salvarBaixa(e,id){
  e.preventDefault();if(!isAdmin||!session||e.target.dataset.saving==='true')return;const form=e.target,b=form.querySelector('button[type=submit]');form.dataset.saving='true';b.disabled=true;let registrado=false;
  try{const o=Object.fromEntries(new FormData(form).entries());const {data:pid,error}=await client.rpc('registrar_pagamento_pendencia',{p_pendencia_id:id,p_valor:Number(o.valor),p_data:o.data_pagamento,p_forma:o.forma,p_observacoes:o.observacoes||''});if(error)throw error;registrado=true;fecharBaixa();await carregarPendencias();render();toast('Pagamento registrado.');if(typeof pid==='string'&&(data.pagamentos_pendencias||[]).some(x=>x.id===pid))abrirReciboPagamento('pendencia',pid);else msg('Pagamento registrado. Atualize a tela e abra Pagamentos → Recibo para emitir o comprovante. Não registre a baixa novamente.',false);
