@@ -1149,6 +1149,17 @@ main.wrap,#app,.app-shell,.app-main,#content{min-width:0;max-width:100%}
 .badge,.driver-status-badge,.status,.status-pill,[class*="status-badge"],[class*="payment-status"]{font-size:clamp(13px,1.05vw,16px)!important;font-weight:800!important;letter-spacing:.035em;text-transform:uppercase;line-height:1.4!important}
 .badge.danger,.badge.pending,.badge.rejected{font-weight:900!important}
 @media(max-width:900px){#mobile-bottom-nav:not([hidden]){position:fixed!important;bottom:0!important;transform:none!important;padding-bottom:env(safe-area-inset-bottom,0px)!important}body{padding-bottom:env(safe-area-inset-bottom,0px)}}
+
+/* Cartão de identificação do administrador no cabeçalho */
+@media (min-width: 901px){
+  #identity:has(.admin-profile-card){display:flex;align-items:center;min-width:310px;max-width:390px;padding:9px 14px;background:linear-gradient(125deg,#101f39,#081224);border:1px solid rgba(234,179,8,.55);border-radius:15px;box-shadow:0 4px 18px rgba(0,0,0,.28),inset 0 0 0 1px rgba(255,255,255,.03);gap:12px}
+  #identity .admin-profile-card.avatar{width:64px!important;height:64px!important;min-width:64px!important;border-radius:50%;box-shadow:0 0 0 3px rgba(234,179,8,.14)}
+  #identity .admin-profile-details{min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:4px}
+  #identity .admin-profile-details b{font-size:14px;line-height:1.25;overflow-wrap:anywhere}
+  #identity .admin-profile-details small{font-size:11px;letter-spacing:.7px;color:#facc15;font-weight:800}
+  #identity .admin-profile-details .admin-photo-change{font-size:12px!important;padding:5px 8px!important;border-radius:7px!important;border:1px solid rgba(250,204,21,.5)!important;background:rgba(250,204,21,.1)!important}
+}
+@media(max-width:900px){#identity .admin-profile-card.avatar{width:42px;height:42px;min-width:42px}#identity .admin-profile-details .admin-photo-change{font-size:10px!important}}
 </style>
 </head>
 <body>
@@ -1765,8 +1776,8 @@ function setIdentity(){
   const email = session.user.email || 'Conectado';
   const foto=isAdmin&&session.user.user_metadata?.sj_admin_avatar;
   $('identity').innerHTML = `
-    <button type="button" class="avatar" style="padding:0;overflow:hidden;cursor:${isAdmin?'pointer':'default'};border:2px solid #eab308;display:grid;place-items:center" ${isAdmin?'onclick="selecionarFotoAdmin()" title="Alterar foto do administrador" aria-label="Alterar foto do administrador"':''}>${foto&&['data:image/jpeg;base64,','data:image/png;base64,','data:image/webp;base64,'].some(prefix=>foto.startsWith(prefix))?`<img src="${foto}" alt="Foto do administrador" style="width:100%;height:100%;object-fit:cover">`:esc((email[0] || '?').toUpperCase())}</button>
-    <div class="who"><b>${esc(email)}</b><small>${isAdmin?'Administrador':'conectado'}</small>${isAdmin?'<button type="button" onclick="selecionarFotoAdmin()" style="display:block;margin-top:3px;color:#ffd21a;background:transparent;border:0;padding:0;font-size:12px;font-weight:800;cursor:pointer;text-align:left">📷 ALTERAR FOTO</button>':''}</div>`;
+    <button type="button" class="avatar ${isAdmin?'admin-profile-card':''}" style="padding:0;overflow:hidden;cursor:${isAdmin?'pointer':'default'};border:2px solid #eab308;display:grid;place-items:center" ${isAdmin?'onclick="selecionarFotoAdmin()" title="Alterar foto do administrador" aria-label="Alterar foto do administrador"':''}>${foto&&['data:image/jpeg;base64,','data:image/png;base64,','data:image/webp;base64,'].some(prefix=>foto.startsWith(prefix))?`<img src="${foto}" alt="Foto do administrador" style="width:100%;height:100%;object-fit:cover">`:esc((email[0] || '?').toUpperCase())}</button>
+    <div class="who ${isAdmin?'admin-profile-details':''}"><b>${esc(email)}</b><small>${isAdmin?'Administrador':'conectado'}</small>${isAdmin?'<button type="button" class="admin-photo-change" onclick="selecionarFotoAdmin()" style="display:block;margin-top:3px;color:#ffd21a;background:transparent;border:0;padding:0;font-size:12px;font-weight:800;cursor:pointer;text-align:left">📷 ALTERAR FOTO</button>':''}</div>`;
 }
 function selecionarFotoAdmin(){
  if(!isAdmin||!session)return;
