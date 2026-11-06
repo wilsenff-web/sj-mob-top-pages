@@ -1766,7 +1766,7 @@ function setIdentity(){
   const foto=isAdmin&&session.user.user_metadata?.sj_admin_avatar;
   $('identity').innerHTML = `
     <button type="button" class="avatar" style="padding:0;overflow:hidden;cursor:${isAdmin?'pointer':'default'};border:2px solid #eab308;display:grid;place-items:center" ${isAdmin?'onclick="selecionarFotoAdmin()" title="Alterar foto do administrador" aria-label="Alterar foto do administrador"':''}>${foto&&/^data:image\\/(jpeg|png|webp);base64,/.test(foto)?`<img src="${foto}" alt="Foto do administrador" style="width:100%;height:100%;object-fit:cover">`:esc((email[0] || '?').toUpperCase())}</button>
-    <div class="who"><b>${esc(email)}</b><small>${isAdmin?'Administrador · toque na foto para alterar':'conectado'}</small></div>`;
+    <div class="who"><b>${esc(email)}</b><small>${isAdmin?'Administrador':'conectado'}</small>${isAdmin?'<button type="button" onclick="selecionarFotoAdmin()" style="display:block;margin-top:3px;color:#ffd21a;background:transparent;border:0;padding:0;font-size:12px;font-weight:800;cursor:pointer;text-align:left">📷 ALTERAR FOTO</button>':''}</div>`;
 }
 function selecionarFotoAdmin(){
  if(!isAdmin||!session)return;
@@ -1775,7 +1775,6 @@ function selecionarFotoAdmin(){
  input.onchange=async()=>{const file=input.files?.[0];input.value='';if(!file)return;if(!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size>8*1024*1024)return msg('Selecione uma imagem JPG, PNG ou WebP de até 8 MB.',true);
  try{const img=await new Promise((resolve,reject)=>{const i=new Image();const url=URL.createObjectURL(file);i.onload=()=>{URL.revokeObjectURL(url);resolve(i)};i.onerror=()=>{URL.revokeObjectURL(url);reject(Error('Imagem inválida'))};i.src=url;});const cv=document.createElement('canvas');const side=240;cv.width=side;cv.height=side;const ctx=cv.getContext('2d');const crop=Math.min(img.width,img.height);ctx.drawImage(img,(img.width-crop)/2,(img.height-crop)/2,crop,crop,0,0,side,side);const foto=cv.toDataURL('image/jpeg',.72);const {data:updated,error}=await client.auth.updateUser({data:{sj_admin_avatar:foto}});if(error)throw error;if(updated?.user)session.user=updated.user;setIdentity();toast('Foto do administrador salva na conta.');}catch(err){msg('Não foi possível salvar a foto: '+err.message,true);}};
  input.click();
-}
 }
 
 let recoveryActive = false;
