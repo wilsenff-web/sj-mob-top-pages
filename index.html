@@ -2466,13 +2466,17 @@ async function removeRow(t, id){
   if(!record) return msg('Registro não encontrado. Atualize a página.',true);
   const question = t === 'financeiro'
     ? 'Excluir este lançamento de '+brl(record.valor)+'? Ele será removido do caixa e dos totais do Financeiro no Dashboard.'+(record.comprovante_id?' A aprovação do comprovante será cancelada; o arquivo será preservado.':'')+' Viagens e manutenção são registros separados e não serão apagados.'
-    : 'Excluir este registro definitivamente? Esta ação não pode ser desfeita.';
+    : t === 'viagens' ? 'Excluir esta viagem? A cobrança automática de uso particular vinculada será excluída somente se não houver pagamentos ou comprovantes. O Dashboard e as Pendências serão atualizados. Esta ação não pode ser desfeita.' : 'Excluir este registro definitivamente? Esta ação não pode ser desfeita.';
   if(!await confirmDialog(question)) return;
   try{
     if(t === 'financeiro'){
       const {data:deletedId,error} = await client.rpc('sj_excluir_lancamento_financeiro',{p_lancamento_id:id});
       if(error) throw error;
       if(deletedId !== id) throw new Error('Não foi possível confirmar a exclusão.');
+    }else if(t === 'viagens'){
+      const {data:deletedId,error} = await client.rpc('sj_excluir_viagem_segura',{p_viagem_id:id});
+      if(error) throw error;
+      if(deletedId !== id) throw new Error('Não foi possível confirmar a exclusão segura da viagem.');
     }else{
       const {data:deleted,error} = await client.from(t).delete().eq('id',id).select('id').maybeSingle();
       if(error) throw error;
@@ -2481,7 +2485,7 @@ async function removeRow(t, id){
     data[t] = (data[t] || []).filter(r => r.id !== id);
     render();
     await refresh();
-    toast(t === 'financeiro'?'Lançamento excluído. Caixa e Dashboard recalculados.':'Registro excluído.');
+    toast(t === 'financeiro'?'Lançamento excluído. Caixa e Dashboard recalculados.':t === 'viagens'?'Viagem excluída com segurança. Pendências e Dashboard atualizados.':'Registro excluído.');
   }catch(error){
     if(t === 'motoristas' && error.code === '23503'){
       if(record.status === 'inativo') return msg('Este motorista já está inativo. O cadastro permanece para preservar viagens, pendências e pagamentos vinculados.',true);
