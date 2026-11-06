@@ -2773,13 +2773,35 @@ function dashboard(){
   const prev = monthTotals(prevMonth(month));
   const dividas = pendenciasReady ? resumoDividasMotoristas() : null;
 
+  // Recebimentos confirmados são apurados pela data do pagamento; faturamento pela data da viagem.
+  // Viagens antigas sem controle permanecem como "a conferir", nunca presumidas como pagas.
+  const faturamento=cur.trips.reduce((s,v)=>s+Number(v.faturamento||0),0);
+  const pagamentosMes=(data.pagamentos_pendencias||[]).filter(p=>String(p.data_pagamento||'').slice(0,7)===month);
+  const pendenciasPorId=new Map((data.pendencias||[]).map(p=>[p.id,p]));
+  const vinculosPorPendencia=new Map();
+  for(const l of (data.sj_vinculos_pagamento_viagem||[])){
+    if(l.pendencia_id&&!l.sem_cobranca){const ids=vinculosPorPendencia.get(l.pendencia_id)||new Set();ids.add(l.viagem_id);vinculosPorPendencia.set(l.pendencia_id,ids);}
+  }
+  const recebidosViagens=pagamentosMes.filter(p=>{
+    const pend=pendenciasPorId.get(p.pendencia_id);
+    return pend && (vinculosPorPendencia.has(p.pendencia_id)||Boolean(pend.viagem_uso_id));
+  }).reduce((s,p)=>s+Number(p.valor||0),0);
+  const semControle=cur.trips.filter(v=>!v.pagamento_controlado&&!((data.sj_vinculos_pagamento_viagem||[]).some(l=>l.viagem_id===v.id))&&!((data.pendencias||[]).some(p=>p.viagem_uso_id===v.id)));
+  const valorSemControle=semControle.reduce((s,v)=>s+Number(v.faturamento||0),0);
+  const aReceber=(data.pendencias||[]).filter(p=>p.viagem_uso_id||vinculosPorPendencia.has(p.id)).reduce((s,p)=>{
+    const recebido=(data.pagamentos_pendencias||[]).filter(pg=>pg.pendencia_id===p.id).reduce((n,pg)=>n+Number(pg.valor||0),0);
+    return s+Math.max(0,Number(p.valor||0)-recebido);
+  },0);
   const cards = [
-    {label:'Motoristas', value:(data.motoristas || []).length, icon:ICONS.motoristas},
-    {label:'Veículos', value:(data.veiculos || []).length, icon:ICONS.veiculos},
-    {label:revenueSource==='viagens'?'Faturamento das viagens':'Receitas financeiras', value:brl(cur.rev), icon:ICONS.financeiro, trend:trend(cur.rev, prev.rev)},
-    {label:'Despesas', value:brl(cur.expense), icon:ICONS.manutencoes, trend:trend(cur.expense, prev.expense, true)},
-    {label:'Resultado', value:brl(cur.rev - cur.expense), icon:ICONS.metas, trend:trend(cur.rev - cur.expense, prev.rev - prev.expense)},
-    {label:'KM rodados', value:num(cur.km), icon:ICONS.viagens, trend:trend(cur.km, prev.km)}
+    {label:'Motoristas',value:(data.motoristas||[]).length,icon:ICONS.motoristas},
+    {label:'Veículos',value:(data.veiculos||[]).length,icon:ICONS.veiculos},
+    {label:'Faturamento das viagens',value:brl(faturamento),icon:ICONS.financeiro},
+    {label:'Recebido de viagens no mês',value:brl(recebidosViagens),icon:ICONS.financeiro},
+    {label:'A receber (cobranças vinculadas, total)',value:brl(aReceber),icon:ICONS.financeiro},
+    {label:'Viagens antigas sem confirmação',value:semControle.length+' · '+brl(valorSemControle),icon:ICONS.viagens},
+    {label:'Despesas registradas',value:brl(cur.expense),icon:ICONS.manutencoes},
+    {label:'Resultado estimado da frota',value:brl(faturamento-cur.expense),icon:ICONS.metas},
+    {label:'KM rodados',value:num(cur.km),icon:ICONS.viagens}
   ];
 
   const goals = (data.metas || []).filter(x => x.mes?.startsWith(month)).map(g => {
@@ -2804,12 +2826,8 @@ function dashboard(){
 
   return `
     <div class="dash tw-dashboard w-full min-w-0">
-    <div class="dashboard-hero"><div class="dashboard-hero-title"><span class="dashboard-hero-icon">${ICONS.dashboard || "▦"}</span><div><h1>Dashboard</h1><span class="dashboard-hero-month">${esc(month)}</span></div></div><div class="dashboard-source">      <label for="revenue-source" style="display:block;margin-bottom:8px"><b>Fonte do faturamento</b></label>
-      <select id="revenue-source" onchange="setRevenueSource(this.value)" style="max-width:340px">
-        <option value="viagens" ${revenueSource === 'viagens' ? 'selected' : ''}>Viagens (padrão)</option>
-        <option value="financeiro" ${revenueSource === 'financeiro' ? 'selected' : ''}>Receitas do Financeiro</option>
-      </select>
-</div></div>
+    <div class="dashboard-hero"><div class="dashboard-hero-title"><span class="dashboard-hero-icon">${ICONS.dashboard || "▦"}</span><div><h1>Dashboard da frota</h1><span class="dashboard-hero-month">${esc(month)}</span></div></div></div>
+    <p class="muted" style="margin:12px 0">Faturamento = viagens conferidas no mês. Recebido = pagamentos vinculados confirmados no mês. A receber = saldo de cobranças vinculadas de todos os períodos. Viagens antigas sem confirmação não são consideradas recebidas. Resultado estimado não representa saldo de caixa.</p>
     <div class="grid kpi-grid overview-grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       ${cards.map(c => `
         <div class="kpi min-w-0 w-full rounded-xl border border-zinc-800 bg-zinc-900 p-5 shadow-sm">
