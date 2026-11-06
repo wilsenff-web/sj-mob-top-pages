@@ -1765,7 +1765,7 @@ function setIdentity(){
   const email = session.user.email || 'Conectado';
   const foto=isAdmin&&session.user.user_metadata?.sj_admin_avatar;
   $('identity').innerHTML = `
-    <button type="button" class="avatar" style="padding:0;overflow:hidden;cursor:${isAdmin?'pointer':'default'};border:2px solid #eab308;display:grid;place-items:center" ${isAdmin?'onclick="selecionarFotoAdmin()" title="Alterar foto do administrador" aria-label="Alterar foto do administrador"':''}>${foto&&/^data:image\\/(jpeg|png|webp);base64,/.test(foto)?`<img src="${foto}" alt="Foto do administrador" style="width:100%;height:100%;object-fit:cover">`:esc((email[0] || '?').toUpperCase())}</button>
+    <button type="button" class="avatar" style="padding:0;overflow:hidden;cursor:${isAdmin?'pointer':'default'};border:2px solid #eab308;display:grid;place-items:center" ${isAdmin?'onclick="selecionarFotoAdmin()" title="Alterar foto do administrador" aria-label="Alterar foto do administrador"':''}>${foto&&['data:image/jpeg;base64,','data:image/png;base64,','data:image/webp;base64,'].some(prefix=>foto.startsWith(prefix))?`<img src="${foto}" alt="Foto do administrador" style="width:100%;height:100%;object-fit:cover">`:esc((email[0] || '?').toUpperCase())}</button>
     <div class="who"><b>${esc(email)}</b><small>${isAdmin?'Administrador':'conectado'}</small>${isAdmin?'<button type="button" onclick="selecionarFotoAdmin()" style="display:block;margin-top:3px;color:#ffd21a;background:transparent;border:0;padding:0;font-size:12px;font-weight:800;cursor:pointer;text-align:left">📷 ALTERAR FOTO</button>':''}</div>`;
 }
 function selecionarFotoAdmin(){
