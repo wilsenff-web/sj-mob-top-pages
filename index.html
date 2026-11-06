@@ -3462,15 +3462,31 @@ function linhasRecibo(r){return ['Gestão de Frota - Recibo de pagamento','Emite
 function abrirReciboPagamento(tipo,id){const r=dadosRecibo(tipo,id);if(!r)return msg('Recebimento não encontrado. Atualize a tela.',true);reciboAtual={tipo:r.tipo,id:r.id};$('receipt-dialog')?.remove();const dlg=document.createElement('dialog');dlg.id='receipt-dialog';dlg.dataset.userId=session.user.id;dlg.setAttribute('aria-labelledby','receipt-title');dlg.innerHTML=`<h2 id="receipt-title">Recibo de pagamento</h2><strong class="receipt-amount">${esc(reaisPend(r.valor))}</strong><div class="receipt-details">${linhasRecibo(r).slice(1).map(line=>`<p>${esc(line)}</p>`).join('')}</div><div class="btn-row"><button type="button" onclick="baixarReciboPdf()">Baixar PDF</button><button type="button" class="alt" onclick="compartilharReciboPdf()">Compartilhar</button><button type="button" class="alt" onclick="document.getElementById('receipt-dialog').close()">Fechar</button></div><p id="receipt-feedback" role="status">O compartilhamento será aberto para você escolher o destinatário.</p>`;document.body.append(dlg);dlg.showModal();}
 emitirRecibo=function(id){abrirReciboPagamento('pendencia',id);};
 function bytesReciboPdf(r){
- const latin=s=>String(s).replace(/[–—]/g,'-').replace(/[“”]/g,'"').replace(/[’‘]/g,"'").replace(/\u00a0/g,' ').replace(/[^\x20-\xff]/g,' ');
- const literal=s=>latin(s).replace(/([\\()])/g,'\\$1');
- let lines=[];for(const text of linhasRecibo(r)){const words=latin(text).split(/\s+/).flatMap(w=>w.match(/.{1,40}/g)||[]);let line='';for(const w of words){if((line+' '+w).trim().length>44){if(line)lines.push(line);line=w;}else line=(line+' '+w).trim();}lines.push(line,'');}
- const streams=[];for(let start=0;start<lines.length;start+=42){const page=lines.slice(start,start+42);streams.push('BT /F1 11 Tf 48 792 Td 16 TL '+page.map((x,i)=>(i?'T* ':'')+'('+literal(x)+') Tj').join('\n')+' ET');}
- const objects=['<< /Type /Catalog /Pages 2 0 R >>','', '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>'];let kids=[];
- for(const stream of streams){const pageId=objects.length+1,contentId=pageId+1;kids.push(pageId+' 0 R');objects.push('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R >> >> /Contents '+contentId+' 0 R >>','<< /Length '+stream.length+' >>\nstream\n'+stream+'\nendstream');}
- objects[1]='<< /Type /Pages /Kids ['+kids.join(' ')+'] /Count '+kids.length+' >>';let pdf='%PDF-1.4\n',offsets=[0];objects.forEach((obj,i)=>{offsets.push(pdf.length);pdf+=(i+1)+' 0 obj\n'+obj+'\nendobj\n';});const xref=pdf.length;pdf+='xref\n0 '+(objects.length+1)+'\n0000000000 65535 f \n'+offsets.slice(1).map(n=>String(n).padStart(10,'0')+' 00000 n \n').join('')+'trailer\n<< /Size '+(objects.length+1)+' /Root 1 0 R >>\nstartxref\n'+xref+'\n%%EOF';return Uint8Array.from(pdf,c=>c.charCodeAt(0));
+ const latin=s=>String(s??'').replace(/[^\x20-\xff]/g,' ');
+ const lit=s=>latin(s).replace(/([\\()])/g,'\\$1');
+ const commands=[];
+ const color=rgb=>rgb.map(v=>(v/255).toFixed(3)).join(' ');
+ const rect=(x,y,w,h,rgb)=>commands.push(color(rgb)+' rg '+x+' '+y+' '+w+' '+h+' re f');
+ const txt=(x,y,s,size=11,bold=false,rgb=[20,29,44])=>commands.push(color(rgb)+' rg BT /'+(bold?'F2':'F1')+' '+size+' Tf 1 0 0 1 '+x+' '+y+' Tm ('+lit(s)+') Tj ET');
+ const wrap=(s,n=70)=>{let out=[],line='';for(const word of latin(s).split(/\s+/)){if((line+' '+word).trim().length>n){if(line)out.push(line);line=word;}else line=(line+' '+word).trim();}if(line)out.push(line);return out;};
+ const navy=[15,23,42],gold=[245,197,66],muted=[96,108,124];
+ rect(0,0,595,842,[255,255,255]);rect(0,677,595,165,navy);rect(0,672,595,5,gold);
+ txt(42,795,'GESTÃO DE FROTA',22,true,gold);txt(42,772,'MARTINS  |  CONTROLE DE PAGAMENTOS',9,false,[230,234,241]);
+ txt(42,720,'RECIBO DE PAGAMENTO',17,true,[255,255,255]);txt(42,697,'Comprovante emitido pelo sistema',10,false,[230,234,241]);
+ rect(42,570,511,78,[245,247,250]);txt(58,625,'VALOR RECEBIDO',10,true,muted);txt(58,591,reaisPend(r.valor),24,true,navy);
+ const status=r.saldo===null?'PAGAMENTO REGISTRADO':r.saldo<.005?'QUITADA':'PAGAMENTO PARCIAL';
+ txt(355,610,status,11,true,r.saldo!==null&&r.saldo<.005?[22,135,76]:[160,105,20]);
+ txt(42,543,'DADOS DO PAGAMENTO',12,true,navy);rect(42,532,511,1,[222,226,233]);
+ const fields=[['RECEBIDO DE',r.pagador],['REFERENTE A',r.categoria],['DATA DO PAGAMENTO',fmtDate(r.data)],['FORMA DE PAGAMENTO',r.forma],['VEÍCULO',r.veiculo||'Não informado'],['SALDO DA PENDÊNCIA',r.saldo===null?'Não se aplica':reaisPend(r.saldo)]];
+ let y=506;for(const [label,value] of fields){txt(43,y,label,9,true,muted);for(const line of wrap(value,48).slice(0,2)){txt(220,y,line,10,true,navy);y-=14;}y-=20;}
+ for(const [label,value] of [['DESCRIÇÃO',r.descricao],['OBSERVAÇÕES',r.observacoes]]){if(!value)continue;y-=4;txt(43,y,label,9,true,muted);y-=17;for(const line of wrap(value,84).slice(0,3)){txt(43,y,line,10,false,navy);y-=15;}}
+ rect(42,91,511,1,[222,226,233]);txt(43,74,'REFERÊNCIA DO REGISTRO',8,true,muted);txt(43,59,r.id,9,false,navy);
+ txt(43,36,'Este recibo comprova somente o valor do pagamento identificado.',9,false,muted);
+ const stream=commands.join('\n')+'\n';
+ const objs=['<< /Type /Catalog /Pages 2 0 R >>','<< /Type /Pages /Kids [4 0 R] /Count 1 >>','<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>','<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R /F2 6 0 R >> >> /Contents 5 0 R >>','<< /Length '+stream.length+' >>\nstream\n'+stream+'endstream','<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>'];
+ let pdf='%PDF-1.4\n',offsets=[0];objs.forEach((obj,i)=>{offsets.push(pdf.length);pdf+=(i+1)+' 0 obj\n'+obj+'\nendobj\n';});const xref=pdf.length;pdf+='xref\n0 '+(objs.length+1)+'\n0000000000 65535 f \n'+offsets.slice(1).map(n=>String(n).padStart(10,'0')+' 00000 n \n').join('')+'trailer\n<< /Size '+(objs.length+1)+' /Root 1 0 R >>\nstartxref\n'+xref+'\n%%EOF';return Uint8Array.from(pdf,c=>c.charCodeAt(0));
 }
-function arquivoReciboAtual(){const r=reciboAtual&&dadosRecibo(reciboAtual.tipo,reciboAtual.id);if(!r)throw Error('Atualize a tela para consultar este recebimento.');return new File([bytesReciboPdf(r)],'SJ-MOB-TOP-recibo-'+r.id+'.pdf',{type:'application/pdf'});}
+function arquivoReciboAtual(){const r=reciboAtual&&dadosRecibo(reciboAtual.tipo,reciboAtual.id);if(!r)throw Error('Atualize a tela para consultar este recebimento.');return new File([bytesReciboPdf(r)],'Gestao-de-Frota-recibo-'+r.id+'.pdf',{type:'application/pdf'});}
 function downloadArquivoRecibo(file){const url=URL.createObjectURL(file),a=document.createElement('a');a.href=url;a.download=file.name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);}
 function baixarReciboPdf(){try{downloadArquivoRecibo(arquivoReciboAtual());$('receipt-feedback').textContent='PDF gerado. Você pode anexá-lo em uma mensagem ao motorista.';}catch(e){$('receipt-feedback').textContent=e.message;}}
 async function compartilharReciboPdf(){try{const file=arquivoReciboAtual();if(navigator.share&&navigator.canShare?.({files:[file]})){await navigator.share({files:[file],title:'Recibo Gestão de Frota'});$('receipt-feedback').textContent='Compartilhamento concluído.';}else{downloadArquivoRecibo(file);$('receipt-feedback').textContent='PDF baixado. Anexe o arquivo no WhatsApp ou e-mail do motorista.';}}catch(e){if(e.name!=='AbortError')$('receipt-feedback').textContent='Não foi possível compartilhar. Use Baixar PDF e anexe o arquivo na sua mensagem.';}}
