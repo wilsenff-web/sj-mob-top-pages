@@ -1933,6 +1933,7 @@ async function refresh(silent = false){
     await carregarComprovantes();
     data.sj_metas_semanais=await lerTodos('sj_metas_semanais');
     data.sj_inicios_viagens=await lerTodos('sj_inicios_viagens');
+    data.sj_pagamentos_viagens_diretos=await lerTodos('sj_pagamentos_viagens_diretos');
     if(session?.user?.id!==expectedUser)return;
     await carregarPedidosAcesso();
     resolveDashboardPeriod();
@@ -2267,14 +2268,16 @@ function resumoCaixaMensal(m){
  const entradas=fin.filter(x=>x.tipo==='receita').reduce((n,x)=>n+Number(x.valor||0),0);
  const saidas=fin.filter(x=>x.tipo==='despesa').reduce((n,x)=>n+Number(x.valor||0),0);
  const recuperacoes=pendenciasReady?(data.pagamentos_pendencias||[]).filter(x=>String(x.data_pagamento||'').slice(0,7)===m).reduce((n,x)=>n+Number(x.valor||0),0):0;
- return {entradas,saidas,recuperacoes,totalEntradas:entradas+recuperacoes,saldo:entradas+recuperacoes-saidas};
+ const recebimentosViagens=(data.sj_pagamentos_viagens_diretos||[]).filter(x=>String(x.data_pagamento||'').slice(0,7)===m).reduce((n,x)=>n+Number(x.valor||0),0);
+ return {entradas,saidas,recuperacoes,recebimentosViagens,totalEntradas:entradas+recuperacoes+recebimentosViagens,saldo:entradas+recuperacoes+recebimentosViagens-saidas};
 }
 function resumoCaixaPage(){
  const c=resumoCaixaMensal(month);
  return `<div class="panel" style="margin-top:16px"><div class="panel-head"><div><h2>Resumo do caixa — ${esc(month)}</h2></div></div>
  <div class="grid kpi-grid">
  <div class="kpi"><span class="kpi-label">Entradas financeiras</span><div class="kpi-value">${reaisPend(c.entradas)}</div></div>
- <div class="kpi"><span class="kpi-label">Pendências recebidas</span><div class="kpi-value" style="color:#49d7a5">${reaisPend(c.recuperacoes)}</div></div>
+ <div class="kpi"><span class="kpi-label">Viagens recebidas</span><div class="kpi-value" style="color:#49d7a5">${reaisPend(c.recebimentosViagens)}</div></div>
+ <div class="kpi"><span class="kpi-label">Outras pendências recebidas</span><div class="kpi-value" style="color:#49d7a5">${reaisPend(c.recuperacoes)}</div></div>
  <div class="kpi"><span class="kpi-label">Saídas financeiras</span><div class="kpi-value" style="color:#ff7676">${reaisPend(c.saidas)}</div></div>
  <div class="kpi"><span class="kpi-label">Saldo do caixa no mês</span><div class="kpi-value" style="color:${c.saldo>=0?'#49d7a5':'#ff7676'}">${reaisPend(c.saldo)}</div></div>
  </div></div>`;
@@ -2776,6 +2779,8 @@ function dashboard(){
   // Recebimentos confirmados são apurados pela data do pagamento; faturamento pela data da viagem.
   // Viagens antigas sem controle permanecem como "a conferir", nunca presumidas como pagas.
   const faturamento=cur.trips.reduce((s,v)=>s+Number(v.faturamento||0),0);
+  const recebidosDiretos=(data.sj_pagamentos_viagens_diretos||[]).filter(p=>String(p.data_pagamento||'').slice(0,7)===month).reduce((s,p)=>s+Number(p.valor||0),0);
+  const saldoViagens=cur.trips.reduce((s,v)=>{if((data.sj_vinculos_pagamento_viagem||[]).some(l=>l.viagem_id===v.id))return s;const pagos=(data.sj_pagamentos_viagens_diretos||[]).filter(p=>p.viagem_id===v.id).reduce((n,p)=>n+Number(p.valor||0),0);return s+Math.max(0,Number(v.faturamento||0)-pagos);},0);
   const pagamentosMes=(data.pagamentos_pendencias||[]).filter(p=>String(p.data_pagamento||'').slice(0,7)===month);
   const pendenciasPorId=new Map((data.pendencias||[]).map(p=>[p.id,p]));
   const vinculosPorPendencia=new Map();
@@ -2796,8 +2801,8 @@ function dashboard(){
     {label:'Motoristas',value:(data.motoristas||[]).length,icon:ICONS.motoristas},
     {label:'Veículos',value:(data.veiculos||[]).length,icon:ICONS.veiculos},
     {label:'Faturamento das viagens',value:brl(faturamento),icon:ICONS.financeiro},
-    {label:'Recebido de viagens no mês',value:brl(recebidosViagens),icon:ICONS.financeiro},
-    {label:'A receber (cobranças vinculadas, total)',value:brl(aReceber),icon:ICONS.financeiro},
+    {label:'Recebido de viagens no mês',value:brl(recebidosViagens+recebidosDiretos),icon:ICONS.financeiro},
+    {label:'A receber (viagens do mês sem cobrança antiga)',value:brl(saldoViagens),icon:ICONS.financeiro},
     {label:'Viagens antigas sem confirmação',value:semControle.length+' · '+brl(valorSemControle),icon:ICONS.viagens},
     {label:'Despesas registradas',value:brl(cur.expense),icon:ICONS.manutencoes},
     {label:'Resultado estimado da frota',value:brl(faturamento-cur.expense),icon:ICONS.metas},
@@ -2827,7 +2832,7 @@ function dashboard(){
   return `
     <div class="dash tw-dashboard w-full min-w-0">
     <div class="dashboard-hero"><div class="dashboard-hero-title"><span class="dashboard-hero-icon">${ICONS.dashboard || "▦"}</span><div><h1>Dashboard da frota</h1><span class="dashboard-hero-month">${esc(month)}</span></div></div></div>
-    <p class="muted" style="margin:12px 0">Faturamento = viagens conferidas no mês. Recebido = pagamentos vinculados confirmados no mês. A receber = saldo de cobranças vinculadas de todos os períodos. Viagens antigas sem confirmação não são consideradas recebidas. Resultado estimado não representa saldo de caixa.</p>
+    <p class="muted" style="margin:12px 0">Faturamento = viagens conferidas no mês. Recebido = pagamentos confirmados no mês. A receber = saldo de viagens do mês sem cobranças antigas vinculadas. Viagens antigas sem confirmação não são consideradas recebidas. Resultado estimado não representa saldo de caixa.</p>
     <div class="grid kpi-grid overview-grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       ${cards.map(c => `
         <div class="kpi min-w-0 w-full rounded-xl border border-zinc-800 bg-zinc-900 p-5 shadow-sm">
@@ -3544,8 +3549,9 @@ const identityAntesEditarPendencia=setIdentity;setIdentity=function(){identityAn
 function novoIdUpload(){if(crypto.randomUUID)return crypto.randomUUID();const b=crypto.getRandomValues(new Uint8Array(16));b[6]=(b[6]&15)|64;b[8]=(b[8]&63)|128;const h=Array.from(b,n=>n.toString(16).padStart(2,'0')).join('');return h.slice(0,8)+'-'+h.slice(8,12)+'-'+h.slice(12,16)+'-'+h.slice(16,20)+'-'+h.slice(20); }
 async function carregarControlePagamentos(){const uid=session?.user?.id;if(!uid)return;for(const t of ['sj_vinculos_pagamento_viagem','sj_recebimentos_viagens']){const rows=await lerTodos(t);if(session?.user?.id!==uid)return;data[t]=rows;}}
 function comprovanteRecebido(id){return (data.financeiro||[]).some(f=>f.comprovante_id===id)||(data.sj_recebimentos_viagens||[]).some(r=>r.comprovante_id===id);}
-function pagamentoDaViagem(v){const l=(data.sj_vinculos_pagamento_viagem||[]).find(l=>l.viagem_id===v.id),p=(data.pendencias||[]).find(p=>p.id===l?.pendencia_id||(!l&&p.viagem_uso_id===v.id)),c=(data.comprovantes_motoristas||[]).find(c=>c.viagem_id===v.id&&c.status!=='rejeitado'&&!comprovanteRecebido(c.id));const pago=p?pagoPend(p.id):0,saldo=p?Math.max(0,Number(p.valor)-pago):null;let status='Aguardando pagamento',tone='warn';if(l?.sem_cobranca){status='Sem cobrança';tone='muted';}else if(p&&saldo<.005){status='Pago';tone='ok';}else if(pago>0){status='Pagamento parcial';}else if(c&&(v.pagamento_controlado||l||p)){status=c.status==='confirmado'?'Comprovante conferido — falta baixa':'Aguardando conferência do comprovante';}else if(!v.pagamento_controlado&&!l&&!p){status='Pagamento não informado (registro anterior)';tone='muted';}return {l:l||p?l||{pendencia_id:p.id,virtual:true}:null,p,c,pago,saldo,status,tone};}
-function pagamentoViagemHtml(v){const r=pagamentoDaViagem(v);return `<div class="trip-payment-state"><small>Pagamento ao proprietário</small><span class="badge ${r.tone}">${esc(r.status)}</span>${r.p?`<small>Saldo da cobrança: ${brl(r.saldo)}</small>`:''}${r.pago>0&&r.c?'<small>Há comprovante para conferir</small>':''}${isAdmin?`<button type="button" class="alt sm" onclick="abrirPagamentoViagem('${v.id}')">Pagamento / dar baixa</button>`:''}</div>`;}
+function pagamentoDaViagem(v){const legacy=(data.sj_vinculos_pagamento_viagem||[]).find(l=>l.viagem_id===v.id);const old=(data.pendencias||[]).find(p=>p.viagem_uso_id===v.id);const payments=(data.sj_pagamentos_viagens_diretos||[]).filter(p=>p.viagem_id===v.id);const pago=payments.reduce((s,p)=>s+Number(p.valor||0),0);const saldo=Math.max(0,Number(v.faturamento||0)-pago);let status=saldo<.005?'PAGO':pago>0?'PAGAMENTO PARCIAL':'AGUARDANDO PAGAMENTO';if(legacy||old)status='COBRANÇA ANTIGA — CONFERIR';return {status,tone:saldo<.005?'ok':'warn',pago,saldo,legacy:legacy||old};}
+function pagamentoViagemHtml(v){const r=pagamentoDaViagem(v);return `<div class="trip-payment-state"><small>Pagamento da viagem</small><span class="badge ${r.tone}">${esc(r.status)}</span><small>Saldo: ${brl(r.saldo)}</small>${isAdmin?`<button type="button" class="alt sm" onclick="abrirPagamentoDireto('${v.id}')">CONFIRMAR PAGAMENTO</button>`:''}</div>`;}
+async function abrirPagamentoDireto(id){if(!isAdmin||!session)return;const v=(data.viagens||[]).find(v=>v.id===id);if(!v)return;const r=pagamentoDaViagem(v);if(r.legacy)return msg('Esta viagem tem uma cobrança antiga vinculada. Confira o histórico antes de registrar novamente.',true);if(v.status_conferencia!=='aprovada')return msg('Aprove a viagem antes do pagamento.',true);if(r.saldo<.005)return msg('Esta viagem já está quitada.',false);const dlg=document.createElement('dialog');dlg.className='trip-payment-dialog';dlg.innerHTML=`<h2>Confirmar pagamento da viagem</h2><p>${esc(lookup('motoristas',v.motorista_id))} · ${esc(fmtDate(v.data_viagem))}</p><p>Saldo a receber: <strong>${brl(r.saldo)}</strong></p><form id="sj-direct-pay"><div class="field"><label>Valor recebido (R$)</label><input name="valor" type="number" min="0.01" max="${r.saldo.toFixed(2)}" step="0.01" value="${r.saldo.toFixed(2)}" required></div><div class="field"><label>Data do pagamento</label><input type="date" name="data" value="${hojeBrasilia()}" required></div><div class="field"><label>Forma</label><select name="forma"><option>PIX</option><option>Dinheiro</option><option>Transferência</option><option>Cartão</option></select></div><div class="btn-row"><button type="submit">CONFIRMAR RECEBIMENTO</button><button type="button" class="alt" id="sj-cancel-pay">Cancelar</button></div><p id="sj-pay-error" role="status"></p></form>`;document.body.append(dlg);dlg.querySelector('#sj-cancel-pay').onclick=()=>dlg.close();dlg.addEventListener('close',()=>dlg.remove());const ref=novoIdUpload();dlg.querySelector('form').onsubmit=async e=>{e.preventDefault();const b=e.target.querySelector('button[type=submit]');b.disabled=true;const f=new FormData(e.target);let saved=false;try{const {error}=await client.rpc('sj_confirmar_pagamento_direto',{p_viagem_id:id,p_valor:Number(f.get('valor')),p_data:f.get('data'),p_forma:f.get('forma'),p_referencia:ref});if(error)throw error;saved=true;dlg.close();await refresh();toast('Pagamento confirmado e caixa atualizado.');}catch(err){if(saved){dlg.close();msg('Pagamento salvo. Atualize a página; não confirme novamente.',true);}else dlg.querySelector('#sj-pay-error').textContent=err.message;}finally{b.disabled=false;}};dlg.showModal();}
 function sugestaoRepasse(v){const m=(data.motoristas||[]).find(m=>m.id===v.motorista_id);if(m?.modalidade_cobranca==='diaria')return 'Diária cadastrada: '+brl(m.valor_diaria)+'. Se já foi lançada, vincule a cobrança existente.';if(m?.modalidade_cobranca==='comissao')return 'Comissão cadastrada: '+num(m.percentual_comissao)+'%. Sugestão sobre o faturamento desta viagem: '+brl(Number(v.faturamento)*Number(m.percentual_comissao)/100)+'. Confira o acordo antes de criar a cobrança.';return 'Informe o repasse combinado com o motorista. O faturamento da corrida não é automaticamente o valor devido ao proprietário.';}
 function camposModoCobranca(form){const mode=form.elements.namedItem('modo').value;for(const el of form.querySelectorAll('[data-charge-mode]')){const show=el.dataset.chargeMode===mode;el.hidden=!show;for(const input of el.querySelectorAll('input,select')){input.disabled=!show;input.required=show&&['valor','pendencia_id'].includes(input.name);}}}
 async function abrirPagamentoViagem(id,proofId=''){if(!isAdmin||!session)return;let v=(data.viagens||[]).find(v=>v.id===id);if(!v)return;let r=pagamentoDaViagem(v);if(r.l?.virtual){const {error}=await client.rpc('sj_definir_pagamento_viagem',{p_viagem_id:id,p_pendencia_id:r.p.id});if(error)return msg(error.message,true);await refresh();v=(data.viagens||[]).find(v=>v.id===id);if(!v)return;r=pagamentoDaViagem(v);}
