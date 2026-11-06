@@ -1685,9 +1685,22 @@ async function abrirComprovante(path){
  if(!client||!session)return;
  const c=(data.comprovantes_motoristas||[]).find(x=>x.arquivo_path===path);
  if(!c)return msg('Comprovante não encontrado.',true);
- const {data:link,error}=await client.storage.from('sj-comprovantes').createSignedUrl(path,60);
- if(error)return msg('Não foi possível abrir: '+error.message,true);
- window.open(link.signedUrl,'_blank','noopener,noreferrer');
+ // Abrir pelo download autenticado evita falhas na criação de links assinados.
+ // A nova aba é criada durante o clique para não ser bloqueada pelo navegador.
+ const janela=window.open('','_blank');
+ if(janela){janela.document.title='Abrindo comprovante';janela.document.body.textContent='Carregando comprovante...';}
+ try{
+  const {data:arquivo,error}=await client.storage.from('sj-comprovantes').download(path);
+  if(error)throw error;
+  const url=URL.createObjectURL(arquivo);
+  if(janela&&!janela.closed){janela.location.href=url;setTimeout(()=>URL.revokeObjectURL(url),120000);}
+  else{const a=document.createElement('a');a.href=url;a.download=path.split('/').pop()||'comprovante';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),120000);}
+ }catch(err){
+  if(janela&&!janela.closed)janela.close();
+  const detail=[err.message,err.statusCode,err.error].filter(Boolean).join(' · ');
+  msg('Erro ao carregar comprovante: '+detail+'. Confira a conexão e tente novamente.',true);
+  console.error('Falha ao abrir comprovante',err);
+ }
 }
 async function revisarComprovante(id,status){
  if(!isAdmin||!['confirmado','rejeitado'].includes(status))return;
